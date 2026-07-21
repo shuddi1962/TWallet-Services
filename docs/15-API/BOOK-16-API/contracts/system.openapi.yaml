@@ -1,0 +1,84 @@
+openapi: 3.1.0
+info:
+  title: TWallet Services API — System
+  version: 1.0.0
+servers:
+  - url: https://api.twalletservices.com/api/v1
+paths:
+  /system/health:
+    get:
+      tags: [System]
+      summary: Health check
+      responses:
+        '200':
+          description: System healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      overall: { type: string, enum: [healthy, degraded, down] }
+                      checks:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name: { type: string }
+                            status: { type: string, enum: [healthy, degraded, down] }
+                            latency_ms: { type: integer }
+                            error: { type: string }
+                      checked_at: { type: string, format: date-time }
+        '503':
+          description: System degraded or down
+  /system/version:
+    get:
+      tags: [System]
+      summary: Get app version
+      responses:
+        '200':
+          description: Version info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      version: { type: string, example: "1.0.0" }
+                      build: { type: string, example: "20260721.1" }
+                      commit: { type: string }
+                      deployed_at: { type: string, format: date-time }
+                      environment: { type: string, enum: [production, staging, development] }
+  /system/status:
+    get:
+      tags: [System]
+      summary: Get platform status
+      responses:
+        '200':
+          description: Platform status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, enum: [operational, degraded, maintenance] }
+                      message: { type: string }
+                      last_incident: { type: string, nullable: true }
+                      uptime_pct_30d: { type: number }
+                      maintenance_scheduled: { type: string, nullable: true }
+  /system/config:
+    get:
+      tags: [System]
+      summary: Get system configuration
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: System config

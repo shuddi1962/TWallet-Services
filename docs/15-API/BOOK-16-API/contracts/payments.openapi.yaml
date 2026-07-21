@@ -1,0 +1,92 @@
+openapi: 3.1.0
+info:
+  title: TWallet Services API — Payments
+  version: 1.0.0
+servers:
+  - url: https://api.twalletservices.com/api/v1
+paths:
+  /payments/create:
+    post:
+      tags: [Payments]
+      summary: Create crypto payment request
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: Idempotency-Key, in: header, schema: { type: string }, description: Unique key for idempotency }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [order_id, network, token]
+              properties:
+                order_id: { type: string, format: uuid }
+                network: { type: string }
+                token: { type: string }
+                idempotency_key: { type: string }
+      responses:
+        '201': { description: Payment request created }
+        '409': { description: Order already paid }
+  /payments/verify:
+    post:
+      tags: [Payments]
+      summary: Verify blockchain transaction
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment_id, tx_hash]
+              properties:
+                payment_id: { type: string, format: uuid }
+                tx_hash: { type: string }
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, enum: [confirmed, pending, failed] }
+                      confirmations: { type: integer }
+                      block_number: { type: integer }
+                      tx_hash: { type: string }
+                      verified_at: { type: string, format: date-time }
+  /payments/{id}:
+    get:
+      tags: [Payments]
+      summary: Get payment details
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Payment details }
+  /payments/history:
+    get:
+      tags: [Payments]
+      summary: Get payment history
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: network, in: query, schema: { type: string } }
+        - { name: page_size, in: query, schema: { type: integer, default: 20 } }
+        - { name: cursor, in: query, schema: { type: string } }
+      responses:
+        '200': { description: Payment history }
+  /payments/estimate-fees:
+    get:
+      tags: [Payments]
+      summary: Estimate network fees
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: network, in: query, required: true, schema: { type: string } }
+        - { name: token, in: query, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Fee estimate }

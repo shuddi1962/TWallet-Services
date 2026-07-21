@@ -1,0 +1,116 @@
+openapi: 3.1.0
+info:
+  title: TWallet Services API — Webhooks
+  version: 1.0.0
+servers:
+  - url: https://api.twalletservices.com/api/v1
+paths:
+  /webhooks/walletconnect:
+    post:
+      tags: [Webhooks]
+      summary: Receive WalletConnect session events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event: { type: string, enum: [session_proposal, session_delete, event_notification] }
+                data: { type: object }
+      responses:
+        '200': { description: Acknowledged }
+  /webhooks/blockchain:
+    post:
+      tags: [Webhooks]
+      summary: Receive blockchain event notifications (Alchemy)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                webhookId: { type: string }
+                id: { type: string }
+                type: { type: string, enum: [ADDRESS_ACTIVITY, MINED_TRANSACTION] }
+                event:
+                  type: object
+                  properties:
+                    network: { type: string }
+                    activity:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          fromAddress: { type: string }
+                          toAddress: { type: string }
+                          hash: { type: string }
+                          value: { type: integer }
+                          asset: { type: string }
+                          contractAddress: { type: string }
+      responses:
+        '200': { description: Acknowledged }
+  /webhooks/email:
+    post:
+      tags: [Webhooks]
+      summary: Receive email delivery events (Resend)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string, enum: [email.sent, email.delivered, email.bounced, email.complained, email.opened] }
+                data:
+                  type: object
+                  properties:
+                    email_id: { type: string, format: uuid }
+                    to: { type: array, items: { type: string, format: email } }
+                    subject: { type: string }
+                    timestamp: { type: string, format: date-time }
+      responses:
+        '200': { description: Acknowledged }
+  /webhooks/storage:
+    post:
+      tags: [Webhooks]
+      summary: Receive Supabase Storage events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string, enum: [INSERT, UPDATE, DELETE] }
+                table: { type: string }
+                record:
+                  type: object
+                  properties:
+                    id: { type: string, format: uuid }
+                    bucket_id: { type: string }
+                    name: { type: string }
+                    metadata: { type: object }
+      responses:
+        '200': { description: Acknowledged }
+  /webhooks/shipping:
+    post:
+      tags: [Webhooks]
+      summary: Receive shipping status updates (carrier)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tracking_number, carrier, status, timestamp]
+              properties:
+                tracking_number: { type: string }
+                carrier: { type: string }
+                status: { type: string }
+                location: { type: string }
+                timestamp: { type: string, format: date-time }
+                signed_by: { type: string }
+      responses:
+        '200': { description: Acknowledged }

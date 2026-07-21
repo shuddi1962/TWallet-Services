@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "description": "TWallet Services — shadow tokens",
+  "version": "1.0.0",
+  "sm": "0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.06)",
+  "md": "0 4px 12px rgba(0,0,0,0.05)",
+  "lg": "0 8px 24px rgba(0,0,0,0.08)",
+  "xl": "0 12px 36px rgba(0,0,0,0.10)",
+  "glow": "0 0 20px rgba(37,99,235,0.15)"
+}

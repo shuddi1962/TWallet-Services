@@ -1,0 +1,49 @@
+openapi: 3.1.0
+info:
+  title: TWallet Services API — Transactions
+  version: 1.0.0
+servers:
+  - url: https://api.twalletservices.com/api/v1
+paths:
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: List transaction history
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: network, in: query, schema: { type: string } }
+        - { name: token, in: query, schema: { type: string } }
+        - { name: date_from, in: query, schema: { type: string, format: date-time } }
+        - { name: date_to, in: query, schema: { type: string, format: date-time } }
+        - { name: min_amount, in: query, schema: { type: number } }
+        - { name: max_amount, in: query, schema: { type: number } }
+        - { name: page_size, in: query, schema: { type: integer, default: 20 } }
+        - { name: cursor, in: query, schema: { type: string } }
+      responses:
+        '200': { description: Transaction list }
+  /transactions/{hash}:
+    get:
+      tags: [Transactions]
+      summary: Get transaction by hash
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: hash, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Transaction details }
+        '404': { description: Transaction not found }
+  /transactions/export:
+    get:
+      tags: [Transactions]
+      summary: Export transactions as CSV
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: date_from, in: query, schema: { type: string, format: date-time } }
+        - { name: date_to, in: query, schema: { type: string, format: date-time } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: network, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: CSV file
+          content:
+            text/csv: {}

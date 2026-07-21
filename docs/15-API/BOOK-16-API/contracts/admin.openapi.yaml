@@ -1,0 +1,146 @@
+openapi: 3.1.0
+info:
+  title: TWallet Services API — Admin
+  version: 1.0.0
+servers:
+  - url: https://api.twalletservices.com/api/v1
+paths:
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Get admin dashboard data
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Dashboard data }
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: List all users (admin view)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: search, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: role, in: query, schema: { type: string } }
+        - { name: country, in: query, schema: { type: string } }
+        - { name: page_size, in: query, schema: { type: integer, default: 20 } }
+        - { name: cursor, in: query, schema: { type: string } }
+      responses:
+        '200': { description: User list }
+  /admin/users/{id}:
+    patch:
+      tags: [Admin]
+      summary: Admin action on user (suspend/reactivate/delete)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, reason]
+              properties:
+                action: { type: string, enum: [suspend, reactivate, delete] }
+                reason: { type: string }
+      responses:
+        '200': { description: Action performed }
+  /admin/orders:
+    get:
+      tags: [Admin]
+      summary: List all orders (admin view)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: search, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: flagged, in: query, schema: { type: boolean } }
+        - { name: page_size, in: query, schema: { type: integer, default: 20 } }
+        - { name: cursor, in: query, schema: { type: string } }
+      responses:
+        '200': { description: Order list }
+  /admin/orders/{id}:
+    patch:
+      tags: [Admin]
+      summary: Admin order management
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [update_status, assign_tracking, flag, unflag, refund, add_note] }
+                status: { type: string }
+                tracking_number: { type: string }
+                carrier: { type: string }
+                note: { type: string }
+      responses:
+        '200': { description: Order updated }
+  /admin/payments:
+    get:
+      tags: [Admin]
+      summary: List all payments (admin view)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Payment list }
+  /admin/payments/{id}:
+    patch:
+      tags: [Admin]
+      summary: Admin payment action
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Payment updated }
+  /admin/cards:
+    get:
+      tags: [Admin]
+      summary: List all card products (admin view)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Card product list }
+    post:
+      tags: [Admin]
+      summary: Create card product
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Card created }
+  /admin/cards/{id}:
+    patch:
+      tags: [Admin]
+      summary: Update card product
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Card updated }
+  /admin/reports:
+    get:
+      tags: [Admin]
+      summary: Generate or download report
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: type, in: query, required: true, schema: { type: string, enum: [revenue, orders, users, transactions, payments, cards, support] } }
+        - { name: date_from, in: query, schema: { type: string, format: date-time } }
+        - { name: date_to, in: query, schema: { type: string, format: date-time } }
+        - { name: group_by, in: query, schema: { type: string, enum: [day, week, month], default: day } }
+        - { name: format, in: query, schema: { type: string, enum: [json, csv, xlsx, pdf], default: json } }
+      responses:
+        '200': { description: Report data or file }
+  /admin/settings:
+    patch:
+      tags: [Admin]
+      summary: Update system settings
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category, settings]
+              properties:
+                category: { type: string, enum: [general, payments, security, notifications, kyc] }
+                settings: { type: object }
+      responses:
+        '200': { description: Settings updated }

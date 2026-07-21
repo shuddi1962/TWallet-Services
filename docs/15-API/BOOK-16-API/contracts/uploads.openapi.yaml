@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: TWallet Services API — Uploads
+  version: 1.0.0
+servers:
+  - url: https://api.twalletservices.com/api/v1
+paths:
+  /upload/avatar:
+    post:
+      tags: [Uploads]
+      summary: Upload user avatar
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PNG, JPEG, or WEBP image (max 2 MB)
+      responses:
+        '201': { description: Avatar uploaded }
+  /upload/document:
+    post:
+      tags: [Uploads]
+      summary: Upload KYC/document
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PNG, JPEG, or PDF (max 10 MB)
+                document_type:
+                  type: string
+                  enum: [passport, drivers_license, id_card, proof_of_address, other]
+      responses:
+        '201': { description: Document uploaded }
+  /upload/{id}:
+    delete:
+      tags: [Uploads]
+      summary: Delete an uploaded file
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: File deleted }
+  /upload/generate-url:
+    post:
+      tags: [Uploads]
+      summary: Generate signed URL for file access
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path: { type: string }
+                expires_in_minutes: { type: integer, default: 60, maximum: 1440 }
+      responses:
+        '200': { description: Signed URL generated }

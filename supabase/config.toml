@@ -1,0 +1,19 @@
+[project]
+project_id = "smkckhsvzyjttzqhphzv"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "auth", "storage"]
+
+[db]
+migration_dirs = ["supabase/migrations"]
+
+[auth]
+enabled = true
+
+[storage]
+enabled = true
+
+[edge_functions]
+enabled = true
