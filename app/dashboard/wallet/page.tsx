@@ -1,4 +1,4 @@
-import { Wallet, Connect } from "lucide-react";
+import { Wallet, Plug } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -27,7 +27,7 @@ export default function WalletPage() {
             description="Connect your self-custody wallet to start ordering cards and making crypto payments."
             action={
               <Button>
-                <Connect className="h-4 w-4" />
+                <Plug className="h-4 w-4" />
                 Connect Wallet
               </Button>
             }

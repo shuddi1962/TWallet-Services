@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Menu, X, Wallet, Bell } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 
 export function DashboardHeader() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);

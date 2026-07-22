@@ -1,4 +1,7 @@
-import { User, Shield, Bell } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +10,10 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 
 export default function SettingsPage() {
+  const [orderUpdates, setOrderUpdates] = useState(true);
+  const [paymentConfirmations, setPaymentConfirmations] = useState(true);
+  const [marketingEmails, setMarketingEmails] = useState(false);
+
   return (
     <div className="space-y-6">
       <div>
@@ -47,7 +54,7 @@ export default function SettingsPage() {
               <p className="text-sm font-medium text-surface-900">Order updates</p>
               <p className="text-sm text-surface-500">Get notified about order status changes</p>
             </div>
-            <Switch defaultChecked />
+            <Switch checked={orderUpdates} onCheckedChange={setOrderUpdates} />
           </div>
           <Separator />
           <div className="flex items-center justify-between">
@@ -55,7 +62,7 @@ export default function SettingsPage() {
               <p className="text-sm font-medium text-surface-900">Payment confirmations</p>
               <p className="text-sm text-surface-500">Get notified when payments are verified</p>
             </div>
-            <Switch defaultChecked />
+            <Switch checked={paymentConfirmations} onCheckedChange={setPaymentConfirmations} />
           </div>
           <Separator />
           <div className="flex items-center justify-between">
@@ -63,7 +70,7 @@ export default function SettingsPage() {
               <p className="text-sm font-medium text-surface-900">Marketing emails</p>
               <p className="text-sm text-surface-500">Receive product updates and offers</p>
             </div>
-            <Switch />
+            <Switch checked={marketingEmails} onCheckedChange={setMarketingEmails} />
           </div>
         </CardContent>
       </Card>
