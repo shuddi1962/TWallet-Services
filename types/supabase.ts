@@ -21,11 +21,16 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export interface Database {
   public: {
-    Tables: Record<string, {
-      Row: Record<string, Json>;
-      Insert: Record<string, Json>;
-      Update: Record<string, Json>;
-    }>;
+    Tables: {
+      card_orders: { Row: Record<string, Json>; Insert: Record<string, Json>; Update: Record<string, Json> };
+      card_products: { Row: Record<string, Json>; Insert: Record<string, Json>; Update: Record<string, Json> };
+      notifications: { Row: Record<string, Json>; Insert: Record<string, Json>; Update: Record<string, Json> };
+      payment_transactions: { Row: Record<string, Json>; Insert: Record<string, Json>; Update: Record<string, Json> };
+      profiles: { Row: Record<string, Json>; Insert: Record<string, Json>; Update: Record<string, Json> };
+      supported_networks: { Row: Record<string, Json>; Insert: Record<string, Json>; Update: Record<string, Json> };
+      supported_tokens: { Row: Record<string, Json>; Insert: Record<string, Json>; Update: Record<string, Json> };
+      supported_wallet_addresses: { Row: Record<string, Json>; Insert: Record<string, Json>; Update: Record<string, Json> };
+    };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: Record<string, never>;
