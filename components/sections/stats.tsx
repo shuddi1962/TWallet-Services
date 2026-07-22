@@ -38,7 +38,7 @@ function AnimatedCounter({ value, suffix, prefix, decimals = 0 }: { value: numbe
       ref={(ref) => {
         if (ref) {
           const observer = new IntersectionObserver(
-            ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+            ([entry]) => { if (entry?.isIntersecting) { setInView(true); observer.disconnect(); } },
             { threshold: 0.5 },
           );
           observer.observe(ref);
