@@ -2,10 +2,14 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Globe, ShieldCheck, Lock, Users } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, ArrowUpRight, Globe, ShieldCheck, Lock, Users, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { useState } from "react";
+
+const CARD_IMAGE =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuB4kIr2XwzwDH8GGE6TbF23yoAi0hgE531M8geP32Cjq1mXYPGqLgX5RomAPAvL8_a31uz8iWMQ2z8bQVqlCgpbFDegzDuB4uw-g3stjGIrqdtoMF9CoWU6flYr36umlpNYm_tJRxYT4mHEFM9HDsv2HdwoHwHoBhy3NMXS0tJOZYYIpIEzOCWpa62ZB_RYk63ExlxwSjO61Ve_DI09AExScnco3FJwHpl6yClmGjB2yLuid6y4Q-vTWqABr5GJaUJjzyk";
 
 function OrderWidget() {
   const [tab, setTab] = useState<"physical" | "virtual">("virtual");
@@ -134,12 +138,12 @@ export function Hero() {
 
       <Container size="xl">
         <div className="relative min-h-screen pt-28 lg:pt-0">
-          <div className="flex min-h-screen flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
+          <div className="grid min-h-screen items-center gap-8 lg:grid-cols-3">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="w-full lg:w-1/2 flex flex-col gap-7"
+              className="flex flex-col gap-7"
             >
               <div className="inline-flex items-center gap-2 bg-brand-500/10 border border-brand-500/20 text-brand px-4 py-2 rounded-full text-sm font-medium w-fit">
                 <Users className="h-4 w-4" />
@@ -187,27 +191,46 @@ export function Hero() {
               </div>
 
               <div className="flex flex-wrap items-center gap-6 pt-6 mt-4 border-t border-white/5">
-                {[
-                  { icon: Globe, label: "Global Acceptance" },
-                  { icon: ShieldCheck, label: "Secure & Private" },
-                  { icon: Lock, label: "Easy to Use" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-2 text-surface-400">
-                    <item.icon className="h-5 w-5 text-brand-400" />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </div>
-                ))}
+                <div className="flex items-center gap-2 text-surface-400">
+                  <Globe className="h-5 w-5 text-brand-400" />
+                  <span className="text-sm font-medium">Global Acceptance</span>
+                </div>
+                <div className="flex items-center gap-2 text-surface-400">
+                  <ShieldCheck className="h-5 w-5 text-brand-400" />
+                  <span className="text-sm font-medium">Secure &amp; Private</span>
+                </div>
+                <div className="flex items-center gap-2 text-surface-400">
+                  <Lock className="h-5 w-5 text-brand-400" />
+                  <span className="text-sm font-medium">Easy to Use</span>
+                </div>
               </div>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="w-full lg:w-1/2 flex justify-center lg:justify-end"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="flex items-center justify-center"
             >
-              <OrderWidget />
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Image
+                  src={CARD_IMAGE}
+                  alt="TWallet Card on a blue pedestal"
+                  width={560}
+                  height={400}
+                  className="w-full max-w-lg object-contain drop-shadow-2xl"
+                  priority
+                  unoptimized
+                />
+              </motion.div>
             </motion.div>
+
+            <div className="flex items-start justify-center lg:justify-end">
+              <OrderWidget />
+            </div>
           </div>
         </div>
       </Container>
