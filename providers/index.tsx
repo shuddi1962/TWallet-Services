@@ -40,9 +40,9 @@ const wagmiConfig = createConfig({
 createWeb3Modal({
   wagmiConfig,
   projectId,
-  chains,
   metadata,
   themeMode: "dark",
+  defaultChain: mainnet,
   features: {
     analytics: false,
     email: false,
