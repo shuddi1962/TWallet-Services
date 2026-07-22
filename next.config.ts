@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -30,7 +31,7 @@ const nextConfig: NextConfig = {
             "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.walletconnect.com https://*.walletconnect.org",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: https://*.supabase.co https://*.walletconnect.com",
-            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.rpc.alchemyapi.io wss://*.rpc.alchemyapi.io https://*.alchemy.com https://app.posthog.com",
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.rpc.alchemyapi.io wss://*.rpc.alchemyapi.io https://*.alchemy.com",
             "frame-src 'self' https://*.walletconnect.com https://*.walletconnect.org",
             "font-src 'self'",
             "object-src 'none'",
@@ -41,6 +42,18 @@ const nextConfig: NextConfig = {
       ],
     },
   ],
+  webpack: (config) => {
+    const stubs = path.resolve("lib/stubs");
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@x402/evm/upto/client": `${stubs}/x402-evm.mjs`,
+      "@x402/evm/exact/client": `${stubs}/x402-evm.mjs`,
+      "@x402/evm": `${stubs}/x402-evm.mjs`,
+      "@x402/core/client": `${stubs}/x402-core.mjs`,
+      "@x402/svm/exact/client": `${stubs}/x402-svm.mjs`,
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
