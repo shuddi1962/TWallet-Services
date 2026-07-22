@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "sonner";
 import { WagmiProvider, http, createConfig } from "wagmi";
-import { walletConnect, metaMask } from "wagmi/connectors";
+import { walletConnect } from "wagmi/connectors";
 import { arbitrum, base, bsc, mainnet, optimism, polygon, avalanche } from "wagmi/chains";
 
 const projectId =
@@ -25,7 +25,6 @@ const wagmiConfig = createConfig({
   chains,
   connectors: [
     walletConnect({ projectId, metadata, showQrModal: false }),
-    metaMask(),
   ],
   transports: {
     [mainnet.id]: http(),

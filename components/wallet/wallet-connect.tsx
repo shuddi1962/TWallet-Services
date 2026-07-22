@@ -1,7 +1,7 @@
 "use client";
 
-import { useAppKit, useAppKitAccount, useAppKitNetwork, useDisconnect } from "@web3modal/wagmi/react";
-import { useAccount, useBalance, useChainId } from "wagmi";
+import { useAppKit } from "@web3modal/wagmi/react";
+import { useAccount, useBalance, useChainId, useDisconnect } from "wagmi";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +12,9 @@ import { toast } from "sonner";
 
 export function WalletConnect() {
   const { open } = useAppKit();
-  const { address, isConnected } = useAppKitAccount();
+  const { address: wagmiAddress, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const const_chainId = useChainId();
-  const { address: wagmiAddress } = useAccount();
   const { data: balance } = useBalance({ address: wagmiAddress });
   const [copied, setCopied] = useState(false);
 

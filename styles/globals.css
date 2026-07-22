@@ -98,11 +98,11 @@
 }
 
 @utility glow {
-  box-shadow: 0 0 40px var(--color-brand-600/0.3);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--color-brand-600) 30%, transparent);
 }
 
 @utility glow-lg {
-  box-shadow: 0 0 80px var(--color-brand-600/0.2), 0 0 40px var(--color-accent-600/0.1);
+  box-shadow: 0 0 80px color-mix(in srgb, var(--color-brand-600) 20%, transparent), 0 0 40px color-mix(in srgb, var(--color-accent-600) 10%, transparent);
 }
 
 @utility card-gradient {
@@ -110,7 +110,7 @@
 }
 
 @utility hero-gradient {
-  background: radial-gradient(ellipse 80% 50% at 50% -20%, var(--color-brand-900/0.4), transparent),
-              radial-gradient(ellipse 60% 50% at 30% 100%, var(--color-accent-900/0.15), transparent),
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, color-mix(in srgb, var(--color-brand-900) 40%, transparent), transparent),
+              radial-gradient(ellipse 60% 50% at 30% 100%, color-mix(in srgb, var(--color-accent-900) 15%, transparent), transparent),
               var(--color-surface-950);
 }

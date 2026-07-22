@@ -6,7 +6,7 @@ import { createOrder } from "@/features/orders/server/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Check, Sparkles, Truck, Smartphone } from "lucide-react";
+import { CreditCard, Check, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
 interface Product {

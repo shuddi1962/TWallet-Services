@@ -52,6 +52,10 @@ const nextConfig: NextConfig = {
       "@x402/core/client": `${stubs}/x402-core.mjs`,
       "@x402/svm/exact/client": `${stubs}/x402-svm.mjs`,
     };
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      "pino-pretty": false,
+    };
     return config;
   },
 };

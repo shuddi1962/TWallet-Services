@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Wallet, ShieldCheck, CreditCard, Zap, Globe, Lock, TrendingUp, Key } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { FadeIn, StaggerChildren, StaggerItem } from "@/components/ui/motion-section";
