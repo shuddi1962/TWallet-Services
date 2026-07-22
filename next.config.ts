@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.supabase.co",
       },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
     ],
   },
   headers: async () => [
@@ -30,7 +34,7 @@ const nextConfig: NextConfig = {
             "default-src 'self'",
             "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.walletconnect.com https://*.walletconnect.org",
             "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: https://*.supabase.co https://*.walletconnect.com",
+            "img-src 'self' data: https://*.supabase.co https://*.walletconnect.com https://lh3.googleusercontent.com",
             "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.rpc.alchemyapi.io wss://*.rpc.alchemyapi.io https://*.alchemy.com",
             "frame-src 'self' https://*.walletconnect.com https://*.walletconnect.org",
             "font-src 'self'",
