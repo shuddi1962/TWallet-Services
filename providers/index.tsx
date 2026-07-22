@@ -12,7 +12,7 @@ const projectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
   "PLACEHOLDER_REPLACE_WITH_REAL_PROJECT_ID";
 
-const chains = [mainnet, polygon, arbitrum, optimism, base, bsc, avalanche];
+const chains = [mainnet, polygon, arbitrum, optimism, base, bsc, avalanche] as const;
 
 const metadata = {
   name: "TWallet Card",
