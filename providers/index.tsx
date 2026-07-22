@@ -1,6 +1,6 @@
 "use client";
 
-import { createAppKit } from "@web3modal/wagmi/react";
+import { createWeb3Modal } from "@web3modal/wagmi/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "sonner";
@@ -37,7 +37,7 @@ const wagmiConfig = createConfig({
   },
 });
 
-createAppKit({
+createWeb3Modal({
   wagmiConfig,
   projectId,
   chains,
