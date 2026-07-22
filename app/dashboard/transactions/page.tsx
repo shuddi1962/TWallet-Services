@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ArrowLeftRight, ExternalLink, Copy, Check, Clock, Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ export default function TransactionsPage() {
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const perPage = 10;
 
-  useMemo(() => {
+  useEffect(() => {
     getTransactions().then((result) => {
       if (result.error) {
         setError(result.error);
