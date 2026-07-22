@@ -51,7 +51,7 @@ export async function signIn(_prev: unknown, formData: FormData) {
     return { error: error.message };
   }
 
-  redirect("/app/dashboard");
+  redirect("/dashboard");
 }
 
 export async function signOut() {

@@ -31,9 +31,9 @@ export async function updateSession(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isAdminPage = request.nextUrl.pathname.startsWith("/admin");
-  const isAppPage = request.nextUrl.pathname.startsWith("/app");
+  const isDashboardPage = request.nextUrl.pathname.startsWith("/dashboard");
 
-  if (!user && (isAppPage || isAdminPage)) {
+  if (!user && (isDashboardPage || isAdminPage)) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     url.searchParams.set("redirect", request.nextUrl.pathname);
@@ -42,7 +42,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/app/dashboard";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
@@ -55,7 +55,7 @@ export async function updateSession(request: NextRequest) {
 
     if (profile?.role !== "admin") {
       const url = request.nextUrl.clone();
-      url.pathname = "/app/dashboard";
+      url.pathname = "/dashboard";
       return NextResponse.redirect(url);
     }
   }
