@@ -23,7 +23,7 @@ function CardPreview({ variant, index }: { variant: typeof cardVariants[0]; inde
     >
       <motion.div
         whileHover={{ scale: 1.02, y: -4 }}
-        className="relative mx-auto h-44 w-72 sm:h-48 sm:w-80 overflow-hidden rounded-2xl p-[1.5px] shadow-xl transition-shadow duration-300 group-hover:shadow-2xl"
+        className="relative mx-auto w-full max-w-[320px] aspect-[1.6] overflow-hidden rounded-2xl p-[1.5px] shadow-xl transition-shadow duration-300 group-hover:shadow-2xl"
         style={{
           background: `linear-gradient(135deg, ${index === 0 ? "#2563eb" : index === 4 ? "#f59e0b" : "#64748b"}, ${index === 0 ? "#1d4ed8" : index === 4 ? "#d97706" : "#475569"})`,
         }}
@@ -65,23 +65,23 @@ function CardPreview({ variant, index }: { variant: typeof cardVariants[0]; inde
 
 export function CardShowcase() {
   return (
-    <section id="cards" className="relative py-20 lg:py-28 overflow-hidden bg-surface-50">
+    <section id="cards" className="relative py-16 lg:py-20 overflow-hidden bg-surface-50">
       <Container>
         <FadeIn>
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm">
               <span className="text-brand-700 font-medium">Card Collection</span>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-surface-900 sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-surface-900">
               Choose your style
             </h2>
-            <p className="mt-4 text-lg text-surface-500">
+            <p className="mt-2 text-sm sm:text-base text-surface-500">
               Five premium card designs. One perfect fit for you.
             </p>
           </div>
         </FadeIn>
 
-        <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {cardVariants.map((variant, index) => (
             <div key={variant.name}>
               <CardPreview variant={variant} index={index} />

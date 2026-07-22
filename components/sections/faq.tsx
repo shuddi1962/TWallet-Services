@@ -62,14 +62,14 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-20 lg:py-28">
+    <section id="faq" className="py-16 lg:py-20">
       <Container size="md">
         <FadeIn>
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-4 py-1.5 text-sm">
               <span className="text-brand-300">FAQ</span>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
               Frequently asked questions
             </h2>
             <p className="mt-4 text-lg text-surface-400">
@@ -78,7 +78,7 @@ export function FAQ() {
           </div>
         </FadeIn>
 
-        <div className="mt-12">
+        <div className="mt-10">
           {faqs.map((faq, index) => (
             <FAQItem
               key={index}

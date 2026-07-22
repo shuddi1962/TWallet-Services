@@ -101,7 +101,7 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-t border-surface-200 bg-white md:hidden"
+            className="border-t border-white/10 bg-dark md:hidden"
           >
             <Container>
               <nav className="flex flex-col gap-4 py-4">
@@ -110,7 +110,7 @@ export function Header() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className="text-sm font-medium text-surface-600 transition-colors hover:text-surface-900"
+                    className="text-sm font-medium text-surface-400 transition-colors hover:text-white"
                   >
                     {link.label}
                   </Link>

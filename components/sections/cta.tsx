@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 
 export function CTA() {
   return (
-    <section className="py-20 lg:py-28">
+    <section className="py-16 lg:py-20">
       <Container>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="relative overflow-hidden rounded-3xl px-6 py-16 text-center lg:px-16 lg:py-24"
+          className="relative overflow-hidden rounded-3xl px-6 py-12 text-center lg:px-12 lg:py-16"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800" />
           <div className="absolute inset-0">
@@ -30,7 +30,7 @@ export function CTA() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white"
             >
               Ready to Get Your Crypto Card?
             </motion.h2>

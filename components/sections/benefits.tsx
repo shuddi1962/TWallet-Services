@@ -33,11 +33,11 @@ const benefits = [
 
 export function Benefits() {
   return (
-    <section id="benefits" className="py-20 lg:py-28">
+    <section id="benefits" className="py-16 lg:py-20">
       <Container>
         <FadeIn>
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
               Why choose TWallet
             </h2>
             <p className="mt-4 text-lg text-surface-400">
@@ -46,14 +46,14 @@ export function Benefits() {
           </div>
         </FadeIn>
 
-        <StaggerChildren className="mt-16 grid gap-6 sm:grid-cols-2">
+        <StaggerChildren className="mt-12 grid gap-4 sm:grid-cols-2">
           {benefits.map((benefit) => (
             <StaggerItem key={benefit.title}>
-              <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-surface-900/50 p-8 transition-all hover:-translate-y-0.5 hover:border-white/10 hover:shadow-xl hover:shadow-brand-500/5">
+              <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-surface-900/50 p-6 transition-all hover:-translate-y-0.5 hover:border-white/10 hover:shadow-xl hover:shadow-brand-500/5">
                 <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} opacity-0 transition-opacity group-hover:opacity-5`} />
                 <div className="relative">
-                  <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${benefit.gradient} shadow-lg`}>
-                    <benefit.icon className="h-6 w-6 text-white" />
+                    <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${benefit.gradient} shadow-lg`}>
+                    <benefit.icon className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-white">{benefit.title}</h3>
                   <p className="mt-2.5 text-sm text-surface-400 leading-relaxed">{benefit.description}</p>

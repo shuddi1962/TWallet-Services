@@ -15,7 +15,7 @@ const plans = [
 
 export function Pricing() {
   return (
-    <section id="pricing" className="relative py-20 lg:py-28 overflow-hidden">
+    <section id="pricing" className="relative py-16 lg:py-20 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-surface-950 via-brand-950/10 to-surface-950 pointer-events-none" />
       <Container className="relative">
         <FadeIn>
@@ -23,7 +23,7 @@ export function Pricing() {
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-4 py-1.5 text-sm">
               <span className="text-brand-300">Pricing</span>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
               Simple, transparent pricing
             </h2>
             <p className="mt-4 text-lg text-surface-400">
@@ -32,11 +32,11 @@ export function Pricing() {
           </div>
         </FadeIn>
 
-        <StaggerChildren className="mt-16 grid gap-6 lg:grid-cols-3">
+        <StaggerChildren className="mt-12 grid gap-4 lg:grid-cols-3">
           {plans.map((plan) => (
             <StaggerItem key={plan.name}>
               <div
-                className={`group relative overflow-hidden rounded-xl border p-6 transition-all ${
+                className={`group relative overflow-hidden rounded-xl border p-5 transition-all ${
                   plan.popular
                     ? "border-brand-500/50 bg-brand-600/5 shadow-lg shadow-brand-600/10"
                     : "border-white/5 bg-surface-900/50 hover:border-white/10 hover:bg-surface-900"
@@ -51,11 +51,11 @@ export function Pricing() {
                     {plan.popular && <Badge variant="default" className="bg-brand-600">Most Popular</Badge>}
                   </div>
                   <p className="text-sm text-surface-400">{plan.description}</p>
-                  <div className="my-6">
-                    <span className="text-4xl font-bold text-white">{plan.price}</span>
+                  <div className="my-5">
+                    <span className="text-3xl font-bold text-white">{plan.price}</span>
                     <span className="ml-2 text-sm text-surface-500">{plan.period}</span>
                   </div>
-                  <ul className="mb-8 space-y-3">
+                  <ul className="mb-6 space-y-2">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />

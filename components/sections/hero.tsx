@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, Globe, ShieldCheck, Lock, Users } from "lucide-react";
+import { ArrowRight, Globe, ShieldCheck, Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { useState } from "react";
@@ -16,16 +16,11 @@ function OrderWidget() {
   const [network, setNetwork] = useState("Ethereum");
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.7, delay: 0.4 }}
-      className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 sm:p-6 w-full max-w-sm mx-auto lg:mx-0"
-    >
-      <div className="flex rounded-xl bg-white/5 p-1 mb-5">
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-4 w-full max-w-sm">
+      <div className="flex rounded-lg bg-white/5 p-0.5 mb-4">
         <button
           onClick={() => setTab("virtual")}
-          className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
             tab === "virtual"
               ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
               : "text-surface-400 hover:text-white"
@@ -35,7 +30,7 @@ function OrderWidget() {
         </button>
         <button
           onClick={() => setTab("physical")}
-          className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
             tab === "physical"
               ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
               : "text-surface-400 hover:text-white"
@@ -45,13 +40,13 @@ function OrderWidget() {
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
-          <label className="text-xs font-medium text-surface-400 mb-1.5 block">Network</label>
+          <label className="text-[10px] font-medium text-surface-400 mb-1 block">Network</label>
           <select
             value={network}
             onChange={(e) => setNetwork(e.target.value)}
-            className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white focus:border-brand-500/50 focus:outline-none appearance-none"
+            className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-white focus:border-brand-500/50 focus:outline-none appearance-none"
           >
             <option value="Ethereum">Ethereum</option>
             <option value="BNB">BNB Chain</option>
@@ -61,10 +56,10 @@ function OrderWidget() {
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-xs font-medium text-surface-400 mb-1.5 block">Quantity</label>
-            <select className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white focus:border-brand-500/50 focus:outline-none appearance-none">
+            <label className="text-[10px] font-medium text-surface-400 mb-1 block">Quantity</label>
+            <select className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-white focus:border-brand-500/50 focus:outline-none appearance-none">
               <option>1</option>
               <option>2</option>
               <option>3</option>
@@ -73,8 +68,8 @@ function OrderWidget() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-surface-400 mb-1.5 block">Country</label>
-            <select className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white focus:border-brand-500/50 focus:outline-none appearance-none">
+            <label className="text-[10px] font-medium text-surface-400 mb-1 block">Country</label>
+            <select className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-white focus:border-brand-500/50 focus:outline-none appearance-none">
               <option>United States</option>
               <option>United Kingdom</option>
               <option>EU</option>
@@ -85,153 +80,145 @@ function OrderWidget() {
         </div>
 
         <div>
-          <label className="text-xs font-medium text-surface-400 mb-1.5 block">Price</label>
-          <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 flex items-center justify-between">
-            <span className="text-lg font-bold text-white">
+          <label className="text-[10px] font-medium text-surface-400 mb-1 block">Price</label>
+          <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 flex items-center justify-between">
+            <span className="text-base font-bold text-white">
               {tab === "physical" ? "$25" : "$5"}
             </span>
-            <span className="text-xs text-surface-400 bg-white/5 px-2 py-1 rounded-md">USDT</span>
+            <span className="text-[10px] text-surface-400 bg-white/5 px-1.5 py-0.5 rounded">USDT</span>
           </div>
         </div>
 
         <Button
           fullWidth
-          size="lg"
-          className="bg-gradient-to-r from-brand-500 to-brand-700 text-white border-0 shadow-lg shadow-brand-500/25 hover:from-brand-400 hover:to-brand-600"
+          size="sm"
+          className="bg-gradient-to-r from-brand-500 to-brand-700 text-white border-0 shadow-lg shadow-brand-500/25"
           asChild
         >
           <Link href="/auth/register">
             Connect Wallet
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-3 w-3" />
           </Link>
         </Button>
 
-        <p className="text-center text-xs text-surface-500">
+        <p className="text-center text-[10px] text-surface-500">
           Secure · Non-custodial · 2 min setup
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen overflow-hidden bg-dark">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <section className="relative overflow-hidden bg-dark">
+      <div className="absolute inset-0 pointer-events-none">
         <div
-          className="absolute w-[600px] h-[600px] rounded-full pointer-events-none"
+          className="absolute w-[500px] h-[500px] rounded-full"
           style={{
-            background: "radial-gradient(circle, rgba(28,100,242,0.15) 0%, rgba(11,17,32,0) 70%)",
-            top: "10%",
-            right: "5%",
+            background: "radial-gradient(circle, rgba(28,100,242,0.12) 0%, rgba(11,17,32,0) 70%)",
+            top: "5%",
+            right: "0%",
           }}
         />
         <div
-          className="absolute w-[400px] h-[400px] rounded-full pointer-events-none"
+          className="absolute w-[300px] h-[300px] rounded-full"
           style={{
-            background: "radial-gradient(circle, rgba(28,100,242,0.08) 0%, rgba(11,17,32,0) 70%)",
-            bottom: "5%",
-            left: "10%",
+            background: "radial-gradient(circle, rgba(28,100,242,0.06) 0%, rgba(11,17,32,0) 70%)",
+            bottom: "0%",
+            left: "5%",
           }}
         />
       </div>
 
-      <Container size="xl">
-        <div className="relative min-h-screen pt-28 lg:pt-0">
-          <div className="grid min-h-screen items-center gap-8 lg:grid-cols-3">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="flex flex-col gap-7"
-            >
-              <div className="inline-flex items-center gap-2 bg-brand-500/10 border border-brand-500/20 text-brand px-4 py-2 rounded-full text-sm font-medium w-fit">
-                <Users className="h-4 w-4" />
-                Trusted by Thousands
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight text-white">
-                  The TWallet Card
-                  <br />
-                  is here.
-                </h1>
-                <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight text-brand-400">
-                  Spend freely,
-                  <br />
-                  anywhere.
-                </h2>
-              </div>
-
-              <p className="text-xl md:text-2xl text-surface-400 max-w-xl font-normal leading-relaxed">
-                A secure payment card for your digital assets. Accepted worldwide.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
-                <Button
-                  size="xl"
-                  className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white border-0 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
-                  asChild
-                >
-                  <Link href="/auth/register">
-                    Order Your Card
-                  </Link>
-                </Button>
-                <Button
-                  size="xl"
-                  variant="outline"
-                  className="w-full sm:w-auto border-2 border-surface-600 hover:border-surface-400 text-white"
-                  asChild
-                >
-                  <Link href="/#how-it-works">
-                    Learn More
-                    <ArrowUpRight className="h-5 w-5" />
-                  </Link>
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-6 pt-6 mt-4 border-t border-white/5">
-                <div className="flex items-center gap-2 text-surface-400">
-                  <Globe className="h-5 w-5 text-brand-400" />
-                  <span className="text-sm font-medium">Global Acceptance</span>
-                </div>
-                <div className="flex items-center gap-2 text-surface-400">
-                  <ShieldCheck className="h-5 w-5 text-brand-400" />
-                  <span className="text-sm font-medium">Secure &amp; Private</span>
-                </div>
-                <div className="flex items-center gap-2 text-surface-400">
-                  <Lock className="h-5 w-5 text-brand-400" />
-                  <span className="text-sm font-medium">Easy to Use</span>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="flex items-center justify-center"
-            >
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Image
-                  src={CARD_IMAGE}
-                  alt="TWallet Card on a blue pedestal"
-                  width={560}
-                  height={400}
-                  className="w-full max-w-lg object-contain drop-shadow-2xl"
-                  priority
-                  unoptimized
-                />
-              </motion.div>
-            </motion.div>
-
-            <div className="flex items-start justify-center lg:justify-end">
-              <OrderWidget />
+      <Container>
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12 py-12 lg:py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full lg:w-1/2 flex flex-col gap-5"
+          >
+            <div className="inline-flex items-center gap-1.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 px-3 py-1.5 rounded-full text-xs font-medium w-fit">
+              <Users className="h-3 w-3" />
+              Trusted by Thousands
             </div>
-          </div>
+
+            <div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-white">
+                The TWallet Card
+                <br />
+                is here.
+              </h1>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-brand-400">
+                Spend freely,
+                <br />
+                anywhere.
+              </h2>
+            </div>
+
+            <p className="text-base sm:text-lg text-surface-400 max-w-lg leading-relaxed">
+              A secure payment card for your digital assets. Accepted worldwide.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white border-0 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+                asChild
+              >
+                <Link href="/auth/register">
+                  Order Your Card
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border border-surface-600 hover:border-surface-400 text-white"
+                asChild
+              >
+                <Link href="/#how-it-works">Learn More</Link>
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/5">
+              {[
+                { icon: Globe, label: "Global Acceptance" },
+                { icon: ShieldCheck, label: "Secure & Private" },
+                { icon: Lock, label: "Easy to Use" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-1.5 text-surface-400">
+                  <item.icon className="h-4 w-4 text-brand-400" />
+                  <span className="text-xs font-medium">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="w-full lg:w-1/2 flex flex-col items-center gap-6"
+          >
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="w-full max-w-sm"
+            >
+              <Image
+                src={CARD_IMAGE}
+                alt="TWallet Card on a blue pedestal"
+                width={500}
+                height={350}
+                className="w-full h-auto object-contain drop-shadow-2xl"
+                priority
+                unoptimized
+              />
+            </motion.div>
+
+            <OrderWidget />
+          </motion.div>
         </div>
       </Container>
     </section>

@@ -13,12 +13,12 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="relative py-20 lg:py-28 overflow-hidden">
+    <section className="relative py-16 lg:py-20 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-surface-950 via-accent-950/10 to-surface-950 pointer-events-none" />
       <Container className="relative">
         <FadeIn>
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
               Loved by crypto natives
             </h2>
             <p className="mt-4 text-lg text-surface-400">
@@ -27,10 +27,10 @@ export function Testimonials() {
           </div>
         </FadeIn>
 
-        <StaggerChildren className="mt-16 grid gap-6 lg:grid-cols-3">
+        <StaggerChildren className="mt-12 grid gap-4 lg:grid-cols-3">
           {testimonials.map((testimonial) => (
             <StaggerItem key={testimonial.name}>
-              <div className="group relative rounded-xl border border-white/5 bg-surface-900/50 p-6 transition-all hover:border-white/10 hover:bg-surface-900">
+              <div className="group relative rounded-xl border border-white/5 bg-surface-900/50 p-5 transition-all hover:border-white/10 hover:bg-surface-900">
                 <div className="mb-4 flex gap-1">
                   {Array.from({ length: testimonial.rating }).map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" />

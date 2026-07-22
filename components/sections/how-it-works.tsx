@@ -17,7 +17,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="relative py-20 lg:py-28 overflow-hidden">
+    <section id="how-it-works" className="relative py-16 lg:py-20 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-surface-950 via-brand-950/10 to-surface-950 pointer-events-none" />
       <Container className="relative">
         <FadeIn>
@@ -25,7 +25,7 @@ export function HowItWorks() {
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-4 py-1.5 text-sm">
               <span className="text-brand-300">Simple Process</span>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
               How it works
             </h2>
             <p className="mt-4 text-lg text-surface-400">
@@ -34,10 +34,10 @@ export function HowItWorks() {
           </div>
         </FadeIn>
 
-        <div className="relative mt-16">
+        <div className="relative mt-12">
           <div className="absolute left-[23px] top-0 h-full w-px bg-gradient-to-b from-brand-500/40 via-brand-500/20 to-transparent hidden lg:block" />
 
-          <div className="space-y-8 lg:space-y-0">
+          <div className="space-y-6 lg:space-y-0">
             {steps.map((step, index) => (
               <motion.div
                 key={step.title}

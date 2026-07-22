@@ -61,11 +61,11 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-dark border-t border-white/5">
+    <footer className="bg-dark border-t border-white/5 overflow-hidden">
       <Container>
-        <div className="py-16 lg:py-20">
-          <div className="grid grid-cols-2 gap-10 md:grid-cols-3 lg:grid-cols-6">
-            <div className="col-span-2 lg:col-span-2">
+        <div className="py-12 lg:py-16">
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+            <div className="sm:col-span-2 lg:col-span-2">
               <Link href="/" className="flex items-center gap-2.5 group">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-500/20">
                   <CreditCard className="h-4 w-4 text-white" />
@@ -140,12 +140,12 @@ export function Footer() {
             ))}
           </div>
 
-          <div className="mt-12 border-t border-white/5 pt-8">
-            <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-              <p className="text-sm text-surface-500">
+          <div className="mt-10 border-t border-white/5 pt-6">
+            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+              <p className="text-xs text-surface-500">
                 &copy; {new Date().getFullYear()} TWallet Services. All rights reserved.
               </p>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-3">
                 {securityBadges.map((badge) => (
                   <div
                     key={badge.label}

@@ -24,23 +24,23 @@ const timeline = [
 
 export function DashboardPreview() {
   return (
-    <section id="dashboard" className="relative py-20 lg:py-28 overflow-hidden">
+    <section id="dashboard" className="relative py-16 lg:py-20 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-surface-950 via-brand-950/20 to-surface-950 pointer-events-none" />
       <Container className="relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mx-auto max-w-2xl text-center mb-12"
+          className="mx-auto max-w-2xl text-center mb-10"
         >
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-4 py-1.5 text-sm">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1 text-xs">
             <LayoutDashboard className="h-3.5 w-3.5 text-brand-400" />
             <span className="text-brand-300">Dashboard Preview</span>
           </div>
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
             Your control center
           </h2>
-          <p className="mt-4 text-lg text-surface-400">
+            <p className="mt-2 text-sm sm:text-base text-surface-400">
             Manage your cards, track orders, and monitor spending — all in one place.
           </p>
         </motion.div>
@@ -52,7 +52,7 @@ export function DashboardPreview() {
           className="relative rounded-2xl border border-white/10 bg-surface-900/60 backdrop-blur-xl overflow-hidden shadow-2xl shadow-brand-500/5"
         >
           <div className="p-5 sm:p-6 lg:p-8">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-sm text-surface-400">Welcome back</p>
                 <h3 className="text-xl font-bold text-white">Alex Johnson</h3>
@@ -68,7 +68,7 @@ export function DashboardPreview() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-8">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
               {[
                 { label: "Balance", value: "$12,840", icon: Wallet, change: "+$840" },
                 { label: "Orders", value: "3", icon: Package, change: "+1" },
@@ -88,9 +88,9 @@ export function DashboardPreview() {
               ))}
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-              <div className="xl:col-span-2 grid gap-6 lg:grid-cols-2">
-                <div className="rounded-xl border border-white/5 bg-white/[0.03] p-5">
+            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+              <div className="xl:col-span-2 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-xl border border-white/5 bg-white/[0.03] p-4">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-sm font-semibold text-white">Your Card</h4>
                     <Badge className="bg-success/10 text-success border-success/20 text-xs">Active</Badge>
@@ -118,7 +118,7 @@ export function DashboardPreview() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/5 bg-white/[0.03] p-5">
+                <div className="rounded-xl border border-white/5 bg-white/[0.03] p-4">
                   <h4 className="text-sm font-semibold text-white mb-4">Order Tracking</h4>
                   <div className="space-y-0">
                     {timeline.map((step, i) => (
@@ -171,7 +171,7 @@ export function DashboardPreview() {
               </div>
 
               <div className="rounded-xl border border-white/5 bg-white/[0.03] p-5 flex flex-col">
-                <h4 className="text-sm font-semibold text-white mb-4">Wallet Connection</h4>
+                <h4 className="text-sm font-semibold text-white mb-4">Wallet</h4>
                 <div className="rounded-xl bg-white/5 p-4 mb-4">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/20">
