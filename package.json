@@ -35,7 +35,10 @@
     "@radix-ui/react-slot": "^1.1.0",
     "server-only": "^0.0.1",
     "date-fns": "^4.1.0",
-    "nuqs": "^2.4.0"
+    "nuqs": "^2.4.0",
+    "@x402/evm": "^0.1.0",
+    "@x402/core": "^0.1.0",
+    "@x402/svm": "^0.1.0"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

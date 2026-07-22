@@ -28,7 +28,7 @@ const wagmiConfig = defaultWagmiConfig({
   enableWalletConnect: true,
   enableEmail: false,
   enableEIP6963: true,
-  enableCoinbase: true,
+  enableCoinbase: false,
   enableMetaMask: true,
   enableSafeWallet: false,
 });
