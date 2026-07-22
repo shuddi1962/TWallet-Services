@@ -53,6 +53,10 @@ const products: Product[] = [
   },
 ];
 
+type OrderResult =
+  | { error: string }
+  | { success: true; order: { id: string; order_number: string; amount_usdc: number } };
+
 export function CardCatalog() {
   const router = useRouter();
   const [ordering, setOrdering] = useState<string | null>(null);
@@ -64,12 +68,12 @@ export function CardCatalog() {
     formData.set("network", "ethereum");
     formData.set("token", "USDC");
 
-    const result = await createOrder(null, formData);
+    const result = (await createOrder(null, formData)) as OrderResult;
 
-    if (result?.error) {
+    if ("error" in result) {
       toast.error(result.error);
       setOrdering(null);
-    } else if (result?.success && result.order) {
+    } else if (result.success && result.order) {
       toast.success("Order created! Redirecting to payment...");
       router.push(`/dashboard/orders/${result.order.id}/payment`);
     } else {
