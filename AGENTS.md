@@ -76,6 +76,26 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - Before committing: inspect `git status`, `git diff`, `git log --oneline -10`; stage only intended files; never commit secrets.
 - Commit messages: concise, matching repo style.
 
+## Work Completed (Last Session — Jul 22, 2026)
+
+### Completed
+- **Landing page redesign** — Dark premium theme with framer-motion animations (hero with floating 3D card, animated stats counters, staggered feature grid, tilt card showcase, animated steps, network cards, testimonial cards, FAQ accordion with AnimatePresence, animated CTA/newsletter)
+- **Header/Footer branding** — TW·CARD brand identity, dark glass header, gradient logo
+- **Global CSS** — Dark-first theme (brand→indigo, accent→purple), custom utilities (`text-gradient`, `glow`, `glow-lg`, `card-gradient`, `hero-gradient`), custom scrollbar
+- **Dashboard dark theme** — Dark sidebar with active state, dark header, all pages converted (overview, cards, orders, wallet, transactions, notifications, support, settings)
+- **Auth pages** — Dark-themed login, register, forgot/reset password pages
+- **UI components darkified** — Card, Input, Textarea, Label, Separator, EmptyState, StatCard, Table, Avatar, Badge
+- **Wallet provider** — Dark mode for Web3Modal, properly wired WalletConnect component
+- **Data layer** — Server actions for orders, cards, dashboard, payments; 19-table Supabase schema with RLS
+
+### Pending
+- `npm install` could not complete (slow registry) — run `npm install --legacy-peer-deps` locally before build
+- `/dashboard/orders` — still shows EmptyState; needs order list table
+- `/dashboard/transactions` — still shows EmptyState; needs transaction list
+- `/dashboard/notifications` — still shows EmptyState; needs notification list
+- Admin dashboard pages — not yet built
+- WalletConnect Project ID placeholder — replace with real key before production
+
 ## File / Search Tool Rules
 
 - Use Glob (not `Get-ChildItem`) for file search.

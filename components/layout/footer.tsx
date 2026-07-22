@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wallet, Twitter, Github, Mail } from "lucide-react";
+import { CreditCard, Twitter, Github, Mail } from "lucide-react";
 import { Container } from "@/components/layout/container";
 
 const footerLinks = {
@@ -37,20 +37,21 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-surface-200 bg-surface-50">
+    <footer className="border-t border-white/5 bg-surface-950">
       <Container>
         <div className="py-12 lg:py-16">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-6">
             <div className="col-span-2">
-              <Link href="/" className="flex items-center gap-2">
-                <Wallet className="h-6 w-6 text-brand-600" />
-                <span className="text-lg font-bold tracking-tight text-surface-900">
-                  TWallet
+              <Link href="/" className="flex items-center gap-2.5 group">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-600 shadow-lg shadow-brand-600/20">
+                  <CreditCard className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-lg font-bold tracking-tight text-white">
+                  TW<span className="text-brand-400">·</span>CARD
                 </span>
               </Link>
               <p className="mt-4 max-w-xs text-sm text-surface-500">
-                Non-custodial, crypto-funded card platform. Your keys, your
-                crypto, your card.
+                Non-custodial, crypto-funded card platform. Your keys, your crypto, your card.
               </p>
               <div className="mt-6 flex gap-4">
                 {socialLinks.map((social) => (
@@ -60,7 +61,7 @@ export function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={social.label}
-                    className="text-surface-400 transition-colors hover:text-brand-600"
+                    className="text-surface-500 transition-colors hover:text-brand-400"
                   >
                     <social.icon className="h-5 w-5" />
                   </a>
@@ -70,15 +71,13 @@ export function Footer() {
 
             {Object.entries(footerLinks).map(([title, links]) => (
               <div key={title}>
-                <h3 className="text-sm font-semibold text-surface-900">
-                  {title}
-                </h3>
+                <h3 className="text-sm font-semibold text-white">{title}</h3>
                 <ul className="mt-4 space-y-3">
                   {links.map((link) => (
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="text-sm text-surface-500 transition-colors hover:text-brand-600"
+                        className="text-sm text-surface-500 transition-colors hover:text-brand-400"
                       >
                         {link.label}
                       </Link>
@@ -89,13 +88,12 @@ export function Footer() {
             ))}
           </div>
 
-          <div className="mt-12 border-t border-surface-200 pt-8">
+          <div className="mt-12 border-t border-white/5 pt-8">
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <p className="text-sm text-surface-500">
-                &copy; {new Date().getFullYear()} TWallet Services. All rights
-                reserved.
+                &copy; {new Date().getFullYear()} TWallet Services. All rights reserved.
               </p>
-              <p className="text-xs text-surface-400">
+              <p className="text-xs text-surface-600">
                 Built with Next.js, Supabase &amp; Vercel
               </p>
             </div>

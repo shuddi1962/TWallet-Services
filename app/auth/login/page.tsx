@@ -14,8 +14,8 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-sm">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-surface-900">Sign in</h1>
-        <p className="mt-1 text-surface-500">Welcome back to TWallet Card</p>
+        <h1 className="text-2xl font-bold text-white">Sign in</h1>
+        <p className="mt-1 text-surface-400">Welcome back to TW·CARD</p>
       </div>
 
       <Card>
@@ -69,7 +69,7 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-surface-500">
         Don&apos;t have an account?{" "}
-        <Link href="/auth/register" className="text-brand-600 hover:underline">
+        <Link href="/auth/register" className="text-brand-400 hover:underline">
           Create one
         </Link>
       </p>

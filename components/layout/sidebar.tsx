@@ -29,13 +29,15 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-surface-200 bg-white lg:flex">
+    <aside className="hidden w-64 shrink-0 border-r border-white/5 bg-surface-950 lg:flex">
       <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center border-b border-surface-200 px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <Wallet className="h-6 w-6 text-brand-600" />
-            <span className="text-lg font-bold tracking-tight text-surface-900">
-              TWallet
+        <div className="flex h-16 items-center border-b border-white/5 px-6">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-600 shadow-lg shadow-brand-600/20">
+              <CreditCard className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="text-base font-bold tracking-tight text-white">
+              TW<span className="text-brand-400">·</span>CARD
             </span>
           </Link>
         </div>
@@ -53,8 +55,8 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-brand-50 text-brand-700"
-                    : "text-surface-600 hover:bg-surface-100 hover:text-surface-900",
+                    ? "bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/20"
+                    : "text-surface-400 hover:bg-white/5 hover:text-white",
                 )}
               >
                 <item.icon className="h-5 w-5" />
@@ -64,10 +66,10 @@ export function Sidebar() {
           })}
         </nav>
 
-        <div className="border-t border-surface-200 p-3">
+        <div className="border-t border-white/5 p-3">
           <Link
             href="/"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-surface-600 transition-colors hover:bg-surface-100"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-surface-500 transition-colors hover:bg-white/5 hover:text-white"
           >
             <ArrowLeftRight className="h-5 w-5" />
             Back to Site

@@ -1,8 +1,53 @@
 "use client";
 
+import { createAppKit } from "@web3modal/wagmi/react";
+import { defaultVariables, defaultWagmiConfig } from "@web3modal/wagmi/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "sonner";
+import { WagmiProvider } from "wagmi";
+import { arbitrum, base, bsc, mainnet, optimism, polygon, avalanche } from "wagmi/chains";
+
+const projectId =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+  "PLACEHOLDER_REPLACE_WITH_REAL_PROJECT_ID";
+
+const chains = [mainnet, polygon, arbitrum, optimism, base, bsc, avalanche];
+
+const metadata = {
+  name: "TWallet Card",
+  description: "Non-custodial crypto-funded card platform",
+  url: "https://twalletservices.com",
+  icons: ["https://twalletservices.com/favicon.ico"],
+};
+
+const wagmiConfig = defaultWagmiConfig({
+  chains,
+  projectId,
+  metadata,
+  enableWalletConnect: true,
+  enableEmail: false,
+  enableEIP6963: true,
+  enableCoinbase: true,
+  enableMetaMask: true,
+  enableSafeWallet: false,
+});
+
+createAppKit({
+  wagmiConfig,
+  projectId,
+  chains,
+  metadata,
+  themeMode: "dark",
+  themeVariables: defaultVariables,
+  features: {
+    analytics: false,
+    email: false,
+    onramp: false,
+    swaps: false,
+    connectMethodsOrder: ["wallet", "metaMask", "coinbase"],
+  },
+});
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -18,9 +63,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster richColors position="top-right" />
-    </QueryClientProvider>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        <Toaster richColors position="top-right" />
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }

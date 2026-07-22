@@ -49,9 +49,9 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900">Overview</h1>
-          <p className="mt-1 text-sm text-surface-500">
-            Welcome back to your TWallet dashboard
+          <h1 className="text-2xl font-bold text-white">Overview</h1>
+          <p className="mt-1 text-sm text-surface-400">
+            Welcome back to your dashboard
           </p>
         </div>
         <Button asChild>

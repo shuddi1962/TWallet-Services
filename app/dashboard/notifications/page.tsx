@@ -6,8 +6,8 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-surface-900">Notifications</h1>
-        <p className="mt-1 text-sm text-surface-500">
+        <h1 className="text-2xl font-bold text-white">Notifications</h1>
+        <p className="mt-1 text-sm text-surface-400">
           Stay updated on your orders and account activity
         </p>
       </div>

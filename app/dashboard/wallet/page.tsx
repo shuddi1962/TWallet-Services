@@ -1,39 +1,18 @@
-import { Wallet, Plug } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
+import { WalletConnect } from "@/components/wallet/wallet-connect";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wallet } from "lucide-react";
 
 export default function WalletPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-surface-900">Wallet</h1>
-        <p className="mt-1 text-sm text-surface-500">
+        <h1 className="text-2xl font-bold text-white">Wallet</h1>
+        <p className="mt-1 text-sm text-surface-400">
           Connect your crypto wallet to make payments
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Connected Wallet</CardTitle>
-          <CardDescription>
-            Connect MetaMask, WalletConnect, Coinbase Wallet, or Trust Wallet
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EmptyState
-            icon={Wallet}
-            title="No wallet connected"
-            description="Connect your self-custody wallet to start ordering cards and making crypto payments."
-            action={
-              <Button>
-                <Plug className="h-4 w-4" />
-                Connect Wallet
-              </Button>
-            }
-          />
-        </CardContent>
-      </Card>
+      <WalletConnect />
 
       <Card>
         <CardHeader>
@@ -45,12 +24,12 @@ export default function WalletPage() {
               (wallet) => (
                 <div
                   key={wallet}
-                  className="flex flex-col items-center rounded-lg border border-surface-200 p-4 text-center transition-shadow hover:shadow-md"
+                  className="flex flex-col items-center rounded-lg border border-white/5 bg-surface-900/50 p-4 text-center transition-all hover:border-white/10 hover:bg-surface-900"
                 >
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
-                    <Wallet className="h-6 w-6 text-brand-600" />
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
+                    <Wallet className="h-6 w-6 text-brand-400" />
                   </div>
-                  <span className="text-sm font-medium text-surface-900">
+                  <span className="text-sm font-medium text-white">
                     {wallet}
                   </span>
                 </div>

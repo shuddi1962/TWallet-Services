@@ -9,9 +9,9 @@ export default function SupportPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-surface-900">Support</h1>
-        <p className="mt-1 text-sm text-surface-500">
-          Get help with your TWallet account
+        <h1 className="text-2xl font-bold text-white">Support</h1>
+        <p className="mt-1 text-sm text-surface-400">
+          Get help with your account
         </p>
       </div>
 
@@ -48,12 +48,12 @@ export default function SupportPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
-                  <Mail className="h-5 w-5 text-brand-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 ring-1 ring-brand-500/20">
+                  <Mail className="h-5 w-5 text-brand-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-surface-900">Email Us</h3>
-                  <p className="mt-1 text-sm text-surface-500">
+                  <h3 className="font-semibold text-white">Email Us</h3>
+                  <p className="mt-1 text-sm text-surface-400">
                     support@twalletservices.com
                   </p>
                 </div>
@@ -64,12 +64,12 @@ export default function SupportPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
-                  <LifeBuoy className="h-5 w-5 text-brand-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 ring-1 ring-brand-500/20">
+                  <LifeBuoy className="h-5 w-5 text-brand-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-surface-900">Help Center</h3>
-                  <p className="mt-1 text-sm text-surface-500">
+                  <h3 className="font-semibold text-white">Help Center</h3>
+                  <p className="mt-1 text-sm text-surface-400">
                     Browse FAQs and guides
                   </p>
                   <Button variant="link" size="sm" className="mt-2 px-0">

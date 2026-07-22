@@ -17,8 +17,8 @@ export default function ForgotPasswordPage() {
   return (
     <div className="w-full max-w-sm">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-surface-900">Reset password</h1>
-        <p className="mt-1 text-surface-500">
+        <h1 className="text-2xl font-bold text-white">Reset password</h1>
+        <p className="mt-1 text-surface-400">
           Enter your email and we&apos;ll send you a reset link
         </p>
       </div>
@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
       </Card>
 
       <p className="mt-6 text-center text-sm text-surface-500">
-        <Link href="/auth/login" className="text-brand-600 hover:underline">
+        <Link href="/auth/login" className="text-brand-400 hover:underline">
           Back to sign in
         </Link>
       </p>

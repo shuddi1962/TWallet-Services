@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Mail, CheckCircle2 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
@@ -18,27 +19,34 @@ export function Newsletter() {
   };
 
   return (
-    <section className="bg-surface-50 py-20">
+    <section className="py-20">
       <Container size="md">
-        <div className="rounded-2xl border border-surface-200 bg-white p-8 text-center shadow-sm lg:p-12">
-          <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
-            <Mail className="h-6 w-6 text-brand-600" />
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="rounded-2xl border border-white/5 bg-surface-900/50 p-8 text-center lg:p-12"
+        >
+          <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
+            <Mail className="h-6 w-6 text-brand-400" />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-surface-900 sm:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
             Stay in the loop
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-surface-600">
-            Get notified about new network support, product updates, and
-            exclusive offers. No spam.
+          <p className="mx-auto mt-3 max-w-md text-surface-400">
+            Get notified about new network support, product updates, and exclusive offers. No spam.
           </p>
 
           {submitted ? (
-            <div className="mx-auto mt-8 flex max-w-md items-center justify-center gap-2 rounded-lg bg-success/10 px-4 py-3 text-success">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mx-auto mt-8 flex max-w-md items-center justify-center gap-2 rounded-lg bg-success/10 px-4 py-3 text-success border border-success/20"
+            >
               <CheckCircle2 className="h-5 w-5" />
-              <span className="text-sm font-medium">
-                Thanks! Check your inbox to confirm.
-              </span>
-            </div>
+              <span className="text-sm font-medium">Thanks! Check your inbox to confirm.</span>
+            </motion.div>
           ) : (
             <form
               onSubmit={handleSubmit}
@@ -50,12 +58,14 @@ export function Newsletter() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="flex-1"
+                className="flex-1 bg-surface-800 border-white/10 text-white placeholder:text-surface-500 focus:border-brand-500/50"
               />
-              <Button type="submit">Subscribe</Button>
+              <Button type="submit" className="bg-gradient-to-r from-brand-600 to-accent-600 border-0">
+                Subscribe
+              </Button>
             </form>
           )}
-        </div>
+        </motion.div>
       </Container>
     </section>
   );
