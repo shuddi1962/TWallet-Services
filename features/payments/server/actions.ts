@@ -3,7 +3,7 @@
 import { createServerSupabaseClient } from "@/lib";
 
 export async function getPaymentDetails(orderId: string) {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient() as any;
 
   const {
     data: { user },
@@ -65,7 +65,7 @@ export async function submitPaymentTx(_prev: unknown, formData: FormData) {
   if (!txHash) return { error: "Transaction hash is required" };
   if (!fromAddress) return { error: "From address is required" };
 
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient() as any;
 
   const {
     data: { user },
@@ -83,7 +83,7 @@ export async function submitPaymentTx(_prev: unknown, formData: FormData) {
 
   const { error } = await supabase
     .from("card_orders")
-    .update({ tx_hash: txHash } as never)
+    .update({ tx_hash: txHash })
     .eq("id", orderId);
 
   if (error) return { error: error.message };

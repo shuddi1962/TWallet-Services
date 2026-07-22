@@ -18,7 +18,7 @@ export async function createOrder(_prev: unknown, formData: FormData) {
   if (!network) return { error: "Network is required" };
   if (!token) return { error: "Token is required" };
 
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient() as any;
 
   const {
     data: { user },
@@ -47,7 +47,7 @@ export async function createOrder(_prev: unknown, formData: FormData) {
       amount_usdc: product.price_usdc,
       network,
       token,
-    } as never)
+    })
     .select("id, order_number, amount_usdc")
     .single();
 

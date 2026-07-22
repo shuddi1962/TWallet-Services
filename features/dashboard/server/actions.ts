@@ -22,11 +22,11 @@ export async function getNotifications() {
 }
 
 export async function markNotificationRead(notificationId: string) {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient() as any;
 
   const { error } = await supabase
     .from("notifications")
-    .update({ read: true } as never)
+    .update({ read: true })
     .eq("id", notificationId);
 
   if (error) return { error: error.message };
