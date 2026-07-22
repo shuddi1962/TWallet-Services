@@ -77,57 +77,8 @@ export function Hero() {
         />
       </div>
 
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <motion.div
-          animate={{ opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute right-0 top-0 w-[60%] h-full"
-          style={{
-            background: "linear-gradient(270deg, rgba(28,100,242,0.08) 0%, transparent 50%)",
-          }}
-        />
-
-        <motion.div
-          animate={{ opacity: [0.5, 0.9, 0.5] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute right-[5%] top-1/2 -translate-y-1/2 w-[45%] h-3/4"
-          style={{
-            background: "radial-gradient(ellipse at center, rgba(28,100,242,0.2) 0%, transparent 60%)",
-          }}
-        />
-
-        <div className="absolute -right-10 top-1/2 -translate-y-1/2 w-[55%] h-full flex items-center justify-center">
-          <motion.div
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="relative w-full max-w-[700px]"
-          >
-            <motion.div
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute inset-0"
-              style={{
-                background: "radial-gradient(ellipse at 50% 50%, rgba(37,99,235,0.3) 0%, transparent 60%)",
-              }}
-            />
-            <Image
-              src={CARD_IMAGE}
-              alt=""
-              width={750}
-              height={525}
-              className="w-full h-auto object-contain relative z-10"
-              style={{
-                filter: "drop-shadow(0 0 80px rgba(37,99,235,0.4)) drop-shadow(0 0 160px rgba(37,99,235,0.2))",
-              }}
-              priority
-              unoptimized
-            />
-          </motion.div>
-        </div>
-      </div>
-
       <Container>
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 py-20 lg:py-28 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 py-20 lg:py-28 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -162,9 +113,7 @@ export function Hero() {
                 className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white border-0 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
                 asChild
               >
-                <Link href="/auth/register">
-                  Order Your Card
-                </Link>
+                <Link href="/auth/register">Order Your Card</Link>
               </Button>
               <Button
                 size="lg"
@@ -194,16 +143,32 @@ export function Hero() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="w-full lg:w-1/2 flex justify-end relative"
+            className="w-full lg:w-1/2 flex flex-col items-center gap-6"
           >
-            <motion.div
-              animate={{ opacity: [0.25, 0.5, 0.25] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -inset-16 bg-gradient-to-r from-brand-500/5 via-brand-400/10 to-brand-500/5 rounded-full blur-3xl"
-            />
-            <div className="relative">
-              <OrderWidget />
+            <div className="relative w-full max-w-sm">
+              <motion.div
+                animate={{ opacity: [0.3, 0.55, 0.3] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -inset-10"
+                style={{
+                  background: "radial-gradient(ellipse at center, rgba(37,99,235,0.25) 0%, transparent 60%)",
+                }}
+              />
+              <Image
+                src={CARD_IMAGE}
+                alt=""
+                width={500}
+                height={350}
+                className="w-full h-auto object-contain relative z-10"
+                style={{
+                  filter: "drop-shadow(0 0 60px rgba(37,99,235,0.35)) drop-shadow(0 0 120px rgba(37,99,235,0.15))",
+                }}
+                priority
+                unoptimized
+              />
             </div>
+
+            <OrderWidget />
           </motion.div>
         </div>
       </Container>
