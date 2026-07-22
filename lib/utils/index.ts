@@ -1,4 +1,4 @@
-export { cn } from "@/lib/utils/cn";
+export { cn } from "./cn";
 export {
   formatAddress,
   formatCryptoAmount,
