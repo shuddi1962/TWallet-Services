@@ -47,7 +47,7 @@ export async function createOrder(_prev: unknown, formData: FormData) {
       amount_usdc: product.price_usdc,
       network,
       token,
-    })
+    } as never)
     .select("id, order_number, amount_usdc")
     .single();
 

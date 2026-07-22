@@ -83,7 +83,7 @@ export async function submitPaymentTx(_prev: unknown, formData: FormData) {
 
   const { error } = await supabase
     .from("card_orders")
-    .update({ tx_hash: txHash })
+    .update({ tx_hash: txHash } as never)
     .eq("id", orderId);
 
   if (error) return { error: error.message };
