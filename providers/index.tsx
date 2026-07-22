@@ -43,13 +43,6 @@ createWeb3Modal({
   metadata,
   themeMode: "dark",
   defaultChain: mainnet,
-  features: {
-    analytics: false,
-    email: false,
-    onramp: false,
-    swaps: false,
-    connectMethodsOrder: ["wallet", "metaMask", "coinbase"],
-  },
 });
 
 export function Providers({ children }: { children: React.ReactNode }) {
