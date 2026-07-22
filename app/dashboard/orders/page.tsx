@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { ShoppingCart, Search, X, Eye, Package, ChevronRight, Clock, CheckCircle2, AlertCircle, Truck } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { ShoppingCart, Search, X, ChevronRight, Clock, CheckCircle2, AlertCircle, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";

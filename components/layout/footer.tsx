@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CreditCard, Twitter, Github, Send, Globe, Linkedin, CheckCircle2 } from "lucide-react";
+import { CreditCard, Twitter, Github, Send, Linkedin, CheckCircle2 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

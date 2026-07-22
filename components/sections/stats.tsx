@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Container } from "@/components/layout/container";
-import { cn } from "@/lib/utils/cn";
 
 const stats = [
   { value: 50000, suffix: "+", label: "Cards Delivered", prefix: "" },

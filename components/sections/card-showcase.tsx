@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Container } from "@/components/layout/container";
 import { FadeIn } from "@/components/ui/motion-section";
@@ -65,8 +64,6 @@ function CardPreview({ variant, index }: { variant: typeof cardVariants[0]; inde
 }
 
 export function CardShowcase() {
-  const [selected, setSelected] = useState(0);
-
   return (
     <section id="cards" className="relative py-20 lg:py-28 overflow-hidden bg-surface-50">
       <Container>
@@ -86,7 +83,7 @@ export function CardShowcase() {
 
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {cardVariants.map((variant, index) => (
-            <div key={variant.name} onClick={() => setSelected(index)}>
+            <div key={variant.name}>
               <CardPreview variant={variant} index={index} />
             </div>
           ))}

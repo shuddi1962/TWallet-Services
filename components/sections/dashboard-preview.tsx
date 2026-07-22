@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Bell, Wallet, CreditCard, ArrowUpRight, ArrowDownRight, CircleCheck, Clock, Package, TrendingUp, LayoutDashboard } from "lucide-react";
+import { ArrowRight, Bell, Wallet, CreditCard, ArrowUpRight, ArrowDownRight, CircleCheck, Package, TrendingUp, LayoutDashboard } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

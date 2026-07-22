@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import { ArrowLeftRight, ExternalLink, Copy, Check, Clock, Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert } from "@/components/ui/alert";
