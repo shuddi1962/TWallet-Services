@@ -1,11 +1,11 @@
 "use client";
 
 import { createAppKit } from "@web3modal/wagmi/react";
-import { defaultVariables, defaultWagmiConfig } from "@web3modal/wagmi/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider } from "wagmi";
+import { WagmiProvider, http, createConfig } from "wagmi";
+import { walletConnect, metaMask, coinbaseWallet } from "wagmi/connectors";
 import { arbitrum, base, bsc, mainnet, optimism, polygon, avalanche } from "wagmi/chains";
 
 const projectId =
@@ -21,16 +21,22 @@ const metadata = {
   icons: ["https://twalletservices.com/favicon.ico"],
 };
 
-const wagmiConfig = defaultWagmiConfig({
+const wagmiConfig = createConfig({
   chains,
-  projectId,
-  metadata,
-  enableWalletConnect: true,
-  enableEmail: false,
-  enableEIP6963: true,
-  enableCoinbase: false,
-  enableMetaMask: true,
-  enableSafeWallet: false,
+  connectors: [
+    walletConnect({ projectId, metadata, showQrModal: false }),
+    metaMask(),
+    coinbaseWallet({ appName: metadata.name }),
+  ],
+  transports: {
+    [mainnet.id]: http(),
+    [polygon.id]: http(),
+    [arbitrum.id]: http(),
+    [optimism.id]: http(),
+    [base.id]: http(),
+    [bsc.id]: http(),
+    [avalanche.id]: http(),
+  },
 });
 
 createAppKit({
@@ -39,7 +45,6 @@ createAppKit({
   chains,
   metadata,
   themeMode: "dark",
-  themeVariables: defaultVariables,
   features: {
     analytics: false,
     email: false,
