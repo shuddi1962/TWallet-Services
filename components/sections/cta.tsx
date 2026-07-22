@@ -17,7 +17,7 @@ export function CTA() {
             Ready to spend your crypto?
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-brand-100">
-            Join thousands of users who've already connected their wallets and
+            Join thousands of users who&apos;ve already connected their wallets and
             ordered their TWallet cards. No custodian. No middleman. Just your
             crypto on a card.
           </p>

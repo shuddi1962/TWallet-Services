@@ -15,7 +15,7 @@ export function CardShowcase() {
               One card. Every use case.
             </h2>
             <p className="mt-4 text-lg text-surface-300">
-              Whether you're shopping online, paying in-store, or traveling
+              Whether you&apos;re shopping online, paying in-store, or traveling
               abroad, your TWallet card works wherever major card networks are
               accepted.
             </p>

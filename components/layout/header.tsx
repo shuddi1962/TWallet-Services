@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Menu, X, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
-import { cn } from "@/lib/utils/cn";
 
 const navLinks = [
   { href: "/#features", label: "Features" },

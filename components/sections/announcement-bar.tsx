@@ -1,5 +1,4 @@
 import { Container } from "@/components/layout/container";
-import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";
 
 export function AnnouncementBar() {
