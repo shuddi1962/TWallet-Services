@@ -58,9 +58,9 @@ export function Hero() {
         <motion.div
           animate={{ scale: [1, 1.08, 1], opacity: [0.15, 0.3, 0.15] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute w-[800px] h-[800px] rounded-full"
+          className="absolute w-[900px] h-[900px] rounded-full"
           style={{
-            background: "radial-gradient(circle, rgba(28,100,242,0.2) 0%, rgba(11,17,32,0) 70%)",
+            background: "radial-gradient(circle, rgba(28,100,242,0.18) 0%, rgba(11,17,32,0) 70%)",
             bottom: "-30%",
             right: "-10%",
           }}
@@ -70,11 +70,43 @@ export function Hero() {
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
           className="absolute w-[600px] h-[600px] rounded-full"
           style={{
-            background: "radial-gradient(circle, rgba(28,100,242,0.12) 0%, rgba(11,17,32,0) 70%)",
-            top: "5%",
-            left: "-10%",
+            background: "radial-gradient(circle, rgba(28,100,242,0.1) 0%, rgba(11,17,32,0) 70%)",
+            top: "0%",
+            left: "-5%",
           }}
         />
+      </div>
+
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute right-0 top-0 w-[55%] h-full flex items-center justify-center">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(90deg, rgba(11,17,32,1) 0%, rgba(11,17,32,0) 25%, rgba(11,17,32,0) 75%, rgba(11,17,32,1) 100%)",
+            }}
+          />
+          <motion.div
+            animate={{ opacity: [0.4, 0.7, 0.4] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0"
+            style={{
+              background: "radial-gradient(ellipse at 50% 50%, rgba(37,99,235,0.2) 0%, transparent 60%)",
+              top: "15%",
+              bottom: "15%",
+              left: "10%",
+              right: "10%",
+            }}
+          />
+          <Image
+            src={CARD_IMAGE}
+            alt=""
+            width={700}
+            height={490}
+            className="w-full max-w-[650px] h-auto object-contain relative"
+            priority
+            unoptimized
+          />
+        </div>
       </div>
 
       <Container>
@@ -83,7 +115,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="w-full lg:w-1/2 flex flex-col gap-5"
+            className="w-full lg:w-[45%] flex flex-col gap-5"
           >
             <div className="inline-flex items-center gap-1.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 px-3 py-1.5 rounded-full text-xs font-medium w-fit">
               <Users className="h-3 w-3" />
@@ -143,32 +175,16 @@ export function Hero() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="w-full lg:w-1/2 flex flex-col items-center gap-6"
+            className="w-full lg:w-[55%] flex justify-end relative"
           >
-            <div className="relative w-full max-w-sm">
-              <motion.div
-                animate={{ opacity: [0.3, 0.55, 0.3] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -inset-10"
-                style={{
-                  background: "radial-gradient(ellipse at center, rgba(37,99,235,0.25) 0%, transparent 60%)",
-                }}
-              />
-              <Image
-                src={CARD_IMAGE}
-                alt=""
-                width={500}
-                height={350}
-                className="w-full h-auto object-contain relative z-10"
-                style={{
-                  filter: "drop-shadow(0 0 60px rgba(37,99,235,0.35)) drop-shadow(0 0 120px rgba(37,99,235,0.15))",
-                }}
-                priority
-                unoptimized
-              />
+            <motion.div
+              animate={{ opacity: [0.2, 0.45, 0.2] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -inset-16 bg-gradient-to-r from-brand-500/5 via-brand-400/10 to-brand-500/5 rounded-full blur-3xl"
+            />
+            <div className="relative">
+              <OrderWidget />
             </div>
-
-            <OrderWidget />
           </motion.div>
         </div>
       </Container>
