@@ -1,6 +1,7 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/lib";
+import type { Json } from "@/types/supabase";
 
 export async function getNotifications() {
   const supabase = await createServerSupabaseClient();
@@ -26,7 +27,7 @@ export async function markNotificationRead(notificationId: string) {
 
   const { error } = await supabase
     .from("notifications")
-    .update({ read: true })
+    .update({ read: true } as Record<string, Json>)
     .eq("id", notificationId);
 
   if (error) return { error: error.message };
