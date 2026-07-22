@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, Globe, ShieldCheck, Lock, Users, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Globe, ShieldCheck, Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { useState } from "react";
