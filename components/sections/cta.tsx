@@ -15,12 +15,13 @@ export function CTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="relative overflow-hidden rounded-3xl px-6 py-16 text-center lg:px-12 lg:py-24"
+          className="relative overflow-hidden rounded-3xl px-6 py-16 text-center lg:px-16 lg:py-24"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-600 via-brand-700 to-accent-700" />
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800" />
           <div className="absolute inset-0">
-            <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-            <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+            <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-brand-400/20 blur-3xl" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-60 w-60 rounded-full bg-brand-300/10 blur-3xl" />
           </div>
 
           <div className="relative">
@@ -31,16 +32,16 @@ export function CTA() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
             >
-              Ready to spend your crypto?
+              Ready to Get Your Crypto Card?
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="mx-auto mt-4 max-w-2xl text-lg text-white/70"
+              className="mx-auto mt-4 max-w-xl text-lg text-white/70"
             >
-              Join thousands of users who&apos;ve already connected their wallets and ordered their TW·CARD cards.
+              Join thousands of users who&apos;ve already ordered their cards. Connect your wallet, pay with crypto, and start spending globally.
             </motion.p>
 
             <motion.div
@@ -50,9 +51,13 @@ export function CTA() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
             >
-              <Button size="xl" className="bg-white text-brand-700 hover:bg-white/90 shadow-xl" asChild>
+              <Button
+                size="xl"
+                className="bg-white text-brand-700 hover:bg-white/90 shadow-2xl shadow-white/20 hover:shadow-white/30"
+                asChild
+              >
                 <Link href="/auth/register">
-                  Get Your Card
+                  Order Now
                   <ArrowRight className="h-5 w-5" />
                 </Link>
               </Button>

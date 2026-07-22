@@ -76,20 +76,37 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - Before committing: inspect `git status`, `git diff`, `git log --oneline -10`; stage only intended files; never commit secrets.
 - Commit messages: concise, matching repo style.
 
-## Work Completed (Last Session — Jul 22, 2026)
+## Work Completed
 
-### Completed
-- **Landing page redesign** — Dark premium theme with framer-motion animations (hero with floating 3D card, animated stats counters, staggered feature grid, tilt card showcase, animated steps, network cards, testimonial cards, FAQ accordion with AnimatePresence, animated CTA/newsletter)
-- **Header/Footer branding** — TW·CARD brand identity, dark glass header, gradient logo
-- **Global CSS** — Dark-first theme (brand→indigo, accent→purple), custom utilities (`text-gradient`, `glow`, `glow-lg`, `card-gradient`, `hero-gradient`), custom scrollbar
-- **Dashboard dark theme** — Dark sidebar with active state, dark header, all pages converted (overview, cards, orders, wallet, transactions, notifications, support, settings)
-- **Auth pages** — Dark-themed login, register, forgot/reset password pages
-- **UI components darkified** — Card, Input, Textarea, Label, Separator, EmptyState, StatCard, Table, Avatar, Badge
-- **Wallet provider** — Dark mode for Web3Modal, properly wired WalletConnect component
-- **Data layer** — Server actions for orders, cards, dashboard, payments; 19-table Supabase schema with RLS
+### Session 1 — Jul 22, 2026
+- **Landing page skeleton** — Dark theme, basic sections, component structure
+- **Dashboard dark theme** — Sidebar, header, all pages (overview, cards, orders, wallet, transactions, notifications, support, settings)
+- **Auth pages** — Login, register, forgot/reset password
+- **UI components** — Card, Input, Textarea, Label, Separator, EmptyState, StatCard, Table, Avatar, Badge
+- **Wallet provider** — Web3Modal, WalletConnect component
+- **Data layer** — Server actions, 19-table Supabase schema with RLS
+- **Global CSS** — Dark-first theme (brand→indigo, accent→purple)
+
+### Session 2 — Jul 22, 2026 (Landing Page Rebuild)
+- **Brand color change** — Indigo → Blue (#2563EB) primary palette
+- **CSS utilities** — Added `text-gradient-blue`, `glass`, `glass-light`, `hero-gradient` with new dark color, `float`/`glow-pulse` animations
+- **Header** — White nav bar, sticky with blur on scroll, nav links (Home/How It Works/Cards/Pricing/About/Support), Dashboard CTA button, theme toggle, mobile drawer
+- **Hero** — 3-column layout (heading + floating 3D card + order widget), animated glow orbs, grid BG pattern, small stats row (100% Secure / Instant Payments / Global Accepted / 24/7 Support), "Order Your Card" CTA
+- **Features** — White background (`bg-surface-50`), 6 premium cards (Secure & Private/Crypto Payments/Global Acceptance/Premium Cards/Fast Delivery/24/7 Support), rounded-2xl, hover lift with shadow
+- **Stats** — Animated counters with IntersectionObserver, 50K+ Cards / 120+ Countries / 99.9% Success Rate / 24/7 Support
+- **Benefits** — Replaces old Security section, 4 cards (No Hidden Fees/Full Control/Advanced Security/Built for Web3), gradient icon headers
+- **Dashboard Preview** — New embedded section with stats bar (Balance/Orders/Cards/Spent), mini card display, order tracking timeline, recent transactions list, wallet connection card with balance/gas, "Order Another Card" CTA
+- **How It Works** — 7-step timeline (Create Account → Verify Email → Connect Wallet → Choose Card → Pay with Crypto → Track Order → Receive Card), step numbers, vertical line connector desktop
+- **Card Showcase** — 5 variants (Midnight Black/Titanium/Royal Blue/Silver/Gold) on white bg, gradient card renders, hover scale
+- **Supported Wallets** — Grid of 8 wallets (MetaMask/Trust Wallet/Coinbase/Phantom/Rainbow/WalletConnect/Binance/OKX) replacing old EVM networks section
+- **CTA** — Full-width blue gradient, "Ready to Get Your Crypto Card?" headline, Order Now + Learn More buttons
+- **Footer** — 5 columns (Company/Resources/Legal/Developers + Brand column with newsletter signup), security badges (PCI DSS/SSL/AES-256/Blockchain), social icons (Twitter/Discord/Telegram/GitHub/LinkedIn), email subscribe form with success state
+- **Page composition** — New section order: Hero → Stats → Features → CardShowcase → Benefits → DashboardPreview → HowItWorks → Wallets → Pricing → Testimonials → FAQ → CTA
+- **Old sections removed** — `announcement-bar.tsx`, `networks.tsx`, `security.tsx`, `newsletter.tsx`
 
 ### Pending
-- `npm install` could not complete (slow registry) — run `npm install --legacy-peer-deps` locally before build
+- `npm install` could not complete (slow registry) — run `npm install --legacy-peer-deps` or `pnpm install` locally before build
+- Verify with `npm run lint` and `npm run typecheck` once deps are installed
 - `/dashboard/orders` — still shows EmptyState; needs order list table
 - `/dashboard/transactions` — still shows EmptyState; needs transaction list
 - `/dashboard/notifications` — still shows EmptyState; needs notification list

@@ -1,8 +1,8 @@
 // Utility functions
 
-export function formatAddress(address: string): string {
-  if (address.length < 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+export function formatAddress(address: string, chars = 4): string {
+  if (address.length < 6 + chars) return address;
+  return `${address.slice(0, 6)}...${address.slice(-chars)}`;
 }
 
 export function formatCryptoAmount(amount: string | number, decimals = 18): string {

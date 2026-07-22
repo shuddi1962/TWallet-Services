@@ -1,15 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Wallet, Send, CreditCard, ShoppingBag } from "lucide-react";
+import { UserPlus, MailCheck, Wallet, CreditCard, Bitcoin, PackageSearch, PackageCheck } from "lucide-react";
 import { Container } from "@/components/layout/container";
-import { FadeIn, StaggerChildren, StaggerItem } from "@/components/ui/motion-section";
+import { FadeIn } from "@/components/ui/motion-section";
 
 const steps = [
-  { number: "01", icon: Wallet, title: "Connect Your Wallet", description: "Connect MetaMask, WalletConnect, Coinbase Wallet, or Trust Wallet. Your private keys never leave your device." },
-  { number: "02", icon: Send, title: "Pay in Crypto", description: "Send the exact amount to the platform's receiving wallet address on your preferred network. You sign the transaction." },
-  { number: "03", icon: CreditCard, title: "Get Verified", description: "Our system verifies your payment on-chain — correct address, amount, chain, and confirmations. No manual checks." },
-  { number: "04", icon: ShoppingBag, title: "Start Spending", description: "Once verified, your card is activated. Use it online or in-store, anywhere major card networks are accepted." },
+  { icon: UserPlus, title: "Create Account", description: "Sign up with your email and verify your identity in minutes." },
+  { icon: MailCheck, title: "Verify Email", description: "Confirm your email address to activate your account." },
+  { icon: Wallet, title: "Connect Wallet", description: "Link your self-custodial wallet — MetaMask, WalletConnect, or Coinbase." },
+  { icon: CreditCard, title: "Choose Card", description: "Select physical or virtual card. Pick your network and quantity." },
+  { icon: Bitcoin, title: "Pay with Crypto", description: "Send the exact amount from your wallet. You sign the transaction." },
+  { icon: PackageSearch, title: "Track Order", description: "Monitor your order status in real-time from the dashboard." },
+  { icon: PackageCheck, title: "Receive Card", description: "Virtual cards issued instantly. Physical cards shipped globally." },
 ];
 
 export function HowItWorks() {
@@ -26,39 +29,54 @@ export function HowItWorks() {
               How it works
             </h2>
             <p className="mt-4 text-lg text-surface-400">
-              From wallet connection to card activation in four simple steps.
+              From signup to spending in a few simple steps.
             </p>
           </div>
         </FadeIn>
 
-        <StaggerChildren className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step, index) => (
-            <StaggerItem key={step.number}>
-              <div className="group relative">
-                {index < steps.length - 1 && (
-                  <div className="absolute left-full top-12 hidden h-px w-full bg-gradient-to-r from-brand-500/40 to-transparent lg:block" />
-                )}
-                <div className="flex flex-col items-center text-center">
-                  <div className="relative mb-6">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20 group-hover:ring-brand-500/40 transition-all">
-                      <step.icon className="h-8 w-8 text-brand-400" />
-                    </div>
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
-                      className="absolute -top-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-accent-600 text-xs font-bold text-white shadow-lg shadow-brand-600/30"
-                    >
-                      {step.number}
-                    </motion.span>
+        <div className="relative mt-16">
+          <div className="absolute left-[23px] top-0 h-full w-px bg-gradient-to-b from-brand-500/40 via-brand-500/20 to-transparent hidden lg:block" />
+
+          <div className="space-y-8 lg:space-y-0">
+            {steps.map((step, index) => (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.08 }}
+                className="group lg:flex lg:items-start lg:gap-8"
+              >
+                <div className="hidden lg:flex lg:flex-col lg:items-center lg:pt-1">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-500/20 ring-1 ring-brand-400/20 transition-all group-hover:ring-brand-400/40 group-hover:shadow-brand-500/30">
+                    <step.icon className="h-5 w-5 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white">{step.title}</h3>
-                  <p className="mt-2 text-sm text-surface-400">{step.description}</p>
+                  {index < steps.length - 1 && (
+                    <div className="mt-2 h-12 w-px bg-gradient-to-b from-brand-500/30 to-transparent" />
+                  )}
                 </div>
-              </div>
-            </StaggerItem>
-          ))}
-        </StaggerChildren>
+
+                <div className="flex items-start gap-4 lg:pt-0">
+                  <div className="flex lg:hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-500/20">
+                    <step.icon className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="min-w-0 lg:pb-16">
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-xs font-bold text-brand-400 tracking-wider">
+                        STEP {String(index + 1).padStart(2, "0")}
+                      </span>
+                      {index < steps.length - 1 && (
+                        <span className="hidden lg:inline text-xs text-surface-600">→</span>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">{step.title}</h3>
+                    <p className="mt-1 text-sm text-surface-400 max-w-md">{step.description}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </Container>
     </section>
   );

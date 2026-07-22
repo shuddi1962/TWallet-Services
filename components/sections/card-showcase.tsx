@@ -1,139 +1,95 @@
 "use client";
 
-import { motion, useMotionValue, useTransform } from "framer-motion";
-import { CreditCard, Smartphone, Globe } from "lucide-react";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { Container } from "@/components/layout/container";
-import { FadeIn, StaggerChildren, StaggerItem } from "@/components/ui/motion-section";
+import { FadeIn } from "@/components/ui/motion-section";
+import { cn } from "@/lib/utils/cn";
 
-function TiltCard() {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
+const cardVariants = [
+  { name: "Black", gradient: "from-surface-900 via-surface-800 to-surface-900", accent: "from-brand-500 to-brand-700", chip: "bg-yellow-400/80", label: "Midnight Black" },
+  { name: "Titanium", gradient: "from-surface-400 via-surface-300 to-surface-400", accent: "from-blue-400 to-blue-600", chip: "bg-yellow-400/80", label: "Titanium" },
+  { name: "Blue", gradient: "from-brand-600 via-brand-700 to-brand-900", accent: "from-brand-400 to-brand-600", chip: "bg-yellow-400/80", label: "Royal Blue" },
+  { name: "Silver", gradient: "from-surface-200 via-white to-surface-200", accent: "from-surface-400 to-surface-600", chip: "bg-yellow-500/80", label: "Silver" },
+  { name: "Gold", gradient: "from-amber-500 via-yellow-500 to-amber-700", accent: "from-amber-400 to-amber-600", chip: "bg-yellow-300", label: "Gold" },
+];
 
-  const rotateX = useTransform(y, [-0.5, 0.5], [10, -10]);
-  const rotateY = useTransform(x, [-0.5, 0.5], [-10, 10]);
-
-  const handleMouse = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    x.set((e.clientX - rect.left) / rect.width - 0.5);
-    y.set((e.clientY - rect.top) / rect.height - 0.5);
-  };
-
-  const handleLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
+function CardPreview({ variant, index }: { variant: typeof cardVariants[0]; index: number }) {
   return (
     <motion.div
-      style={{ rotateX, rotateY, perspective: 1000 }}
-      onMouseMove={handleMouse}
-      onMouseLeave={handleLeave}
-      className="relative cursor-pointer"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="group cursor-pointer"
     >
       <motion.div
-        animate={{ y: [0, -6, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="relative h-56 w-96 max-w-full rounded-2xl bg-gradient-to-br from-brand-500 via-brand-600 to-accent-600 p-0.5 shadow-2xl shadow-brand-600/30"
+        whileHover={{ scale: 1.02, y: -4 }}
+        className="relative mx-auto h-44 w-72 sm:h-48 sm:w-80 overflow-hidden rounded-2xl p-[1.5px] shadow-xl transition-shadow duration-300 group-hover:shadow-2xl"
+        style={{
+          background: `linear-gradient(135deg, ${index === 0 ? "#2563eb" : index === 4 ? "#f59e0b" : "#64748b"}, ${index === 0 ? "#1d4ed8" : index === 4 ? "#d97706" : "#475569"})`,
+        }}
       >
-        <div className="h-full w-full rounded-2xl bg-gradient-to-br from-surface-900 to-surface-800 p-6">
+        <div className={cn("h-full w-full rounded-2xl bg-gradient-to-br p-5", variant.gradient)}>
           <div className="flex h-full flex-col justify-between">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-brand-400 to-accent-500 flex items-center justify-center">
-                  <span className="text-xs font-bold text-white">TW</span>
-                </div>
-                <span className="text-sm font-semibold text-white/80">TW·CARD</span>
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br shadow-lg" style={{
+                background: `linear-gradient(135deg, ${index === 0 ? "#3b82f6" : index === 4 ? "#fbbf24" : "#94a3b8"}, ${index === 0 ? "#1d4ed8" : index === 4 ? "#f59e0b" : "#64748b"})`,
+              }}>
+                <span className="text-[8px] font-bold text-white">TW</span>
               </div>
-              <div className="flex gap-1.5">
-                <div className="h-3 w-3 rounded-full bg-yellow-400/80" />
-                <div className="h-3 w-3 rounded-full bg-yellow-400/60" />
+              <div className="flex gap-1">
+                <div className={cn("h-2.5 w-2.5 rounded-full", variant.chip)} />
+                <div className="h-2.5 w-2.5 rounded-full bg-white/30" />
               </div>
             </div>
             <div>
-              <div className="mb-4">
-                <div className="h-7 w-12 rounded-sm bg-yellow-400/70" />
+              <div className="mb-3">
+                <div className={cn("h-6 w-10 rounded", variant.chip)} />
               </div>
-              <p className="font-mono text-lg tracking-[0.3em] text-white/90">
-                •••• •••• •••• 2026
+              <p className="font-mono text-sm tracking-[0.2em] text-white/80">
+                •••• •••• •••• 4582
               </p>
-              <div className="mt-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-white/50">CARDHOLDER</p>
-                  <p className="text-sm font-semibold text-white/80">YOUR NAME</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-8 rounded bg-gradient-to-br from-red-500 to-yellow-500/80" />
-                  <div className="h-6 w-8 rounded bg-gradient-to-t from-red-600 to-yellow-400" />
-                </div>
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-[10px] text-white/50 uppercase">Cardholder</p>
+                <svg className="h-4 w-6" viewBox="0 0 24 16" fill="none">
+                  <rect x="0.5" y="0.5" width="23" height="15" rx="2.5" fill={index === 4 ? "#1a1a1a" : "#00579F"} />
+                </svg>
               </div>
             </div>
           </div>
         </div>
       </motion.div>
+      <p className="mt-3 text-center text-sm font-medium text-surface-400">{variant.label}</p>
     </motion.div>
   );
 }
 
 export function CardShowcase() {
+  const [selected, setSelected] = useState(0);
+
   return (
-    <section className="relative overflow-hidden py-20 lg:py-28">
-      <div className="absolute inset-0 bg-gradient-to-b from-surface-950 via-brand-950/20 to-surface-950 pointer-events-none" />
-      <Container className="relative">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <FadeIn>
-            <div>
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-4 py-1.5 text-sm">
-                <CreditCard className="h-3.5 w-3.5 text-brand-400" />
-                <span className="text-brand-300">Card Showcase</span>
-              </div>
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                One card. Every use case.
-              </h2>
-              <p className="mt-4 text-lg text-surface-400">
-                Whether you&apos;re shopping online, paying in-store, or traveling abroad, your TW·CARD works everywhere.
-              </p>
-
-              <StaggerChildren className="mt-8 space-y-6">
-                <StaggerItem>
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 ring-1 ring-brand-500/20">
-                      <CreditCard className="h-5 w-5 text-brand-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white">Physical Card</h3>
-                      <p className="mt-1 text-sm text-surface-400">Contactless payments, ATM withdrawals, and in-store purchases. Shipped globally.</p>
-                    </div>
-                  </div>
-                </StaggerItem>
-                <StaggerItem>
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 ring-1 ring-brand-500/20">
-                      <Smartphone className="h-5 w-5 text-brand-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white">Virtual Card</h3>
-                      <p className="mt-1 text-sm text-surface-400">Instant issuance for online shopping, subscriptions, and digital purchases.</p>
-                    </div>
-                  </div>
-                </StaggerItem>
-                <StaggerItem>
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 ring-1 ring-brand-500/20">
-                      <Globe className="h-5 w-5 text-brand-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white">Global Acceptance</h3>
-                      <p className="mt-1 text-sm text-surface-400">Accepted at 100M+ merchants worldwide. Spend in 150+ currencies.</p>
-                    </div>
-                  </div>
-                </StaggerItem>
-              </StaggerChildren>
+    <section id="cards" className="relative py-20 lg:py-28 overflow-hidden bg-surface-50">
+      <Container>
+        <FadeIn>
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm">
+              <span className="text-brand-700 font-medium">Card Collection</span>
             </div>
-          </FadeIn>
-
-          <div className="flex justify-center lg:justify-end">
-            <TiltCard />
+            <h2 className="text-3xl font-bold tracking-tight text-surface-900 sm:text-4xl">
+              Choose your style
+            </h2>
+            <p className="mt-4 text-lg text-surface-500">
+              Five premium card designs. One perfect fit for you.
+            </p>
           </div>
+        </FadeIn>
+
+        <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {cardVariants.map((variant, index) => (
+            <div key={variant.name} onClick={() => setSelected(index)}>
+              <CardPreview variant={variant} index={index} />
+            </div>
+          ))}
         </div>
       </Container>
     </section>

@@ -33,6 +33,18 @@ export async function markNotificationRead(notificationId: string) {
   return { success: true };
 }
 
+export async function deleteNotification(notificationId: string) {
+  const supabase = await createServerSupabaseClient() as any;
+
+  const { error } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("id", notificationId);
+
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
 export async function getTransactions() {
   const supabase = await createServerSupabaseClient();
 

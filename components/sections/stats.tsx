@@ -1,31 +1,59 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Container } from "@/components/layout/container";
-import { useInView } from "@/lib/hooks/use-in-view";
+import { cn } from "@/lib/utils/cn";
 
 const stats = [
-  { value: 10000, suffix: "+", label: "Active cards", prefix: "" },
-  { value: 7, suffix: "", label: "EVM networks", prefix: "" },
-  { value: 150, suffix: "+", label: "Countries supported", prefix: "" },
-  { value: 100, suffix: "M+", label: "Merchants worldwide", prefix: "" },
-  { value: 5, suffix: "min", label: "Average verification", prefix: "<" },
-  { value: 0, suffix: "", label: "Keys collected", prefix: "" },
+  { value: 50000, suffix: "+", label: "Cards Delivered", prefix: "" },
+  { value: 120, suffix: "+", label: "Countries", prefix: "" },
+  { value: 99.9, suffix: "%", label: "Success Rate", prefix: "", decimals: 1 },
+  { value: 24, suffix: "/7", label: "Support", prefix: "" },
 ];
 
-function AnimatedCounter({ value, suffix, prefix }: { value: number; suffix: string; prefix: string }) {
-  const { ref, inView } = useInView({ threshold: 0.5 });
+function AnimatedCounter({ value, suffix, prefix, decimals = 0 }: { value: number; suffix: string; prefix: string; decimals?: number }) {
+  const [count, setCount] = useState(0);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    if (!inView) return;
+    const duration = 2000;
+    const steps = 60;
+    const increment = value / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= value) {
+        setCount(value);
+        clearInterval(timer);
+      } else {
+        setCount(current);
+      }
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [inView, value]);
 
   return (
-    <div ref={ref} className="relative">
+    <div
+      ref={(ref) => {
+        if (ref) {
+          const observer = new IntersectionObserver(
+            ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+            { threshold: 0.5 },
+          );
+          observer.observe(ref);
+        }
+      }}
+    >
       <motion.span
         initial={{ opacity: 0, y: 20 }}
         animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="text-3xl font-bold text-gradient"
+        className="text-4xl font-bold text-gradient-blue sm:text-5xl"
       >
         {prefix}
-        {value.toLocaleString()}
+        {count.toLocaleString(undefined, { maximumFractionDigits: decimals })}
         {suffix}
       </motion.span>
     </div>
@@ -33,34 +61,24 @@ function AnimatedCounter({ value, suffix, prefix }: { value: number; suffix: str
 }
 
 export function Stats() {
-  const { ref, inView } = useInView({ threshold: 0.2 });
-
   return (
-    <section ref={ref} className="border-y border-white/5 py-16">
+    <section className="relative py-16 lg:py-20 bg-surface-50 border-y border-surface-200">
       <Container>
-        <motion.div
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={{
-            hidden: { opacity: 0 },
-            visible: { transition: { staggerChildren: 0.08 } },
-          }}
-          className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6"
-        >
-          {stats.map((stat) => (
+        <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+          {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-              }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
               className="text-center"
             >
-              <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix} />
-              <div className="mt-1 text-sm text-surface-500">{stat.label}</div>
+              <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix} decimals={stat.decimals} />
+              <div className="mt-1.5 text-sm font-medium text-surface-500">{stat.label}</div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
       </Container>
     </section>
   );
