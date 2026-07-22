@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Hero } from "@/components/sections/hero";
+import { OrderWidget } from "@/components/sections/order-widget";
 import { Stats } from "@/components/sections/stats";
 import { Features } from "@/components/sections/features";
 import { Benefits } from "@/components/sections/benefits";
@@ -19,6 +20,9 @@ export default function LandingPage() {
       <Header />
       <main>
         <Hero />
+        <div className="-mt-28 relative z-20 flex justify-center">
+          <OrderWidget />
+        </div>
         <Stats />
         <Features />
         <CardShowcase />
