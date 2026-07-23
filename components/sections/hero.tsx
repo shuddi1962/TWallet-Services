@@ -3,14 +3,10 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
 import { Globe, ShieldCheck, Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { OrderWidget } from "@/components/sections/order-widget";
-
-const CARD_IMAGE =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuB4kIr2XwzwDH8GGE6TbF23yoAi0hgE531M8geP32Cjq1mXYPGqLgX5RomAPAvL8_a31uz8iWMQ2z8bQVqlCgpbFDegzDuB4uw-g3stjGIrqdtoMF9CoWU6flYr36umlpNYm_tJRxYT4mHEFM9HDsv2HdwoHwHoBhy3NMXS0tJOZYYIpIEzOCWpa62ZB_RYk63ExlxwSjO61Ve_DI09AExScnco3FJwHpl6yClmGjB2yLuid6y4Q-vTWqABr5GJaUJjzyk";
 
 function Stars() {
   const stars = useMemo(() =>
@@ -49,19 +45,79 @@ function Stars() {
   );
 }
 
+function CardGlare() {
+  return (
+    <div
+      className="absolute inset-0 rounded-2xl opacity-30"
+      style={{
+        background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.05) 100%)",
+      }}
+    />
+  );
+}
+
+function CssCard() {
+  return (
+    <div className="relative w-full max-w-[420px] mx-auto">
+      <motion.div
+        animate={{ opacity: [0.2, 0.45, 0.2] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -inset-12"
+        style={{
+          background: "radial-gradient(ellipse at center, rgba(37,99,235,0.2) 0%, transparent 60%)",
+        }}
+      />
+      <div
+        className="relative rounded-2xl p-[1.5px] shadow-2xl"
+        style={{
+          background: "linear-gradient(135deg, rgba(37,99,235,0.6), rgba(99,102,241,0.3), rgba(37,99,235,0.4))",
+        }}
+      >
+        <div className="rounded-2xl bg-gradient-to-br from-surface-900 via-[#0f1729] to-surface-900 p-6 overflow-hidden relative">
+          <CardGlare />
+          <div className="flex items-center justify-between mb-8 relative">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-semibold tracking-widest text-white/40 uppercase">twallet</span>
+            </div>
+            <svg className="h-5 w-8" viewBox="0 0 24 16" fill="none">
+              <rect x="0.5" y="0.5" width="23" height="15" rx="2.5" fill="#00579F" />
+              <rect x="11.5" y="0.5" width="12" height="15" rx="0" fill="#FAAF00" />
+            </svg>
+          </div>
+          <div className="mb-6 relative">
+            <div className="h-8 w-12 rounded-md bg-gradient-to-br from-yellow-400/80 to-yellow-600/80 shadow-lg" />
+          </div>
+          <p className="font-mono text-lg tracking-[0.25em] text-white/90 mb-4 relative">
+            •••• •••• •••• 4582
+          </p>
+          <div className="flex items-center justify-between relative">
+            <div>
+              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">Cardholder</p>
+              <p className="text-xs text-white/70">Y. NAME</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">Expires</p>
+              <p className="text-xs text-white/70">06/28</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Hero() {
   return (
-    <section className="relative min-h-screen overflow-hidden bg-dark flex items-start">
+    <section className="relative min-h-screen bg-dark flex flex-col">
       <div className="absolute inset-0 pointer-events-none">
         <Stars />
-
         <motion.div
           animate={{ scale: [1, 1.06, 1], opacity: [0.12, 0.25, 0.12] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
           className="absolute w-[800px] h-[800px] rounded-full"
           style={{
             background: "radial-gradient(circle, rgba(37,99,235,0.15) 0%, rgba(11,17,32,0) 70%)",
-            bottom: "-20%",
+            bottom: "-30%",
             right: "-5%",
           }}
         />
@@ -77,124 +133,89 @@ export function Hero() {
         />
       </div>
 
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute right-0 top-0 w-[55%] h-[60%]">
-          <div
-            className="absolute inset-0 z-20"
-            style={{
-              background: "linear-gradient(90deg, rgba(11,17,32,1) 0%, rgba(11,17,32,0) 25%, rgba(11,17,32,0) 75%, rgba(11,17,32,1) 100%)",
-            }}
-          />
-          <div
-            className="absolute inset-0 z-20"
-            style={{
-              background: "linear-gradient(180deg, rgba(11,17,32,0) 30%, rgba(11,17,32,1) 100%)",
-            }}
-          />
-          <motion.div
-            animate={{ opacity: [0.25, 0.5, 0.25] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 z-10"
-            style={{
-              background: "radial-gradient(ellipse at 50% 40%, rgba(37,99,235,0.18) 0%, transparent 55%)",
-            }}
-          />
-          <Image
-            src={CARD_IMAGE}
-            alt=""
-            width={700}
-            height={490}
-            className="w-full max-w-[600px] h-auto object-contain relative z-0 scale-110"
-            style={{
-              filter: "drop-shadow(0 0 60px rgba(37,99,235,0.25))",
-            }}
-            priority
-            unoptimized
-          />
-        </div>
+      <div className="flex-1 flex items-center">
+        <Container>
+          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 pt-24 lg:pt-32 relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="w-full lg:w-1/2 flex flex-col gap-5"
+            >
+              <div className="inline-flex items-center gap-1.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 px-3 py-1.5 rounded-full text-xs font-medium w-fit">
+                <Users className="h-3 w-3" />
+                Trusted by Thousands
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-white">
+                  The TWallet Card
+                  <br />
+                  is here.
+                </h1>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-brand-400">
+                  Spend freely,
+                  <br />
+                  anywhere.
+                </h2>
+              </div>
+              <p className="text-base sm:text-lg text-surface-400 max-w-lg leading-relaxed">
+                A secure payment card for your digital assets. Accepted worldwide.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white border-0 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+                  asChild
+                >
+                  <Link href="/auth/register">Order Your Card</Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto border border-surface-600 hover:border-surface-400 text-white"
+                  asChild
+                >
+                  <Link href="/#how-it-works">Learn More</Link>
+                </Button>
+              </div>
+              <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/5">
+                {[
+                  { icon: Globe, label: "Global Acceptance" },
+                  { icon: ShieldCheck, label: "Secure & Private" },
+                  { icon: Lock, label: "Easy to Use" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-1.5 text-surface-400">
+                    <item.icon className="h-4 w-4 text-brand-400" />
+                    <span className="text-xs font-medium">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="w-full lg:w-1/2 flex justify-center"
+            >
+              <CssCard />
+            </motion.div>
+          </div>
+        </Container>
       </div>
 
-      <Container>
-        <div className="flex flex-col lg:flex-row items-start gap-10 lg:gap-16 pt-24 lg:pt-32 pb-20 lg:pb-28 relative z-10 min-h-screen">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="w-full lg:w-[45%] flex flex-col gap-5"
-          >
-            <div className="inline-flex items-center gap-1.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 px-3 py-1.5 rounded-full text-xs font-medium w-fit">
-              <Users className="h-3 w-3" />
-              Trusted by Thousands
-            </div>
-
-            <div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-white">
-                The TWallet Card
-                <br />
-                is here.
-              </h1>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-brand-400">
-                Spend freely,
-                <br />
-                anywhere.
-              </h2>
-            </div>
-
-            <p className="text-base sm:text-lg text-surface-400 max-w-lg leading-relaxed">
-              A secure payment card for your digital assets. Accepted worldwide.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white border-0 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
-                asChild
-              >
-                <Link href="/auth/register">Order Your Card</Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto border border-surface-600 hover:border-surface-400 text-white"
-                asChild
-              >
-                <Link href="/#how-it-works">Learn More</Link>
-              </Button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/5">
-              {[
-                { icon: Globe, label: "Global Acceptance" },
-                { icon: ShieldCheck, label: "Secure & Private" },
-                { icon: Lock, label: "Easy to Use" },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-1.5 text-surface-400">
-                  <item.icon className="h-4 w-4 text-brand-400" />
-                  <span className="text-xs font-medium">{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="w-full lg:w-[55%] flex justify-end relative"
-          >
-            <div className="relative mt-48 lg:mt-72">
-              <motion.div
-                animate={{ opacity: [0.15, 0.4, 0.15] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -inset-20 bg-gradient-to-r from-brand-500/5 via-brand-400/10 to-brand-500/5 rounded-full blur-3xl"
-              />
-              <div className="relative">
-                <OrderWidget />
-              </div>
-            </div>
-          </motion.div>
+      <div className="relative z-10 flex justify-end -mb-24 lg:-mb-28">
+        <div className="w-full lg:w-1/2 flex justify-end px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div>
+            <motion.div
+              animate={{ opacity: [0.15, 0.4, 0.15] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -inset-20 bg-gradient-to-r from-brand-500/5 via-brand-400/10 to-brand-500/5 rounded-full blur-3xl pointer-events-none"
+            />
+            <OrderWidget />
+          </div>
         </div>
-      </Container>
+      </div>
     </section>
   );
 }
