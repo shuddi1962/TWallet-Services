@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
-import { Providers } from "@/providers";
+import { WalletProviders } from "@/components/wallet-providers";
 
 export const metadata: Metadata = {
   title: {
-    default: "TWallet Card — Non-Custodial Crypto Card",
-    template: "%s | TWallet Card",
+    default: "TWALLET — Non-Custodial Crypto Card",
+    template: "%s | TWALLET",
   },
   description:
-    "Order a physical or virtual card funded by your crypto. Non-custodial — you keep control of your keys.",
+    "Order a crypto-funded card. Non-custodial — you keep control of your keys.",
   openGraph: {
-    title: "TWallet Card",
-    description: "Your crypto, your card. Non-custodial card platform.",
-    siteName: "TWallet Services",
+    title: "TWALLET",
+    description: "Your crypto, your card. Non-custodial.",
+    siteName: "TWALLET",
     type: "website",
     locale: "en_US",
   },
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <Providers>{children}</Providers>
+        <WalletProviders>{children}</WalletProviders>
       </body>
     </html>
   );

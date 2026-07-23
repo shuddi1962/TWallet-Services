@@ -32,12 +32,12 @@ export function Sidebar() {
     <aside className="hidden w-64 shrink-0 border-r border-white/5 bg-surface-950 lg:flex">
       <div className="flex h-full flex-col">
         <div className="flex h-16 items-center border-b border-white/5 px-6">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-600 shadow-lg shadow-brand-600/20">
-              <CreditCard className="h-3.5 w-3.5 text-white" />
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-600/30 transition-transform group-hover:scale-110">
+              <CreditCard className="h-5 w-5 text-white" />
             </div>
-            <span className="text-base font-bold tracking-tight text-white">
-              TW<span className="text-brand-400">·</span>CARD
+            <span className="text-lg font-bold tracking-tight text-white">
+              TWALLET
             </span>
           </Link>
         </div>

@@ -15,7 +15,7 @@ export default function RegisterPage() {
     <div className="w-full max-w-sm">
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-white">Create account</h1>
-        <p className="mt-1 text-surface-400">Get your TW·CARD today</p>
+        <p className="mt-1 text-surface-400">Get your TWALLET card today</p>
       </div>
 
       <Card>

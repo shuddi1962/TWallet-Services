@@ -23,11 +23,11 @@ export function DashboardHeader() {
       </button>
 
       <div className="flex items-center gap-2 lg:hidden">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-600">
-          <CreditCard className="h-3.5 w-3.5 text-white" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-600/20">
+          <CreditCard className="h-4.5 w-4.5 text-white" />
         </div>
         <span className="text-base font-bold tracking-tight text-white">
-          TW<span className="text-brand-400">·</span>CARD
+          TWALLET
         </span>
       </div>
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { CardCatalog } from "@/components/cards/card-catalog";
 
 export default function CardsPage() {

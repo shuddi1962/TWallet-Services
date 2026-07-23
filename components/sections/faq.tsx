@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils/cn";
 import { FadeIn } from "@/components/ui/motion-section";
 
 const faqs = [
-  { question: "Is TWallet really non-custodial?", answer: "Yes. We never collect, store, or request your recovery phrase or private keys. You connect your wallet using standard protocols (WalletConnect, MetaMask, etc.), and you sign every transaction yourself. The platform never signs or broadcasts on your behalf." },
+  { question: "Is TWALLET really non-custodial?", answer: "Yes. We never collect, store, or request your recovery phrase or private keys. You connect your wallet using standard protocols (WalletConnect, MetaMask, etc.), and you sign every transaction yourself. The platform never signs or broadcasts on your behalf." },
   { question: "How does payment verification work?", answer: "When you place an order, we generate a unique receiving wallet address and the exact crypto amount. After you send the payment, our system independently verifies the transaction on-chain — checking the correct address, amount, chain, and required confirmations. Only then is your order marked as paid." },
   { question: "Which wallets are supported?", answer: "MetaMask, WalletConnect v2, Coinbase Wallet, and Trust Wallet. Any wallet that supports WalletConnect v2 can connect to the platform." },
   { question: "Which crypto networks are supported?", answer: "Ethereum, Polygon, Arbitrum, Optimism, Base, BNB Chain, and Avalanche. More networks will be added in future updates." },
@@ -24,20 +24,20 @@ function FAQItem({ faq, isOpen, onToggle, index }: { faq: { question: string; an
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="border-b border-white/5"
+      className="border-b border-surface-200"
     >
       <button
         onClick={onToggle}
         className="flex w-full items-center justify-between py-5 text-left group"
         aria-expanded={isOpen}
       >
-        <span className="text-base font-medium text-white transition-colors group-hover:text-brand-400">
+        <span className="text-base font-medium text-surface-900 transition-colors group-hover:text-brand-600">
           {faq.question}
         </span>
         <ChevronDown
           className={cn(
-            "h-5 w-5 shrink-0 text-surface-500 transition-all duration-300",
-            isOpen && "rotate-180 text-brand-400",
+            "h-5 w-5 shrink-0 text-surface-400 transition-all duration-300",
+            isOpen && "rotate-180 text-brand-500",
           )}
         />
       </button>
@@ -50,7 +50,7 @@ function FAQItem({ faq, isOpen, onToggle, index }: { faq: { question: string; an
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <p className="pb-5 text-sm text-surface-400">{faq.answer}</p>
+            <p className="pb-5 text-sm text-surface-600 leading-relaxed">{faq.answer}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -62,18 +62,18 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-16 lg:py-20">
-      <Container size="md">
+    <section id="faq" className="py-16 lg:py-20 bg-white">
+      <Container className="max-w-3xl">
         <FadeIn>
           <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-4 py-1.5 text-sm">
-              <span className="text-brand-300">FAQ</span>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm">
+              <span className="text-brand-700 font-medium">FAQ</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-surface-900">
               Frequently asked questions
             </h2>
-            <p className="mt-4 text-lg text-surface-400">
-              Everything you need to know about TW·CARD.
+            <p className="mt-4 text-surface-500">
+              Everything you need to know about TWALLET.
             </p>
           </div>
         </FadeIn>

@@ -87,6 +87,17 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Data layer** — Server actions, 19-table Supabase schema with RLS
 - **Global CSS** — Dark-first theme (brand→indigo, accent→purple)
 
+### Session 3 — Jul 23, 2026
+- **Wallet provider** — Web3Modal + wagmi + viem installed, `providers/index.tsx` with `WagmiProvider` + `QueryClientProvider` + `createWeb3Modal`, `defaultWagmiConfig` for 6 chains, `account` dependency resolved with webpack fallback, `indexedDB` SSR fixed via `components/wallet-providers.tsx` dynamic import with `ssr: false`
+- **Admin layout** — Collapsible sidebar (13 items, search, role-based, localStorage persistence), sticky header (breadcrumb, environment badge, notification bell, admin profile), responsive with mobile hamburger
+- **Admin overview dashboard** — 8 stat cards (Total Users, Active Wallets, Pending Orders, Completed Orders, Revenue, Open Tickets, System Health, Today's TX), recent orders table, recent payments table, recent signups list, open tickets list, activity feed timeline
+- **Admin users page** — Searchable table with status/role/country/wallet/created columns, inline suspend/reactivate via server actions
+- **Admin orders page** — Search/filter table with status badge, status transition dropdown (per state machine), inline update server action
+- **Admin payments page** — Searchable table with tx hash/amount/network/status, block explorer links
+- **Admin card products page** — Searchable table with type/price/status, empty state with icon
+- **Admin system settings page** — Tabbed UI (General/Payments/Security/Notifications/KYC), inline toggles/selects/inputs, save button per section
+- **Admin audit logs page** — Searchable expandable rows with action badge, admin name, timestamp, detail drawer showing target/IP/before-after diff
+
 ### Session 2 — Jul 22, 2026 (Landing Page Rebuild)
 - **Brand color change** — Indigo → Blue (#2563EB) primary palette
 - **CSS utilities** — Added `text-gradient-blue`, `glass`, `glass-light`, `hero-gradient` with new dark color, `float`/`glow-pulse` animations
@@ -105,13 +116,14 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Old sections removed** — `announcement-bar.tsx`, `networks.tsx`, `security.tsx`, `newsletter.tsx`
 
 ### Pending
-- `npm install` could not complete (slow registry) — run `npm install --legacy-peer-deps` or `pnpm install` locally before build
-- Verify with `npm run lint` and `npm run typecheck` once deps are installed
-- `/dashboard/orders` — still shows EmptyState; needs order list table
-- `/dashboard/transactions` — still shows EmptyState; needs transaction list
-- `/dashboard/notifications` — still shows EmptyState; needs notification list
-- Admin dashboard pages — not yet built
 - WalletConnect Project ID placeholder — replace with real key before production
+- `/admin/analytics` — empty directory stub; needs charts (Recharts) page
+- `/admin/support` — empty directory stub; needs ticket management page
+
+### Known Issues
+- `@wagmi/connectors` has warnings about missing optional deps (safe-sdk, porto, metamask-connect, coinbase-sdk, base-org/account) — non-blocking, webpack resolves to false
+- `indexedDB is not defined` during SSR — fixed via `ssr: false` on WalletProviders dynamic import
+- Supabase types (`types/supabase.ts`) have `Row: any` — casts needed in admin actions; regen types after schema changes
 
 ## File / Search Tool Rules
 

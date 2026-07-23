@@ -15,18 +15,17 @@ const plans = [
 
 export function Pricing() {
   return (
-    <section id="pricing" className="relative py-16 lg:py-20 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-surface-950 via-brand-950/10 to-surface-950 pointer-events-none" />
+    <section id="pricing" className="relative py-16 lg:py-20 overflow-hidden bg-white">
       <Container className="relative">
         <FadeIn>
           <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 px-4 py-1.5 text-sm">
-              <span className="text-brand-300">Pricing</span>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm">
+              <span className="text-brand-700 font-medium">Pricing</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-surface-900">
               Simple, transparent pricing
             </h2>
-            <p className="mt-4 text-lg text-surface-400">
+            <p className="mt-4 text-surface-500">
               Pay a one-time issuance fee. No hidden charges. No surprises.
             </p>
           </div>
@@ -36,37 +35,37 @@ export function Pricing() {
           {plans.map((plan) => (
             <StaggerItem key={plan.name}>
               <div
-                className={`group relative overflow-hidden rounded-xl border p-5 transition-all ${
+                className={`group relative overflow-hidden rounded-2xl border p-6 transition-all hover:-translate-y-1 ${
                   plan.popular
-                    ? "border-brand-500/50 bg-brand-600/5 shadow-lg shadow-brand-600/10"
-                    : "border-white/5 bg-surface-900/50 hover:border-white/10 hover:bg-surface-900"
+                    ? "border-brand-500/30 bg-white shadow-xl shadow-brand-500/10 ring-1 ring-brand-500/20"
+                    : "border-surface-200 bg-white hover:shadow-xl hover:shadow-brand-500/5"
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-gradient-to-br from-brand-500 to-accent-600 blur-2xl opacity-30" />
+                  <div className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-gradient-to-br from-brand-500 to-accent-600 blur-2xl opacity-20" />
                 )}
                 <div className="relative">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-white">{plan.name}</h3>
+                    <h3 className="text-lg font-semibold text-surface-900">{plan.name}</h3>
                     {plan.popular && <Badge variant="default" className="bg-brand-600">Most Popular</Badge>}
                   </div>
-                  <p className="text-sm text-surface-400">{plan.description}</p>
+                  <p className="text-sm text-surface-500">{plan.description}</p>
                   <div className="my-5">
-                    <span className="text-3xl font-bold text-white">{plan.price}</span>
+                    <span className="text-3xl font-bold text-surface-900">{plan.price}</span>
                     <span className="ml-2 text-sm text-surface-500">{plan.period}</span>
                   </div>
                   <ul className="mb-6 space-y-2">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                        <span className="text-sm text-surface-300">{feature}</span>
+                        <span className="text-sm text-surface-600">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <Button
                     fullWidth
                     variant={plan.popular ? "primary" : "outline"}
-                    className={plan.popular ? "bg-gradient-to-r from-brand-600 to-accent-600 border-0" : "border-white/10 text-white hover:bg-white/5"}
+                    className={plan.popular ? "bg-gradient-to-r from-brand-600 to-accent-600 border-0 shadow-lg shadow-brand-600/20" : "border-surface-300 text-surface-700 hover:bg-surface-50"}
                     asChild
                   >
                     <Link href="/auth/register">

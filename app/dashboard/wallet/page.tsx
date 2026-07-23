@@ -1,3 +1,5 @@
+"use client";
+
 import { WalletConnect } from "@/components/wallet/wallet-connect";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet } from "lucide-react";

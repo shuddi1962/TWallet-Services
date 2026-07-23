@@ -61,21 +61,21 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-dark border-t border-white/5 overflow-hidden">
+    <footer className="bg-surface-50 border-t border-surface-200 overflow-hidden">
       <Container>
         <div className="py-12 lg:py-16">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
             <div className="sm:col-span-2 lg:col-span-2">
-              <Link href="/" className="flex items-center gap-2.5 group">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-500/20">
-                  <CreditCard className="h-4 w-4 text-white" />
+              <Link href="/" className="flex items-center gap-3 group">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-500/30 transition-transform group-hover:scale-110">
+                  <CreditCard className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-lg font-bold tracking-tight text-white">
-                  TWallet <span className="text-brand-400">·</span> Services
-                </span>
+                  <span className="text-xl font-bold tracking-tight text-surface-900">
+                    TWALLET
+                  </span>
               </Link>
-              <p className="mt-4 max-w-xs text-sm text-surface-400 leading-relaxed">
-                Order premium physical and virtual crypto cards using secure blockchain payments. Non-custodial. Global. Yours.
+              <p className="mt-4 max-w-xs text-sm text-surface-500 leading-relaxed">
+                Order premium crypto cards with secure blockchain payments. Non-custodial. Global. Yours.
               </p>
               <div className="mt-6 flex gap-3">
                 {socialLinks.map((social) => (
@@ -85,7 +85,7 @@ export function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={social.label}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-surface-400 transition-all hover:bg-brand-500/20 hover:text-brand-400"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-200 text-surface-500 transition-all hover:bg-brand-100 hover:text-brand-600"
                   >
                     <social.icon className="h-4 w-4" />
                   </a>
@@ -93,7 +93,7 @@ export function Footer() {
               </div>
 
               <div className="mt-8">
-                <h3 className="text-sm font-semibold text-white mb-4">Stay updated</h3>
+                <h3 className="text-sm font-semibold text-surface-900 mb-4">Stay updated</h3>
                 {submitted ? (
                   <div className="flex items-center gap-2 rounded-lg bg-success/10 px-4 py-3 text-sm text-success border border-success/20 max-w-xs">
                     <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -107,7 +107,7 @@ export function Footer() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="flex-1 h-10 bg-white/5 border-white/10 text-white placeholder:text-surface-500 text-sm focus:border-brand-500/50"
+                      className="flex-1 h-10 bg-white border-surface-200 text-surface-900 placeholder:text-surface-400 text-sm focus:border-brand-500"
                     />
                     <Button
                       type="submit"
@@ -123,13 +123,13 @@ export function Footer() {
 
             {Object.entries(footerLinks).map(([title, links]) => (
               <div key={title}>
-                <h3 className="text-sm font-semibold text-white">{title}</h3>
+                <h3 className="text-sm font-semibold text-surface-900">{title}</h3>
                 <ul className="mt-4 space-y-3">
                   {links.map((link) => (
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="text-sm text-surface-400 transition-colors hover:text-brand-400"
+                        className="text-sm text-surface-500 transition-colors hover:text-brand-600"
                       >
                         {link.label}
                       </Link>
@@ -140,19 +140,19 @@ export function Footer() {
             ))}
           </div>
 
-          <div className="mt-10 border-t border-white/5 pt-6">
+          <div className="mt-10 border-t border-surface-200 pt-6">
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <p className="text-xs text-surface-500">
-                &copy; {new Date().getFullYear()} TWallet Services. All rights reserved.
+                &copy; {new Date().getFullYear()} TWALLET. All rights reserved.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 {securityBadges.map((badge) => (
                   <div
                     key={badge.label}
-                    className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1"
+                    className="flex items-center gap-1.5 rounded-full bg-surface-200 px-3 py-1"
                   >
                     <div className="h-1.5 w-1.5 rounded-full bg-success" />
-                    <span className="text-xs text-surface-400">
+                    <span className="text-xs text-surface-600">
                       {badge.label}
                     </span>
                   </div>

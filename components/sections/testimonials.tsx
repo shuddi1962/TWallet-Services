@@ -13,16 +13,19 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="relative py-16 lg:py-20 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-surface-950 via-accent-950/10 to-surface-950 pointer-events-none" />
+    <section className="relative py-16 lg:py-20 overflow-hidden bg-white">
+      <div className="absolute inset-0 bg-gradient-to-b from-brand-50/40 via-white to-brand-50/20 pointer-events-none" />
       <Container className="relative">
         <FadeIn>
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm">
+              <span className="text-brand-700 font-medium">Testimonials</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-surface-900">
               Loved by crypto natives
             </h2>
-            <p className="mt-4 text-lg text-surface-400">
-              Join thousands of users spending their crypto with TW·CARD.
+            <p className="mt-4 text-surface-500">
+              Join thousands of users spending their crypto with TWALLET.
             </p>
           </div>
         </FadeIn>
@@ -30,17 +33,17 @@ export function Testimonials() {
         <StaggerChildren className="mt-12 grid gap-4 lg:grid-cols-3">
           {testimonials.map((testimonial) => (
             <StaggerItem key={testimonial.name}>
-              <div className="group relative rounded-xl border border-white/5 bg-surface-900/50 p-5 transition-all hover:border-white/10 hover:bg-surface-900">
+              <div className="group relative rounded-2xl border border-surface-200 bg-white p-6 transition-all hover:shadow-xl hover:shadow-brand-500/5 hover:-translate-y-1">
                 <div className="mb-4 flex gap-1">
                   {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-sm text-surface-300">&ldquo;{testimonial.content}&rdquo;</p>
+                <p className="text-sm text-surface-600 leading-relaxed">&ldquo;{testimonial.content}&rdquo;</p>
                 <div className="mt-6 flex items-center gap-3">
                   <Avatar fallback={testimonial.avatar} className="ring-2 ring-brand-500/20" />
                   <div>
-                    <p className="text-sm font-semibold text-white">{testimonial.name}</p>
+                    <p className="text-sm font-semibold text-surface-900">{testimonial.name}</p>
                     <p className="text-xs text-surface-500">{testimonial.role}</p>
                   </div>
                 </div>

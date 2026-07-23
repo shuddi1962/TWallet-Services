@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
       ],
     },
   ],
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     const stubs = path.resolve("lib/stubs");
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -60,7 +60,9 @@ const nextConfig: NextConfig = {
       ...config.resolve.fallback,
       "pino-pretty": false,
       "@react-native-async-storage/async-storage": false,
+      "accounts": false,
     };
+
     return config;
   },
 };

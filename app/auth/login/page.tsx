@@ -15,7 +15,7 @@ export default function LoginPage() {
     <div className="w-full max-w-sm">
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-white">Sign in</h1>
-        <p className="mt-1 text-surface-400">Welcome back to TW·CARD</p>
+        <p className="mt-1 text-surface-400">Welcome back to TWALLET</p>
       </div>
 
       <Card>

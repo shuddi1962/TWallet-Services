@@ -49,15 +49,8 @@ export function StaggerChildren({ children, className, delay = 0 }: MotionSectio
   return (
     <div ref={ref}>
       <motion.div
-        initial="hidden"
-        animate={inView ? "visible" : "hidden"}
-        variants={{
-          hidden: { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1, delayChildren: delay },
-          },
-        }}
+        initial={{ opacity: 0 }}
+        animate={inView ? { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: delay } } : { opacity: 0 }}
         className={className}
       >
         {children}
