@@ -60,44 +60,55 @@ function CssCard() {
   return (
     <div className="relative w-full max-w-[420px] mx-auto">
       <motion.div
-        animate={{ opacity: [0.2, 0.45, 0.2] }}
+        animate={{ opacity: [0.25, 0.5, 0.25] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -inset-12"
+        className="absolute -inset-16 rounded-full"
         style={{
-          background: "radial-gradient(ellipse at center, rgba(37,99,235,0.2) 0%, transparent 60%)",
+          background: "radial-gradient(ellipse at 50% 50%, rgba(37,99,235,0.2) 0%, rgba(99,102,241,0.08) 40%, transparent 65%)",
         }}
       />
-      <div
-        className="relative rounded-2xl p-[1.5px] shadow-2xl"
+      <div className="relative rounded-[20px] p-[1.5px] shadow-2xl shadow-brand-500/20"
         style={{
-          background: "linear-gradient(135deg, rgba(37,99,235,0.6), rgba(99,102,241,0.3), rgba(37,99,235,0.4))",
+          background: "linear-gradient(145deg, rgba(37,99,235,0.5), rgba(99,102,241,0.2), rgba(37,99,235,0.3), rgba(99,102,241,0.1))",
         }}
       >
-        <div className="rounded-2xl bg-gradient-to-br from-surface-900 via-[#0f1729] to-surface-900 p-6 overflow-hidden relative">
+        <div className="rounded-[20px] bg-gradient-to-br from-[#0c1425] via-[#0f1a2e] to-[#0a1120] p-6 overflow-hidden relative min-h-[220px]">
           <CardGlare />
-          <div className="flex items-center justify-between mb-8 relative">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-semibold tracking-widest text-white/40 uppercase">twallet</span>
+          <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-brand-500/5 blur-xl" />
+          <div className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full bg-purple-500/5 blur-xl" />
+          <div className="flex items-start justify-between mb-8 relative">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.15em] text-white/30 uppercase mb-1">twallet</p>
+              <p className="text-[8px] tracking-[0.2em] text-white/20 uppercase">services</p>
             </div>
-            <svg className="h-5 w-8" viewBox="0 0 24 16" fill="none">
-              <rect x="0.5" y="0.5" width="23" height="15" rx="2.5" fill="#00579F" />
-              <rect x="11.5" y="0.5" width="12" height="15" rx="0" fill="#FAAF00" />
+            <svg className="h-6 w-10" viewBox="0 0 28 18" fill="none">
+              <rect x="0.5" y="0.5" width="27" height="17" rx="3" fill="#1a1f2e" stroke="#ffffff20" strokeWidth="0.5"/>
+              <circle cx="14" cy="9" r="5" fill="#FF5F00" opacity="0.8"/>
+              <circle cx="10" cy="9" r="5" fill="#EB001B" opacity="0.8"/>
+              <circle cx="10" cy="9" r="5" fill="#EB001B" opacity="0.4" clipPath="url(#mcclip)"/>
+              <defs>
+                <clipPath id="mcclip"><rect x="7" y="4" width="6" height="10"/></clipPath>
+              </defs>
             </svg>
           </div>
-          <div className="mb-6 relative">
-            <div className="h-8 w-12 rounded-md bg-gradient-to-br from-yellow-400/80 to-yellow-600/80 shadow-lg" />
+          <div className="mb-5 relative">
+            <div className="h-10 w-14 rounded-lg bg-gradient-to-br from-yellow-300/90 via-yellow-400/80 to-amber-500/90 shadow-lg shadow-yellow-500/20 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+            </div>
           </div>
-          <p className="font-mono text-lg tracking-[0.25em] text-white/90 mb-4 relative">
-            •••• •••• •••• 4582
-          </p>
+          <div className="flex items-center justify-between mb-4 relative">
+            <p className="font-mono text-xl tracking-[0.2em] text-white/85 font-medium">
+              •••• •••• •••• 4582
+            </p>
+          </div>
           <div className="flex items-center justify-between relative">
             <div>
-              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">Cardholder</p>
-              <p className="text-xs text-white/70">Y. NAME</p>
+              <p className="text-[8px] text-white/30 uppercase tracking-[0.15em] mb-1">Card Holder</p>
+              <p className="text-sm font-medium text-white/75 tracking-wider">Y. NAME</p>
             </div>
             <div className="text-right">
-              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">Expires</p>
-              <p className="text-xs text-white/70">06/28</p>
+              <p className="text-[8px] text-white/30 uppercase tracking-[0.15em] mb-1">Expires</p>
+              <p className="text-sm font-medium text-white/75">06/28</p>
             </div>
           </div>
         </div>
