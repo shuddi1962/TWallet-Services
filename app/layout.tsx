@@ -25,6 +25,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#0a0a0f" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://*.supabase.co" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://*.walletconnect.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://*.supabase.co" />
+        <link rel="dns-prefetch" href="https://*.walletconnect.com" />
+      </head>
       <body>
         <WalletProviders>{children}</WalletProviders>
       </body>
