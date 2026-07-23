@@ -51,7 +51,7 @@ function Stars() {
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen overflow-hidden bg-dark flex items-center">
+    <section className="relative min-h-screen overflow-hidden bg-dark flex items-start">
       <div className="absolute inset-0 pointer-events-none">
         <Stars />
 
@@ -61,7 +61,8 @@ export function Hero() {
           className="absolute w-[900px] h-[900px] rounded-full"
           style={{
             background: "radial-gradient(circle, rgba(28,100,242,0.18) 0%, rgba(11,17,32,0) 70%)",
-            bottom: "-30%",
+            top: "auto",
+            bottom: "-20%",
             right: "-10%",
           }}
         />
@@ -71,28 +72,28 @@ export function Hero() {
           className="absolute w-[600px] h-[600px] rounded-full"
           style={{
             background: "radial-gradient(circle, rgba(28,100,242,0.1) 0%, rgba(11,17,32,0) 70%)",
-            top: "0%",
+            top: "-5%",
             left: "-5%",
           }}
         />
       </div>
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute right-0 top-0 w-[55%] h-full flex items-center justify-center">
+        <div className="absolute right-0 top-0 w-[55%] h-[70%]">
           <div
             className="absolute inset-0"
             style={{
-              background: "linear-gradient(90deg, rgba(11,17,32,1) 0%, rgba(11,17,32,0) 25%, rgba(11,17,32,0) 75%, rgba(11,17,32,1) 100%)",
+              background: "linear-gradient(90deg, rgba(11,17,32,1) 0%, rgba(11,17,32,0) 30%, rgba(11,17,32,0) 100%)",
             }}
           />
           <motion.div
-            animate={{ opacity: [0.4, 0.7, 0.4] }}
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             className="absolute inset-0"
             style={{
               background: "radial-gradient(ellipse at 50% 50%, rgba(37,99,235,0.2) 0%, transparent 60%)",
-              top: "15%",
-              bottom: "15%",
+              top: "10%",
+              bottom: "10%",
               left: "10%",
               right: "10%",
             }}
@@ -110,7 +111,7 @@ export function Hero() {
       </div>
 
       <Container>
-        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 py-20 lg:py-28 relative z-10">
+        <div className="flex flex-col lg:flex-row items-start gap-10 lg:gap-16 pt-24 lg:pt-32 pb-20 lg:pb-28 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -182,7 +183,7 @@ export function Hero() {
               transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
               className="absolute -inset-16 bg-gradient-to-r from-brand-500/5 via-brand-400/10 to-brand-500/5 rounded-full blur-3xl"
             />
-            <div className="relative">
+            <div className="relative mt-24 lg:mt-32">
               <OrderWidget />
             </div>
           </motion.div>
