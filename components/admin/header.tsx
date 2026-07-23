@@ -21,13 +21,16 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
         onClick={onMenuToggle}
         className="lg:hidden p-2 rounded-lg hover:bg-surface-100 text-body"
         aria-label="Toggle sidebar"
+        aria-expanded={undefined}
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-5 h-5" aria-hidden="true" />
       </button>
 
-      <div className="text-sm text-body font-medium">
-        {breadcrumbFromPath(pathname)}
-      </div>
+      <nav aria-label="Breadcrumb">
+        <div className="text-sm text-body font-medium">
+          {breadcrumbFromPath(pathname)}
+        </div>
+      </nav>
 
       <div className="ml-auto flex items-center gap-3">
         <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-danger/10 text-danger">
@@ -35,8 +38,8 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
         </span>
 
         <button className="relative p-2 rounded-lg hover:bg-surface-100 text-body" aria-label="Notifications">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full" />
+          <Bell className="w-5 h-5" aria-hidden="true" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full" aria-label="Unread notifications" />
         </button>
 
         <div className="flex items-center gap-2 pl-3 border-l border-surface-200">

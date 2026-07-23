@@ -169,7 +169,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
-              className="flex items-center gap-3"
+              className="flex flex-col sm:flex-row items-center gap-3"
             >
               <div className="relative">
                 <div className="absolute inset-0 rounded-xl bg-[#2563eb]/40 blur-xl animate-glow-pulse" />
@@ -211,7 +211,7 @@ export function Hero() {
                   className="flex items-center gap-2"
                 >
                   <div className="w-7 h-7 shrink-0 rounded-lg bg-[#2563eb]/10 border border-[#2563eb]/15 flex items-center justify-center">
-                    <Icon className="w-3.5 h-3.5 text-[#2563eb]" strokeWidth={2} />
+                    <Icon className="w-3.5 h-3.5 text-[#2563eb]" strokeWidth={2} aria-hidden="true" />
                   </div>
                   <span className="text-white/65 text-[11px] font-medium whitespace-nowrap">{label}</span>
                 </motion.div>

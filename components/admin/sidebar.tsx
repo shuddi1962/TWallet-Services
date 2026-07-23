@@ -21,7 +21,12 @@ const navItems = [
   { label: "Audit Logs", icon: ScrollText, route: "/admin/audit", roles: ["super_admin"] },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,7 +48,9 @@ export function AdminSidebar() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full bg-white border-r border-surface-200 z-50 flex flex-col transition-all duration-300 ${collapsed ? "w-[72px]" : "w-[240px]"}`}
+      className={`fixed left-0 top-0 h-full bg-white border-r border-surface-200 z-50 flex flex-col transition-all duration-300 ${collapsed ? "w-[72px]" : "w-[240px]"} ${
+        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      }`}
       aria-label="Admin navigation"
     >
       <div className="flex items-center gap-2 p-4 border-b border-surface-200">
@@ -53,14 +60,14 @@ export function AdminSidebar() {
           className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors ml-auto"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`} />
+          <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`} aria-hidden="true" />
         </button>
       </div>
 
       {!collapsed && (
         <div className="px-3 pt-3">
           <div className="flex items-center gap-2 px-3 py-2 bg-surface-100 rounded-lg text-body text-sm">
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4" aria-hidden="true" />
             <input
               type="text"
               placeholder="Search navigation..."
@@ -86,9 +93,9 @@ export function AdminSidebar() {
                   : "text-body hover:text-heading hover:bg-surface-100"
               }`}
               aria-current={isActive ? "page" : undefined}
-              title={collapsed ? item.label : undefined}
+              aria-label={collapsed ? item.label : undefined}
             >
-              <item.icon className="w-5 h-5 shrink-0" />
+              <item.icon className="w-5 h-5 shrink-0" aria-hidden="true" />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -100,7 +107,7 @@ export function AdminSidebar() {
           href="/"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-body hover:text-heading hover:bg-surface-100 transition-colors"
         >
-          <LogOut className="w-5 h-5 shrink-0" />
+          <LogOut className="w-5 h-5 shrink-0" aria-hidden="true" />
           {!collapsed && <span>Back to Site</span>}
         </Link>
       </div>

@@ -68,7 +68,7 @@ export function Footer() {
             <div className="sm:col-span-2 lg:col-span-2">
               <Link href="/" className="flex items-center gap-3 group">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-500/30 transition-transform group-hover:scale-110">
-                  <CreditCard className="h-5 w-5 text-white" />
+                  <CreditCard className="h-5 w-5 text-white" aria-hidden="true" />
                 </div>
                   <span className="text-xl font-bold tracking-tight text-surface-900">
                     TWALLET
@@ -87,26 +87,28 @@ export function Footer() {
                     aria-label={social.label}
                     className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-200 text-surface-500 transition-all hover:bg-brand-100 hover:text-brand-600"
                   >
-                    <social.icon className="h-4 w-4" />
+                    <social.icon className="h-4 w-4" aria-hidden="true" />
                   </a>
                 ))}
               </div>
 
               <div className="mt-8">
-                <h3 className="text-sm font-semibold text-surface-900 mb-4">Stay updated</h3>
+                <h3 id="newsletter-heading" className="text-sm font-semibold text-surface-900 mb-4">Stay updated</h3>
                 {submitted ? (
                   <div className="flex items-center gap-2 rounded-lg bg-success/10 px-4 py-3 text-sm text-success border border-success/20 max-w-xs">
-                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span>Thanks for subscribing!</span>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="flex max-w-xs gap-2">
                     <Input
+                      id="newsletter-email"
                       type="email"
                       placeholder="Enter your email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      aria-labelledby="newsletter-heading"
                       className="flex-1 h-10 bg-white border-surface-200 text-surface-900 placeholder:text-surface-400 text-sm focus:border-brand-500"
                     />
                     <Button

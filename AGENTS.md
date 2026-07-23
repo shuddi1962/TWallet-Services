@@ -89,14 +89,12 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 
 ### Session 3 — Jul 23, 2026
 - **Wallet provider** — Web3Modal + wagmi + viem installed, `providers/index.tsx` with `WagmiProvider` + `QueryClientProvider` + `createWeb3Modal`, `defaultWagmiConfig` for 6 chains, `account` dependency resolved with webpack fallback, `indexedDB` SSR fixed via `components/wallet-providers.tsx` dynamic import with `ssr: false`
-- **Admin layout** — Collapsible sidebar (13 items, search, role-based, localStorage persistence), sticky header (breadcrumb, environment badge, notification bell, admin profile), responsive with mobile hamburger
-- **Admin overview dashboard** — 8 stat cards (Total Users, Active Wallets, Pending Orders, Completed Orders, Revenue, Open Tickets, System Health, Today's TX), recent orders table, recent payments table, recent signups list, open tickets list, activity feed timeline
-- **Admin users page** — Searchable table with status/role/country/wallet/created columns, inline suspend/reactivate via server actions
-- **Admin orders page** — Search/filter table with status badge, status transition dropdown (per state machine), inline update server action
-- **Admin payments page** — Searchable table with tx hash/amount/network/status, block explorer links
-- **Admin card products page** — Searchable table with type/price/status, empty state with icon
-- **Admin system settings page** — Tabbed UI (General/Payments/Security/Notifications/KYC), inline toggles/selects/inputs, save button per section
-- **Admin audit logs page** — Searchable expandable rows with action badge, admin name, timestamp, detail drawer showing target/IP/before-after diff
+- **Admin dashboard (tasks 056–063)** — Layout with collapsible sidebar (13 items, search), sticky header; overview (8 stat cards + tables), users (searchable table, inline suspend/reactivate), orders (state machine dropdown), payments (block explorer links), cards (empty state), settings (tabbed toggles), audit logs (expandable rows with detail drawer)
+
+### Session 4 — Jul 23, 2026
+- **Test infrastructure** — MSW handlers, Playwright config, vitest setup file
+- **Unit tests (tasks 066–067)** — 82 tests across 10 files: `validations` (25), `errors` (7), `cards` (5), `cn` (3), `use-in-view` (3), auth actions (13), orders actions (8), payments actions (4), admin actions (11), auth integration (3)
+- **E2E stubs (tasks 070–073)** — Playwright spec files for auth, wallet, card ordering, admin operations
 
 ### Session 2 — Jul 22, 2026 (Landing Page Rebuild)
 - **Brand color change** — Indigo → Blue (#2563EB) primary palette

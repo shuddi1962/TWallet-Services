@@ -22,7 +22,7 @@ export default function LoginPage() {
         <CardContent className="p-6">
           <form action={formAction} className="space-y-4">
             {state?.error && (
-              <div className="rounded-lg border border-error/20 bg-error/10 p-3 text-sm text-error">
+              <div className="rounded-lg border border-error/20 bg-error/10 p-3 text-sm text-error" role="alert">
                 {state.error}
               </div>
             )}

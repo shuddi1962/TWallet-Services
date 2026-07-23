@@ -58,7 +58,7 @@ export default function DashboardPage() {
         </div>
         <Button asChild>
           <Link href="/dashboard/orders">
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" aria-hidden="true" />
             New Order
           </Link>
         </Button>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/dashboard/orders">
                   View all
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
             </div>
@@ -110,7 +110,7 @@ export default function DashboardPage() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/dashboard/wallet">
                   Manage
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
             </div>

@@ -29,7 +29,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-white/5 bg-surface-950 lg:flex">
+    <aside className="hidden w-64 shrink-0 border-r border-white/5 bg-surface-950 lg:flex" aria-label="Dashboard navigation">
       <div className="flex h-full flex-col">
         <div className="flex h-16 items-center border-b border-white/5 px-6">
           <Link href="/" className="flex items-center gap-3 group">
@@ -59,7 +59,7 @@ export function Sidebar() {
                     : "text-surface-400 hover:bg-white/5 hover:text-white",
                 )}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-5 w-5" aria-hidden="true" />
                 {item.label}
               </Link>
             );
@@ -71,7 +71,7 @@ export function Sidebar() {
             href="/"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-surface-500 transition-colors hover:bg-white/5 hover:text-white"
           >
-            <ArrowLeftRight className="h-5 w-5" />
+            <ArrowLeftRight className="h-5 w-5" aria-hidden="true" />
             Back to Site
           </Link>
         </div>

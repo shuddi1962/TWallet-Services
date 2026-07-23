@@ -38,7 +38,7 @@ export function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] shadow-lg shadow-[#2563eb]/30 flex items-center justify-center transition-transform group-hover:scale-110">
-            <Shield className="w-5 h-5 text-white" strokeWidth={2.5} />
+            <Shield className="w-5 h-5 text-white" strokeWidth={2.5} aria-hidden="true" />
           </div>
           <span className="text-white font-bold text-lg tracking-tight">
             TWALLET
@@ -71,9 +71,11 @@ export function Header() {
           <button
             className="md:hidden w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:border-white/20 transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -84,6 +86,9 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
+            id="mobile-menu"
+            role="navigation"
+            aria-label="Mobile navigation"
             className="border-t border-white/10 bg-[#05070a] md:hidden"
           >
             <div className="px-4 py-4 flex flex-col gap-3">

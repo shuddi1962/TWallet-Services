@@ -43,7 +43,7 @@ export function Features() {
               <div className="absolute inset-0 bg-gradient-to-br from-brand-50/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
               <div className="relative">
                 <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 shadow-lg shadow-brand-500/20">
-                  <feature.icon className="h-5 w-5 text-white" />
+                  <feature.icon className="h-5 w-5 text-white" aria-hidden="true" />
                 </div>
                 <h3 className="text-lg font-semibold text-surface-900">{feature.title}</h3>
                 <p className="mt-2.5 text-sm text-surface-500 leading-relaxed">{feature.description}</p>
