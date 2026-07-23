@@ -1,104 +1,106 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronDown, Minus, Plus, Wallet } from "lucide-react";
+
+const networks = ["Ethereum", "BNB Chain", "Polygon"];
 
 export function OrderWidget() {
-  const [tab, setTab] = useState<"physical" | "virtual">("virtual");
-  const [network, setNetwork] = useState("Ethereum");
+  const [activeTab, setActiveTab] = useState("Physical Card");
+  const [selectedNetwork, setSelectedNetwork] = useState("Ethereum");
+  const [quantity, setQuantity] = useState(1);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-surface-900/80 backdrop-blur-xl p-4 w-full max-w-sm shadow-xl">
-      <div className="flex rounded-lg bg-white/5 p-0.5 mb-4">
-        <button
-          onClick={() => setTab("virtual")}
-          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-            tab === "virtual"
-              ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
-              : "text-surface-400 hover:text-white"
-          }`}
-        >
-          Virtual Card
-        </button>
-        <button
-          onClick={() => setTab("physical")}
-          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-            tab === "physical"
-              ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
-              : "text-surface-400 hover:text-white"
-          }`}
-        >
-          Physical Card
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <label className="text-[10px] font-medium text-surface-400 mb-1 block">Network</label>
-          <select
-            value={network}
-            onChange={(e) => setNetwork(e.target.value)}
-            className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-white focus:border-brand-500/50 focus:outline-none appearance-none"
+    <div className="bg-[#0c0e14] border border-white/8 rounded-2xl p-5 lg:p-6 shadow-2xl shadow-black/40 w-full max-w-sm">
+      <div className="flex gap-6 border-b border-white/8 mb-5">
+        {["Physical Card", "Virtual Card"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-3 text-sm font-medium transition-colors relative ${
+              activeTab === tab ? "text-white" : "text-white/45 hover:text-white/70"
+            }`}
           >
-            <option value="Ethereum">Ethereum</option>
-            <option value="BNB">BNB Chain</option>
-            <option value="Polygon">Polygon</option>
-            <option value="Arbitrum">Arbitrum</option>
-            <option value="Base">Base</option>
-          </select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-[10px] font-medium text-surface-400 mb-1 block">Quantity</label>
-            <select className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-white focus:border-brand-500/50 focus:outline-none appearance-none">
-              <option>1</option>
-              <option>2</option>
-              <option>3</option>
-              <option>5</option>
-              <option>10</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-[10px] font-medium text-surface-400 mb-1 block">Country</label>
-            <select className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-white focus:border-brand-500/50 focus:outline-none appearance-none">
-              <option>United States</option>
-              <option>United Kingdom</option>
-              <option>EU</option>
-              <option>Canada</option>
-              <option>Singapore</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-[10px] font-medium text-surface-400 mb-1 block">Price</label>
-          <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 flex items-center justify-between">
-            <span className="text-base font-bold text-white">
-              {tab === "physical" ? "$25" : "$5"}
-            </span>
-            <span className="text-[10px] text-surface-400 bg-white/5 px-1.5 py-0.5 rounded">USDT</span>
-          </div>
-        </div>
-
-        <Button
-          fullWidth
-          size="sm"
-          className="bg-gradient-to-r from-brand-500 to-brand-700 text-white border-0 shadow-lg shadow-brand-500/25"
-          asChild
-        >
-          <Link href="/auth/register">
-            Connect Wallet
-            <ArrowRight className="h-3 w-3" />
-          </Link>
-        </Button>
-
-        <p className="text-center text-[10px] text-surface-500">
-          Secure · Non-custodial · 2 min setup
-        </p>
+            {tab}
+            {activeTab === tab && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0066FF] rounded-full" />
+            )}
+          </button>
+        ))}
       </div>
+
+      <div className="mb-4">
+        <label className="block text-white/45 text-xs font-medium mb-2">Select Card Type</label>
+        <div className="flex items-center justify-between px-4 h-11 rounded-lg bg-white/5 border border-white/8 hover:border-white/15 transition-colors cursor-pointer">
+          <span className="text-white text-sm font-medium">Premium Black Card</span>
+          <ChevronDown className="w-4 h-4 text-white/40" />
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-white/45 text-xs font-medium mb-2">Select Network</label>
+        <div className="grid grid-cols-3 gap-2">
+          {networks.map((net) => (
+            <button
+              key={net}
+              onClick={() => setSelectedNetwork(net)}
+              className={`h-10 rounded-lg text-xs font-semibold transition-all border ${
+                selectedNetwork === net
+                  ? "bg-[#0066FF]/15 border-[#0066FF]/50 text-white"
+                  : "bg-white/5 border-white/8 text-white/50 hover:border-white/20"
+              }`}
+            >
+              {net}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-white/45 text-xs font-medium mb-2">Quantity</label>
+        <div className="flex items-center justify-between px-2 h-11 rounded-lg bg-white/5 border border-white/8">
+          <button
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            className="w-7 h-7 rounded-md hover:bg-white/10 flex items-center justify-center text-white/70 transition-colors"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <span className="text-white text-sm font-semibold w-8 text-center">{quantity}</span>
+          <button
+            onClick={() => setQuantity((q) => q + 1)}
+            className="w-7 h-7 rounded-md hover:bg-white/10 flex items-center justify-center text-white/70 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-5">
+        <label className="block text-white/45 text-xs font-medium mb-2">Shipping Country</label>
+        <div className="flex items-center justify-between px-4 h-11 rounded-lg bg-white/5 border border-white/8 hover:border-white/15 transition-colors cursor-pointer">
+          <div className="flex items-center gap-2.5">
+            <span className="text-base leading-none">🇳🇬</span>
+            <span className="text-white text-sm font-medium">Nigeria</span>
+          </div>
+          <ChevronDown className="w-4 h-4 text-white/40" />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between py-4 mb-5 border-t border-b border-white/8">
+        <div>
+          <div className="text-white/45 text-xs font-medium">You Will Pay</div>
+          <div className="text-white text-xl font-bold mt-0.5">50 USDT</div>
+        </div>
+        <div className="flex items-center gap-2 px-3 h-9 rounded-lg bg-white/5 border border-white/8 cursor-pointer hover:border-white/15 transition-colors">
+          <span className="text-white text-xs font-semibold">USDT</span>
+          <ChevronDown className="w-3.5 h-3.5 text-white/40" />
+        </div>
+      </div>
+
+      <button className="w-full h-12 rounded-xl bg-[#0066FF] hover:bg-[#0052cc] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5">
+        <Wallet className="w-4.5 h-4.5" strokeWidth={2} />
+        Connect Wallet to Continue
+      </button>
     </div>
   );
 }
