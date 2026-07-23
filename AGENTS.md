@@ -94,7 +94,10 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 ### Session 4 — Jul 23, 2026
 - **Test infrastructure** — MSW handlers, Playwright config, vitest setup file
 - **Unit tests (tasks 066–067)** — 82 tests across 10 files: `validations` (25), `errors` (7), `cards` (5), `cn` (3), `use-in-view` (3), auth actions (13), orders actions (8), payments actions (4), admin actions (11), auth integration (3)
-- **E2E stubs (tasks 070–073)** — Playwright spec files for auth, wallet, card ordering, admin operations
+- **Integration tests (tasks 068–069)** — Auth full flow (signup → signin → password reset → signout), error path coverage
+- **E2E tests (tasks 070–073)** — Playwright spec files for auth registration, wallet connection, card ordering, admin CRUD
+- **Responsive design pass (task 064)** — Admin sidebar mobile overlay/drawer pattern, hero CTA stacking on 320px, responsive grid padding
+- **Accessibility pass (task 065)** — aria-expanded/aria-controls on hamburger toggles, nav landmarks with aria-labels, role="alert" on form errors, aria-describedby on password hints, aria-hidden="true" on all decorative icons, breadcrumb `<nav>` landmark, newsletter input `aria-labelledby`
 
 ### Session 2 — Jul 22, 2026 (Landing Page Rebuild)
 - **Brand color change** — Indigo → Blue (#2563EB) primary palette
