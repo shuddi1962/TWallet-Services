@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function OrderConfirmationPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
   const { data: order, error } = await getOrder(id);
