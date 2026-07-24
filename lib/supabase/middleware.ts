@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -9,25 +10,17 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
+        getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          for (const { name, value } of cookiesToSet) {
-            request.cookies.set(name, value);
-          }
+          for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
           supabaseResponse = NextResponse.next({ request });
-          for (const { name, value, options } of cookiesToSet) {
-            supabaseResponse.cookies.set(name, value, options);
-          }
+          for (const { name, value, options } of cookiesToSet) supabaseResponse.cookies.set(name, value, options);
         },
       },
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isAdminPage = request.nextUrl.pathname.startsWith("/admin");
@@ -47,13 +40,13 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isAdminPage && user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const { data: admin }: any = await supabase
+      .from("admins")
+      .select("profile_id, user_roles!inner(role)")
+      .eq("profile_id", user.id)
+      .maybeSingle();
 
-    if (profile?.role !== "admin") {
+    if (!admin) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);

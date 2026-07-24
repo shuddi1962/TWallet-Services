@@ -1,52 +1,45 @@
 "use client";
 
-import { useEffect } from "react";
+import posthog from "posthog-js";
 
-export type AnalyticsEvent =
-  | "page_view"
-  | "order_created"
-  | "payment_submitted"
-  | "payment_verified"
-  | "wallet_connected"
-  | "card_ordered"
-  | "signup_completed";
+type EventProperties = Record<string, string | number | boolean | undefined>;
 
-export interface AnalyticsProps {
-  enabled?: boolean;
-}
-
-export function trackEvent(event: AnalyticsEvent, properties?: Record<string, unknown>) {
-  if (typeof window === "undefined") return;
+export function trackEvent(name: string, properties?: EventProperties) {
   try {
-    if (typeof window.umami !== "undefined") {
-      window.umami.track(event, properties);
-    }
-    if (typeof window.gtag !== "undefined") {
-      window.gtag("event", event, properties);
+    if (typeof posthog.capture === "function") {
+      posthog.capture(name, properties);
     }
   } catch {
-    // silently fail in environments without analytics
+    // Analytics should never break the app
   }
 }
 
-export function AnalyticsProvider({ enabled = true }: AnalyticsProps) {
-  useEffect(() => {
-    if (!enabled || typeof window === "undefined") return;
-    trackEvent("page_view", { path: window.location.pathname });
-  }, [enabled]);
+// Auth events
+export const trackSignup = () => trackEvent("user_registered");
+export const trackLogin = () => trackEvent("user_logged_in");
+export const trackLogout = () => trackEvent("user_logged_out");
 
-  return null;
-}
+// Wallet events
+export const trackWalletConnected = (provider: string) => trackEvent("wallet_connected", { provider });
+export const trackWalletDisconnected = () => trackEvent("wallet_disconnected");
+export const trackNetworkSwitched = (chainId: number) => trackEvent("network_switched", { chainId: String(chainId) });
 
-export function usePageViewTracking() {
-  useEffect(() => {
-    trackEvent("page_view", { path: window.location.pathname });
-  }, []);
-}
+// Card events
+export const trackCardOrdered = (productName: string) => trackEvent("card_ordered", { product: productName });
+export const trackCardViewed = (cardType: string) => trackEvent("card_viewed", { type: cardType });
 
-declare global {
-  interface Window {
-    umami?: { track: (event: string, data?: Record<string, unknown>) => void };
-    gtag?: (command: string, ...args: unknown[]) => void;
-  }
-}
+// Payment events
+export const trackPaymentInitiated = (amount: string, network: string) => trackEvent("payment_initiated", { amount, network });
+export const trackPaymentConfirmed = (txHash: string) => trackEvent("payment_confirmed", { txHash: txHash.slice(0, 10) });
+export const trackPaymentFailed = (reason: string) => trackEvent("payment_failed", { reason });
+
+// Order events
+export const trackOrderCreated = () => trackEvent("order_created");
+export const trackOrderStatusChanged = (status: string) => trackEvent("order_status_changed", { status });
+
+// Support events
+export const trackTicketCreated = () => trackEvent("support_ticket_created");
+export const trackTicketResolved = () => trackEvent("support_ticket_resolved");
+
+// Navigation events
+export const trackPageView = (path: string) => trackEvent("page_view", { path });
