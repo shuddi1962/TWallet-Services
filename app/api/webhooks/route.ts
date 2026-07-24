@@ -11,10 +11,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: { message: "event is required" } }, { status: 400 });
     }
 
-    const supabase = createAdminClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = createAdminClient() as any;
     const { error } = await supabase
       .from("webhook_events")
-      .insert({ event, payload: data, signature, source: request.headers.get("x-webhook-source") ?? "unknown" }) as unknown as { error: { message: string } | null };
+      .insert({ event, payload: data, signature, source: request.headers.get("x-webhook-source") ?? "unknown" });
 
     if (error) throw error;
 

@@ -11,15 +11,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ segm
     const limit = Math.min(Number(searchParams.get("limit")) || 20, 100);
     const offset = Number(searchParams.get("offset")) || 0;
 
-    const supabase = createAdminClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = createAdminClient() as any;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new AppError(ErrorCodes.UNAUTHORIZED, "Not authenticated");
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single() as unknown as { data: { role: string } | null };
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
     if (!profile || !["super_admin", "operations", "finance", "support", "viewer"].includes(profile.role)) {
       throw new AppError(ErrorCodes.FORBIDDEN, "Not authorized");
     }
@@ -27,15 +24,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ segm
     if (segments.length === 0) {
       const results: Record<string, number> = {};
       for (const table of ALLOWED_TABLES) {
-        const { count } = await supabase
-          .from(table).select("*", { count: "exact", head: true }) as unknown as { count: number | null };
+        const { count } = await supabase.from(table).select("*", { count: "exact", head: true });
         results[table] = count ?? 0;
       }
       return NextResponse.json({ data: results });
     }
 
     const table = segments[0];
-    if (!ALLOWED_TABLES.includes(table as typeof ALLOWED_TABLES[number])) {
+    if (!ALLOWED_TABLES.includes(table)) {
       throw new AppError(ErrorCodes.VALIDATION_ERROR, "Invalid table");
     }
 
@@ -43,7 +39,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ segm
       .from(table)
       .select("*", { count: "estimated" })
       .range(offset, offset + limit - 1)
-      .order("created_at", { ascending: false }) as unknown as { data: unknown; error: { message: string } | null; count: number | null };
+      .order("created_at", { ascending: false });
 
     if (error) throw new AppError(ErrorCodes.INTERNAL_ERROR, error.message);
 

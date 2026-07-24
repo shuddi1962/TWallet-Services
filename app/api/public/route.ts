@@ -10,14 +10,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: { message: "endpoint is required" } }, { status: 400 });
     }
 
-    const supabase = await createServerSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = await createServerSupabaseClient() as any;
 
     switch (endpoint) {
       case "products": {
         const { data, error } = await supabase
           .from("card_products")
           .select("id, name, type, price_usdc, delivery_days, features")
-          .eq("active", true) as unknown as { data: unknown; error: { message: string } | null };
+          .eq("active", true);
         if (error) throw error;
         return NextResponse.json({ data });
       }
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
         const { data, error } = await supabase
           .from("supported_networks")
           .select("*")
-          .eq("active", true) as unknown as { data: unknown; error: { message: string } | null };
+          .eq("active", true);
         if (error) throw error;
         return NextResponse.json({ data });
       }
