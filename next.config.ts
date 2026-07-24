@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import path from "path";
 
-let nextConfig: NextConfig = {
+const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: "2mb",
@@ -50,6 +50,9 @@ let nextConfig: NextConfig = {
   ],
   webpack: (config, { isServer }) => {
     const stubs = path.resolve("lib/stubs");
+    const ep = path.resolve(
+      "node_modules/@web3modal/wagmi/node_modules/@walletconnect/.ethereum-provider-ZFGd1aIF",
+    );
     config.resolve.alias = {
       ...config.resolve.alias,
       "@x402/evm/upto/client": `${stubs}/x402-evm.mjs`,
@@ -57,20 +60,34 @@ let nextConfig: NextConfig = {
       "@x402/evm": `${stubs}/x402-evm.mjs`,
       "@x402/core/client": `${stubs}/x402-core.mjs`,
       "@x402/svm/exact/client": `${stubs}/x402-svm.mjs`,
+      "@reown/appkit-ui": `${stubs}/reown-ui.mjs`,
+      "@reown/appkit-scaffold-ui/basic": `${stubs}/reown-scaffold.mjs`,
+      "@reown/appkit-scaffold-ui/w3m-modal": `${stubs}/reown-scaffold.mjs`,
+      "@walletconnect/ethereum-provider": `${ep}/dist/index.es.js`,
     };
+    config.module.rules.push({
+      test: /\.m?js/,
+      resolve: { fullySpecified: false },
+    });
+
     config.resolve.fallback = {
       ...config.resolve.fallback,
       "pino-pretty": false,
       "@react-native-async-storage/async-storage": false,
       "accounts": false,
+      ...(isServer ? {} : { net: false, tls: false }),
     };
+
+    config.resolve.conditionNames = ["require", "default", "import"];
 
     return config;
   },
 };
 
-const withBundleAnalyzer = process.env.ANALYZE === "true"
-  ? (await import("@next/bundle-analyzer")).default({ enabled: true })
-  : (config: NextConfig) => config;
+export default async function () {
+  const withBundleAnalyzer = process.env.ANALYZE === "true"
+    ? (await import("@next/bundle-analyzer")).default({ enabled: true })
+    : (config: NextConfig) => config;
 
-export default withBundleAnalyzer(nextConfig);
+  return withBundleAnalyzer(nextConfig);
+}

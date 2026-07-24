@@ -47,12 +47,20 @@ export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
   );
 
   return (
-    <aside
-      className={`fixed left-0 top-0 h-full bg-white border-r border-surface-200 z-50 flex flex-col transition-all duration-300 ${collapsed ? "w-[72px]" : "w-[240px]"} ${
-        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      }`}
-      aria-label="Admin navigation"
-    >
+    <>
+      {mobileOpen && onCloseMobile && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`fixed left-0 top-0 h-full bg-white border-r border-surface-200 z-50 flex flex-col transition-all duration-300 ${collapsed ? "w-[72px]" : "w-[240px]"} ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+        aria-label="Admin navigation"
+      >
       <div className="flex items-center gap-2 p-4 border-b border-surface-200">
         {!collapsed && <span className="text-xl font-bold text-primary">TWALLET</span>}
         <button
@@ -112,5 +120,6 @@ export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
         </Link>
       </div>
     </aside>
+    </>
   );
 }

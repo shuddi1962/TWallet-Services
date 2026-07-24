@@ -32,6 +32,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://*.walletconnect.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://*.supabase.co" />
         <link rel="dns-prefetch" href="https://*.walletconnect.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "TWALLET Services",
+              url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://twalletservices.com",
+              description: "Non-custodial crypto-funded card platform",
+            }),
+          }}
+        />
       </head>
       <body>
         <WalletProviders>{children}</WalletProviders>
