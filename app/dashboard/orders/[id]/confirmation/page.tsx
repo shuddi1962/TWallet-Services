@@ -1,55 +1,25 @@
-"use client";
-
-import { use } from "react";
-import { useEffect, useState } from "react";
+import { getOrder } from "@/features/orders/server/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
-export default function OrderConfirmationPage(props: { params: Promise<{ id: string }> }) {
-  const { id } = use(props.params);
-  const [order, setOrder] = useState<Record<string, unknown> | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export const dynamic = "force-dynamic";
 
-  useEffect(() => {
-    async function load() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setError("Not authenticated"); return; }
-      const { data, error: err } = await supabase
-        .from("card_orders")
-        .select("*, card_products(*), payment_transactions(*), shipping_addresses(*)")
-        .eq("id", id)
-        .eq("user_id", user.id)
-        .single();
-      if (err) { setError(err.message); return; }
-      setOrder(data);
-    }
-    load();
-  }, [id]);
+export default async function OrderConfirmationPage(props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
+  const { data: order, error } = await getOrder(id);
 
-  if (error) {
+  if (error || !order) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white">Order Not Found</h1>
-          <p className="mt-2 text-surface-400">{error}</p>
+          <p className="mt-2 text-surface-400">{error ?? "Could not load order."}</p>
         </div>
       </div>
     );
   }
-
-  if (!order) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-400" />
-      </div>
-    );
-  }
-
-  const cardProducts = order.card_products as Record<string, unknown> | null;
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
@@ -59,7 +29,7 @@ export default function OrderConfirmationPage(props: { params: Promise<{ id: str
         </div>
         <h1 className="mt-6 text-2xl font-bold text-white">Order Placed!</h1>
         <p className="mt-2 text-surface-400">
-          Your order <span className="font-semibold text-surface-200">{order.order_number as string}</span> has been created.
+          Your order <span className="font-semibold text-surface-200">{order.order_number}</span> has been created.
         </p>
 
         <Card className="mt-8 text-left">
@@ -69,15 +39,15 @@ export default function OrderConfirmationPage(props: { params: Promise<{ id: str
           <CardContent className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-surface-400">Product</span>
-              <span className="text-surface-200">{cardProducts?.name as string ?? "—"}</span>
+              <span className="text-surface-200">{order.card_products?.name ?? "—"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-surface-400">Amount</span>
-              <span className="font-semibold text-brand-400">{order.amount_usdc as string} USDC</span>
+              <span className="font-semibold text-brand-400">{order.amount_usdc} USDC</span>
             </div>
             <div className="flex justify-between">
               <span className="text-surface-400">Status</span>
-              <span className="capitalize text-surface-200">{order.status as string}</span>
+              <span className="capitalize text-surface-200">{order.status}</span>
             </div>
           </CardContent>
         </Card>

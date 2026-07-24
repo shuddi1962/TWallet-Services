@@ -1,4 +1,4 @@
-import { getOrder } from "@/features/orders/server/actions";
+import { getOrder } from "@/features/orders/server/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
