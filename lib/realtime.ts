@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 
-type ChannelCallback = (payload: Record<string, unknown>) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ChannelCallback = (payload: any) => void;
 
 export function subscribeOrders(userId: string, callback: ChannelCallback) {
   const supabase = createClient();
@@ -9,7 +10,7 @@ export function subscribeOrders(userId: string, callback: ChannelCallback) {
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "card_orders", filter: `user_id=eq.${userId}` },
-      (payload) => callback(payload.new),
+      (payload: any) => callback(payload.new),
     )
     .subscribe();
 }
@@ -21,7 +22,7 @@ export function subscribeNotifications(userId: string, callback: ChannelCallback
     .on(
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-      (payload) => callback(payload.new),
+      (payload: any) => callback(payload.new),
     )
     .subscribe();
 }
@@ -33,7 +34,7 @@ export function subscribePayments(orderId: string, callback: ChannelCallback) {
     .on(
       "postgres_changes",
       { event: "UPDATE", schema: "public", table: "payment_transactions", filter: `order_id=eq.${orderId}` },
-      (payload) => callback(payload.new),
+      (payload: any) => callback(payload.new),
     )
     .subscribe();
 }
@@ -45,7 +46,7 @@ export function subscribeWallets(userId: string, callback: ChannelCallback) {
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "wallets", filter: `user_id=eq.${userId}` },
-      (payload) => callback(payload.new),
+      (payload: any) => callback(payload.new),
     )
     .subscribe();
 }
@@ -57,7 +58,7 @@ export function subscribeAdminOrders(callback: ChannelCallback) {
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "card_orders" },
-      (payload) => callback(payload.new),
+      (payload: any) => callback(payload.new),
     )
     .subscribe();
 }
@@ -69,7 +70,7 @@ export function subscribeAdminPayments(callback: ChannelCallback) {
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "payment_transactions" },
-      (payload) => callback(payload.new),
+      (payload: any) => callback(payload.new),
     )
     .subscribe();
 }
@@ -81,7 +82,7 @@ export function subscribeAdminUsers(callback: ChannelCallback) {
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "profiles" },
-      (payload) => callback(payload.new),
+      (payload: any) => callback(payload.new),
     )
     .subscribe();
 }
