@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib";
+import { createClient } from "@/lib/supabase/client";
 
 export default function OrderConfirmationPage(props: { params: Promise<{ id: string }> }) {
   const { id } = use(props.params);
