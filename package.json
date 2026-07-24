@@ -42,9 +42,11 @@
     "viem": "^2.55.8",
     "wagmi": "^3.7.4",
     "ws": "^8.21.1",
+    "resend": "^4.0.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@sentry/nextjs": "^9.0.0",
     "@next/bundle-analyzer": "^16.2.11",
     "@playwright/test": "^1.52.0",
     "@tailwindcss/postcss": "^4.1.0",

@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import path from "path";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -86,5 +87,11 @@ export default async function () {
     ? (await import("@next/bundle-analyzer")).default({ enabled: true })
     : (config: NextConfig) => config;
 
-  return withBundleAnalyzer(nextConfig);
+  const config = withBundleAnalyzer(nextConfig);
+
+  return withSentryConfig(config, {
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    disableLogger: true,
+  });
 }

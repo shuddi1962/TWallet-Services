@@ -116,9 +116,19 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Page composition** — New section order: Hero → Stats → Features → CardShowcase → Benefits → DashboardPreview → HowItWorks → Wallets → Pricing → Testimonials → FAQ → CTA
 - **Old sections removed** — `announcement-bar.tsx`, `networks.tsx`, `security.tsx`, `newsletter.tsx`
 
+### Session 5 — Jul 24, 2026
+- **Vercel deployment fixes (iterative)** — 5 commits resolving build failures:
+  - `bf8f150`: admin API route `as any` eslint-disable alignment
+  - `278d002`: `ALLOWED_TABLES.includes` + profile role type assertions
+  - `f62d84e`: removed framer-motion `Variants` import (not exported in version)
+  - `2fbd634`: explicit `any` type annotations on realtime callbacks
+  - `06d3944`: replaced `any` with `unknown` in realtime callbacks (lint compliance)
+- **Commit `06d3944` built READY on Vercel**
+- **All tasks implemented** from earlier session: 026, 028, 029, 030, 034, 035, 055, 061, 069, 005, 009, 027, 054, 095
+
 ### Pending
 - WalletConnect Project ID placeholder — replace with real key before production
-- `/admin/analytics` — empty directory stub; needs charts (Recharts) page
+- `/admin/analytics` — needs chart library integration (Recharts)
 - `/admin/support` — empty directory stub; needs ticket management page
 
 ### Known Issues
