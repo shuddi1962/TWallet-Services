@@ -1,10 +1,3 @@
-async function getResend() {
-  const { Resend } = await import("resend");
-  const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error("RESEND_API_KEY is not configured");
-  return new Resend(key);
-}
-
 export interface EmailParams {
   to: string;
   subject: string;
@@ -13,15 +6,23 @@ export interface EmailParams {
 
 export async function sendEmail(params: EmailParams): Promise<{ success: boolean; error?: string }> {
   try {
-    const resend = await getResend();
-    const { error } = await resend.emails.send({
-      from: "TWallet <noreply@twallet.com>",
-      to: params.to,
-      subject: params.subject,
-      html: params.html,
+    const key = process.env.RESEND_API_KEY;
+    if (!key) throw new Error("RESEND_API_KEY is not configured");
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "TWallet <noreply@twallet.com>",
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+      }),
     });
-
-    if (error) return { success: false, error: error.message };
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.message ?? "Failed to send email" };
     return { success: true };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Failed to send email" };
