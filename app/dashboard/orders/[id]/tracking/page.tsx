@@ -1,13 +1,56 @@
-import { getOrder } from "@/features/orders/server/queries";
+"use client";
+
+import { useEffect, useState } from "react";
+import { use } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Truck, Package, MapPin, ArrowLeft } from "lucide-react";
+import { Truck, Package, MapPin, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 
-export default async function OrderTrackingPage(props: { params: Promise<{ id: string }> }) {
-  const { id } = await props.params;
-  const { data: order, error } = await getOrder(id);
+export default function OrderTrackingPage(props: { params: Promise<{ id: string }> }) {
+  const { id } = use(props.params);
+  const [order, setOrder] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function loadOrder() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError("Not authenticated");
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("card_orders")
+        .select("*, card_products(name, type)")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .single();
+
+      if (error || !data) {
+        setError(error?.message ?? "Order not found");
+      } else {
+        setOrder(data);
+      }
+      setLoading(false);
+    }
+
+    loadOrder();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-400" />
+      </div>
+    );
+  }
 
   if (error || !order) {
     return (
