@@ -133,8 +133,19 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **CI pipeline** — `.github/workflows/ci.yml` with 4-stage (lint → typecheck → test → build), Node 20, `--legacy-peer-deps`
 - **AGENTS.md updated** — Pending section corrected (analytics & support were already implemented)
 
-### Pending
-- WalletConnect Project ID placeholder — replace with real key before production
+### Session 7 — Jul 24, 2026
+- **Pending changes committed & pushed** — Session 6 uncommitted work (16 modified + 1 new file) committed as `7d4d8a2` and pushed to GitHub
+- **Build fix** — `tests/setup.ts` `vi.mock()` removed (broke Next.js build because `vi` is vitest-only); committed as `c5bb975`
+- **Vercel deploy** — Production deploy `c5bb975` built READY at `https://twallet-services-kh78u5461.vercel.app` (aliased to `twalletservices.com`)
+- **Remaining work documented** — Full gap analysis performed (see below)
+
+### Remaining
+- **Missing pages (14):** `/how-it-works`, `/cards`, `/pricing`, `/about`, `/faq` (public), `/auth/verify-email`, `not-found.tsx`, `error.tsx`, `loading.tsx` (global), order detail/new/confirmation/tracking (dashboard)
+- **Missing Edge Functions:** `transition-order`, `send-email`
+- **Empty email templates:** `emails/` directory — no `.tsx` templates exist
+- **`.tasks/` directory:** Does not exist on disk (referenced in docs but never created)
+- **Production checklist:** All 10 items unchecked (domain, SSL, prod DB, real API keys, Sentry, monitoring, backups, rollback)
+- **Real API keys:** WalletConnect Project ID, Alchemy, Sentry DSN, Resend, Supabase credentials — all placeholders
 
 ### Known Issues
 - `@wagmi/connectors` has warnings about missing optional deps (safe-sdk, porto, metamask-connect, coinbase-sdk, base-org/account) — non-blocking, webpack resolves to false
