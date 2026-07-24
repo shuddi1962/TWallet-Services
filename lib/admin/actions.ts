@@ -3,6 +3,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { sendEmail, buildPaymentReceivedEmail, buildOrderShippedEmail, buildShippingUpdateEmail } from "@/lib/email";
 import type {
   RecentOrder,
   RecentPayment,
@@ -193,8 +195,66 @@ export async function getAuditLogs(options?: { search?: string; action?: string;
 
 export async function updateOrderStatus(orderId: string, status: string): Promise<ActionResult> {
   const supabase: any = await sb();
+
+  // Get order with user email before updating
+  const { data: order }: any = await supabase
+    .from("card_orders")
+    .select("*, profiles!inner(full_name, email)")
+    .eq("id", orderId)
+    .single();
+
   const { error }: any = await supabase.from("card_orders").update({ status } as any).eq("id", orderId);
   if (error) return { success: false, error: error.message as string };
+
+  // Fire-and-forget email notifications
+  if (order?.profiles?.email) {
+    const origin = (await headers()).get("origin") ?? "https://twallet.com";
+    const userEmail: string = order.profiles.email;
+    const orderNumber: string = order.order_number;
+
+    if (status === "paid") {
+      sendEmail({
+        to: userEmail,
+        subject: `Payment Received - Order ${orderNumber}`,
+        html: buildPaymentReceivedEmail({
+          orderNumber,
+          amount: (order.amount_usdc ?? 0).toString(),
+          dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
+        }),
+      });
+    } else if (status === "shipped") {
+      sendEmail({
+        to: userEmail,
+        subject: `Order Shipped - ${orderNumber}`,
+        html: buildOrderShippedEmail({
+          orderNumber,
+          trackingNumber: order.tracking_number ?? undefined,
+          dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
+        }),
+      });
+    } else if (status === "delivered") {
+      sendEmail({
+        to: userEmail,
+        subject: `Order Delivered - ${orderNumber}`,
+        html: buildShippingUpdateEmail({
+          orderNumber,
+          status: "delivered",
+          dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
+        }),
+      });
+    } else if (status === "cancelled") {
+      sendEmail({
+        to: userEmail,
+        subject: `Order Cancelled - ${orderNumber}`,
+        html: buildShippingUpdateEmail({
+          orderNumber,
+          status: "cancelled",
+          dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
+        }),
+      });
+    }
+  }
+
   revalidatePath("/admin/orders");
   return { success: true };
 }

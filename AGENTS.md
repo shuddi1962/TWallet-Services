@@ -126,10 +126,15 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Commit `06d3944` built READY on Vercel**
 - **All tasks implemented** from earlier session: 026, 028, 029, 030, 034, 035, 055, 061, 069, 005, 009, 027, 054, 095
 
+### Session 6 — Jul 24, 2026
+- **Payment checkout page wired** — `app/dashboard/orders/[id]/payment/page.tsx` converted to server component fetching real data from `getPaymentDetails()`; `payment-form.tsx` client component with wagmi wallet integration, `useSendTransaction` for crypto payment, `verify-payment` edge function polling (5s interval), real-time verification status, error handling via `formatPaymentError()`
+- **Rate limiting wired** — `checkRateLimit()` calls added to `signUp`, `signIn`, `sendPasswordResetEmail`, `createOrder`, `submitPaymentTx` server actions
+- **Email notifications wired** — Resend `sendEmail()` calls added to auth actions (welcome, password reset, password changed), order creation (order confirmation), and admin `updateOrderStatus` (payment received, shipped, delivered, cancelled)
+- **CI pipeline** — `.github/workflows/ci.yml` with 4-stage (lint → typecheck → test → build), Node 20, `--legacy-peer-deps`
+- **AGENTS.md updated** — Pending section corrected (analytics & support were already implemented)
+
 ### Pending
 - WalletConnect Project ID placeholder — replace with real key before production
-- `/admin/analytics` — needs chart library integration (Recharts)
-- `/admin/support` — empty directory stub; needs ticket management page
 
 ### Known Issues
 - `@wagmi/connectors` has warnings about missing optional deps (safe-sdk, porto, metamask-connect, coinbase-sdk, base-org/account) — non-blocking, webpack resolves to false

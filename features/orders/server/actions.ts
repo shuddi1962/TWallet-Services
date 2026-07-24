@@ -1,7 +1,10 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/lib";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { sendEmail, buildOrderConfirmationEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 function generateOrderNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
@@ -10,6 +13,10 @@ function generateOrderNumber(): string {
 }
 
 export async function createOrder(_prev: unknown, formData: FormData) {
+  const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
+  const { allowed } = checkRateLimit(ip, "createOrder", RATE_LIMITS.createOrder);
+  if (!allowed) return { error: "Too many requests. Please try again later." };
+
   const productId = String(formData.get("productId") ?? "");
   const network = String(formData.get("network") ?? "");
   const token = String(formData.get("token") ?? "");
@@ -52,6 +59,21 @@ export async function createOrder(_prev: unknown, formData: FormData) {
     .single();
 
   if (orderError) return { error: orderError.message };
+
+  // Fire-and-forget order confirmation email
+  if (user?.email) {
+    const origin = (await headers()).get("origin");
+    sendEmail({
+      to: user.email,
+      subject: `Order Confirmed - ${orderNumber}`,
+      html: buildOrderConfirmationEmail({
+        orderNumber,
+        productName: product.name,
+        amount: product.price_usdc.toString(),
+        orderUrl: `${origin}/dashboard/orders/${order.id}`,
+      }),
+    });
+  }
 
   revalidatePath("/dashboard/orders");
   return {

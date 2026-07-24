@@ -1,5 +1,4 @@
-[project]
-project_id = "smkckhsvzyjttzqhphzv"
+project_id = "smkckhsvzyjttzqhpzhv"
 
 [api]
 enabled = true
@@ -7,7 +6,11 @@ port = 54321
 schemas = ["public", "auth", "storage"]
 
 [db]
-migration_dirs = ["supabase/migrations"]
+port = 54322
+major_version = 17
+
+[db.migrations]
+enabled = true
 
 [auth]
 enabled = true
@@ -15,5 +18,5 @@ enabled = true
 [storage]
 enabled = true
 
-[edge_functions]
+[edge_runtime]
 enabled = true

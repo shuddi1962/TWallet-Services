@@ -1,6 +1,8 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/lib";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { headers } from "next/headers";
 
 export async function getPaymentDetails(orderId: string) {
   const supabase = await createServerSupabaseClient() as any;
@@ -57,6 +59,10 @@ export async function getPaymentDetails(orderId: string) {
 }
 
 export async function submitPaymentTx(_prev: unknown, formData: FormData) {
+  const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
+  const { allowed } = checkRateLimit(ip, "paymentVerify", RATE_LIMITS.paymentVerify);
+  if (!allowed) return { error: "Too many requests. Please try again later." };
+
   const orderId = String(formData.get("orderId") ?? "");
   const txHash = String(formData.get("txHash") ?? "");
   const fromAddress = String(formData.get("fromAddress") ?? "");

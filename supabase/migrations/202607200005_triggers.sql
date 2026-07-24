@@ -117,10 +117,10 @@ VOLATILE
 SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
-  IF NEW.status = 'confirmed' AND OLD.status = 'pending' THEN
+  IF NEW.status = 'paid' AND OLD.status = 'pending' THEN
     -- Create payment transaction record
     INSERT INTO payment_transactions (order_id, user_id, amount, network_id, token_id, tx_hash, status, from_address, to_address, confirmed_at)
-    VALUES (NEW.id, NEW.user_id, NEW.amount_usdc, ...);
+    VALUES (NEW.id, NEW.user_id, NEW.amount_usdc, NEW.network, (SELECT id FROM supported_tokens WHERE symbol = NEW.token LIMIT 1), NEW.tx_hash, 'confirmed', NEW.from_address, NEW.to_address, now());
 
     -- Update order status
     UPDATE card_orders

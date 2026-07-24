@@ -31,7 +31,7 @@ SELECT
   p.full_name AS customer_name,
   p.email AS customer_email
 FROM card_orders co
-JOIN card_products cp ON cp.id = co.card_product_id
+JOIN card_products cp ON cp.id = co.product_id
 LEFT JOIN profiles p ON p.id = co.user_id
 WHERE co.status NOT IN ('cancelled', 'refunded', 'delivered');
 

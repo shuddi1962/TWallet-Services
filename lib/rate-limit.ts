@@ -32,6 +32,10 @@ export function checkRateLimit(
   return { allowed: true, remaining: config.max - entry.count, retryAfter: 0 };
 }
 
+export function clearRateLimits() {
+  limits.clear();
+}
+
 export const RATE_LIMITS = {
   login: { window: 15 * 60 * 1000, max: 5 },
   register: { window: 60 * 60 * 1000, max: 3 },

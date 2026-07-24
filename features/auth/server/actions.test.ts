@@ -5,7 +5,15 @@ vi.mock("@/lib", () => ({
 }));
 
 vi.mock("next/headers", () => ({
-  headers: vi.fn(() => new Map([["origin", "http://localhost:3000"]])),
+  headers: vi.fn(() => ({
+    get: (key: string) => {
+      const map: Record<string, string> = {
+        "x-forwarded-for": `127.0.0.${Math.floor(Math.random() * 255)}`,
+        origin: "http://localhost:3000",
+      };
+      return map[key] ?? null;
+    },
+  })),
 }));
 
 const { redirectMock } = vi.hoisted(() => ({ redirectMock: vi.fn() }));
@@ -13,10 +21,12 @@ const { redirectMock } = vi.hoisted(() => ({ redirectMock: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 
 import { createServerSupabaseClient } from "@/lib";
+import { clearRateLimits } from "@/lib/rate-limit";
 import { signUp, signIn, signOut, sendPasswordResetEmail, updatePassword } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearRateLimits();
   (createServerSupabaseClient as any).mockResolvedValue({
     auth: {
       signUp: vi.fn(),
@@ -24,6 +34,7 @@ beforeEach(() => {
       signOut: vi.fn(),
       resetPasswordForEmail: vi.fn(),
       updateUser: vi.fn(),
+      getUser: vi.fn().mockResolvedValue({ data: { user: { email: "test@example.com" } }, error: null }),
     },
   });
 });
