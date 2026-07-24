@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ segm
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new AppError(ErrorCodes.UNAUTHORIZED, "Not authenticated");
 
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single() as { data: { role: string } | null; error: unknown };
     if (!profile || !["super_admin", "operations", "finance", "support", "viewer"].includes(profile.role)) {
       throw new AppError(ErrorCodes.FORBIDDEN, "Not authorized");
     }
@@ -31,7 +31,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ segm
     }
 
     const table = segments[0];
-    if (!ALLOWED_TABLES.includes(table)) {
+    if (!table || !ALLOWED_TABLES.includes(table as typeof ALLOWED_TABLES[number])) {
       throw new AppError(ErrorCodes.VALIDATION_ERROR, "Invalid table");
     }
 
