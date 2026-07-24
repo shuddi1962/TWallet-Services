@@ -24,6 +24,20 @@ export const colors = {
     900: "#0f172a",
     950: "#020617",
   },
+  primary: "#2563eb",
+  primaryHover: "#1d4ed8",
+  primaryLight: "#dbeafe",
+  bg: "#f8fafc",
+  border: "#e2e8f0",
+  heading: "#0f172a",
+  body: "#475569",
+  muted: "#94a3b8",
+  footer: "#020817",
+  hero: "#020817",
+  success: "#16a34a",
+  warning: "#f59e0b",
+  error: "#dc2626",
+  info: "#0ea5e9",
 } as const;
 
 export const spacing = {
@@ -41,11 +55,15 @@ export const spacing = {
 } as const;
 
 export const borderRadius = {
-  sm: "6px",
+  sm: "8px",
+  button: "14px",
   md: "8px",
+  card: "20px",
   lg: "12px",
   xl: "16px",
   "2xl": "24px",
+  modal: "24px",
+  pill: "999px",
 } as const;
 
 export const animation = {

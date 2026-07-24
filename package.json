@@ -16,11 +16,13 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@opentelemetry/core": "^2.10.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-checkbox": "^1.3.0",
     "@radix-ui/react-dropdown-menu": "^2.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.2.0",
+    "@sentry/nextjs": "^9.0.0",
     "@supabase/ssr": "^0.6.0",
     "@supabase/supabase-js": "^2.49.0",
     "@tanstack/react-query": "^5.67.0",
@@ -30,11 +32,13 @@
     "clsx": "^2.1.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.18.0",
+    "geist": "^1.7.2",
     "lucide-react": "^0.475.0",
     "next": "^15.5.21",
     "nuqs": "^2.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "resend": "^4.0.0",
     "server-only": "^0.0.1",
     "sonner": "^2.0.0",
     "tailwind-merge": "^3.0.0",
@@ -42,9 +46,6 @@
     "viem": "^2.55.8",
     "wagmi": "^3.7.4",
     "ws": "^8.21.1",
-    "@opentelemetry/core": "^2.10.0",
-    "@sentry/nextjs": "^9.0.0",
-    "resend": "^4.0.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

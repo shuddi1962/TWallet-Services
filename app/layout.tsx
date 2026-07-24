@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 import { WalletProviders } from "@/components/wallet-providers";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 
 export const metadata: Metadata = {
   title: {
@@ -45,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <WalletProviders>{children}</WalletProviders>
       </body>
     </html>
