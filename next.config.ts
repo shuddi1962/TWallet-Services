@@ -50,9 +50,6 @@ const nextConfig: NextConfig = {
   ],
   webpack: (config, { isServer }) => {
     const stubs = path.resolve("lib/stubs");
-    const ep = path.resolve(
-      "node_modules/@web3modal/wagmi/node_modules/@walletconnect/.ethereum-provider-ZFGd1aIF",
-    );
     config.resolve.alias = {
       ...config.resolve.alias,
       "@x402/evm/upto/client": `${stubs}/x402-evm.mjs`,
@@ -63,7 +60,7 @@ const nextConfig: NextConfig = {
       "@reown/appkit-ui": `${stubs}/reown-ui.mjs`,
       "@reown/appkit-scaffold-ui/basic": `${stubs}/reown-scaffold.mjs`,
       "@reown/appkit-scaffold-ui/w3m-modal": `${stubs}/reown-scaffold.mjs`,
-      "@walletconnect/ethereum-provider": `${ep}/dist/index.es.js`,
+      "@walletconnect/ethereum-provider": path.resolve("node_modules/@web3modal/wagmi/node_modules/@walletconnect/ethereum-provider/dist/index.es.js"),
     };
     config.module.rules.push({
       test: /\.m?js/,
