@@ -1,14 +1,8 @@
-import { Resend } from "resend";
-
-let resendInstance: Resend | null = null;
-
-function getResend(): Resend {
-  if (!resendInstance) {
-    const key = process.env.RESEND_API_KEY;
-    if (!key) throw new Error("RESEND_API_KEY is not configured");
-    resendInstance = new Resend(key);
-  }
-  return resendInstance;
+async function getResend() {
+  const { Resend } = await import("resend");
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY is not configured");
+  return new Resend(key);
 }
 
 export interface EmailParams {
@@ -19,7 +13,8 @@ export interface EmailParams {
 
 export async function sendEmail(params: EmailParams): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await getResend().emails.send({
+    const resend = await getResend();
+    const { error } = await resend.emails.send({
       from: "TWallet <noreply@twallet.com>",
       to: params.to,
       subject: params.subject,
