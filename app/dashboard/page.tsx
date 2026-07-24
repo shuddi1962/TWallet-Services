@@ -1,159 +1,95 @@
-"use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { redirect } from "next/navigation";
+import { createServerSupabaseClient } from "@/lib";
+import { createClient } from "@supabase/supabase-js";
+import { DashboardContent } from "@/components/dashboard/dashboard-content";
+import type { DashboardData } from "@/lib/types";
 
-import Link from "next/link";
-import {
-  CreditCard,
-  ShoppingCart,
-  Wallet,
-  TrendingUp,
-  ArrowRight,
-  Plus,
-} from "lucide-react";
-import { StatCard } from "@/components/ui/stat-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+export const dynamic = "force-dynamic";
 
-const stats = [
-  {
-    label: "Active Cards",
-    value: "0",
-    icon: CreditCard,
-    trend: { value: "New", positive: true },
-  },
-  {
-    label: "Total Orders",
-    value: "0",
-    icon: ShoppingCart,
-  },
-  {
-    label: "Wallet Balance",
-    value: "—",
-    icon: Wallet,
-  },
-  {
-    label: "Total Spent",
-    value: "$0",
-    icon: TrendingUp,
-  },
-];
-
-export default function DashboardPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Overview</h1>
-          <p className="mt-1 text-sm text-surface-400">
-            Welcome back to your dashboard
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/dashboard/orders">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            New Order
-          </Link>
-        </Button>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard
-            key={stat.label}
-            label={stat.label}
-            value={stat.value}
-            icon={stat.icon}
-            trend={stat.trend}
-          />
-        ))}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Recent Orders</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard/orders">
-                  View all
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <EmptyState
-              icon={ShoppingCart}
-              title="No orders yet"
-              description="Place your first card order to get started with TWallet."
-              action={
-                <Button size="sm" asChild>
-                  <Link href="/dashboard/orders">Order a Card</Link>
-                </Button>
-              }
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Wallet Status</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard/wallet">
-                  Manage
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <EmptyState
-              icon={Wallet}
-              title="No wallet connected"
-              description="Connect your crypto wallet to start making payments."
-              action={
-                <Button size="sm" asChild>
-                  <Link href="/dashboard/wallet">Connect Wallet</Link>
-                </Button>
-              }
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-surface-500">
-                  No transactions yet
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+async function sb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
   );
+}
+
+export default async function DashboardPage() {
+  const authSb = await createServerSupabaseClient();
+  const { data: { user } } = await authSb.auth.getUser();
+  if (!user) redirect("/auth/login?redirect=/dashboard");
+
+  const adminDb: any = await sb();
+
+  const [
+    activeCardsRes,
+    totalOrdersRes,
+    recentOrdersRes,
+    walletsRes,
+    transactionsRes,
+    notificationsRes,
+  ]: any = await Promise.all([
+    adminDb
+      .from("card_orders")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .in("status", ["paid", "processing", "shipped", "delivered"]),
+    adminDb
+      .from("card_orders")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    adminDb
+      .from("card_orders")
+      .select("id, order_number, status, amount_usdc, network, token, created_at, card_products(name, type)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    adminDb
+      .from("wallets")
+      .select("id, address, network, label, is_default, connected_at")
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+    adminDb
+      .from("payment_transactions")
+      .select("id, amount, status, tx_hash, network_id, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    adminDb
+      .from("notifications")
+      .select("id, type, title, message, read, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
+
+  const confirmedTx = (transactionsRes?.data ?? []).filter(
+    (t: any) => t.status === "confirmed",
+  );
+  const totalSpent = confirmedTx.reduce(
+    (sum: number, t: any) => sum + Number(t.amount ?? 0),
+    0,
+  );
+
+  const dashboardData: DashboardData = {
+    userName:
+      (user.user_metadata as any)?.full_name ??
+      user.email?.split("@")[0] ??
+      "User",
+    userEmail: user.email ?? "",
+    stats: {
+      activeCards: activeCardsRes?.count ?? 0,
+      totalOrders: totalOrdersRes?.count ?? 0,
+      walletCount: (walletsRes?.data ?? []).length,
+      totalSpent,
+    },
+    recentOrders: recentOrdersRes?.data ?? [],
+    wallets: walletsRes?.data ?? [],
+    recentTransactions: transactionsRes?.data ?? [],
+    notifications: notificationsRes?.data ?? [],
+  };
+
+  return <DashboardContent data={dashboardData} />;
 }

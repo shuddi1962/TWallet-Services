@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { signIn } from "@/features/auth/server/actions";
+import { trackLogin } from "@/lib/analytics";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,7 @@ export default function LoginPage() {
 
       <Card>
         <CardContent className="p-6">
-          <form action={formAction} className="space-y-4">
+          <form action={formAction} onSubmit={() => trackLogin()} className="space-y-4">
             {state?.error && (
               <div className="rounded-lg border border-error/20 bg-error/10 p-3 text-sm text-error" role="alert">
                 {state.error}

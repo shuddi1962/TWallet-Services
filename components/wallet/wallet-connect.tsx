@@ -3,9 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet, Plug } from "lucide-react";
+import { trackWalletConnected } from "@/lib/analytics";
 
 export function WalletConnect() {
   const handleConnect = () => {
+    trackWalletConnected("metamask");
     const ethereum = (window as { ethereum?: { isMetaMask?: boolean; request: (args: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
     if (ethereum?.isMetaMask) {
       ethereum.request({ method: "eth_requestAccounts" }).catch(() => {});

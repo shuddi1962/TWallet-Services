@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAccount, useBalance, useDisconnect, useChainId } from "wagmi";
 import { Copy, Check, Wallet, Plug, ExternalLink } from "lucide-react";
+import { trackWalletDisconnected } from "@/lib/analytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -148,7 +149,7 @@ export function WalletOverview() {
               variant="ghost"
               size="sm"
               fullWidth
-              onClick={() => disconnect()}
+              onClick={() => { trackWalletDisconnected(); disconnect(); }}
               className="border border-surface-800 text-surface-400 hover:bg-surface-800 hover:text-error"
             >
               <Plug className="h-3.5 w-3.5" aria-hidden="true" />
