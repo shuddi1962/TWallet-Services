@@ -22,7 +22,7 @@ const TIMELINE_STEPS = ["pending", "paid", "processing", "shipped", "delivered"]
 
 export default function OrderDetailPage(props: { params: Promise<{ id: string }> }) {
   const { id } = use(props.params);
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 

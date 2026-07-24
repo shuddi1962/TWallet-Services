@@ -11,7 +11,7 @@ import Link from "next/link";
 
 export default function OrderTrackingPage(props: { params: Promise<{ id: string }> }) {
   const { id } = use(props.params);
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
