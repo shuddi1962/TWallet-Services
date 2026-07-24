@@ -80,3 +80,103 @@ export function buildPasswordResetEmail(params: {
     </div>
   `;
 }
+
+export function buildWelcomeEmail(params: {
+  name: string;
+  dashboardUrl: string;
+}): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="color: #2563eb;">Welcome to TWallet!</h1>
+      <p>Hi ${params.name},</p>
+      <p>Your account has been created. Connect a wallet to get started with your first card order.</p>
+      <a href="${params.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">Go to Dashboard</a>
+    </div>
+  `;
+}
+
+export function buildEmailVerificationEmail(params: {
+  verifyUrl: string;
+}): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="color: #2563eb;">Verify Your Email</h1>
+      <p>Click the link below to verify your email address.</p>
+      <a href="${params.verifyUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">Verify Email</a>
+    </div>
+  `;
+}
+
+export function buildPasswordChangedEmail(): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="color: #2563eb;">Password Changed</h1>
+      <p>Your password has been changed successfully. If you did not make this change, please contact support immediately.</p>
+    </div>
+  `;
+}
+
+export function buildTwoFactorEnabledEmail(): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="color: #2563eb;">Two-Factor Authentication Enabled</h1>
+      <p>Two-factor authentication has been enabled on your account. Your account is now more secure.</p>
+      <p>If you did not enable this, please contact support immediately.</p>
+    </div>
+  `;
+}
+
+export function buildShippingUpdateEmail(params: {
+  orderNumber: string;
+  status: string;
+  dashboardUrl: string;
+}): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="color: #2563eb;">Shipping Update</h1>
+      <p>Your order <strong>${params.orderNumber}</strong> status has changed to <strong>${params.status}</strong>.</p>
+      <p>View your order: <a href="${params.dashboardUrl}">${params.dashboardUrl}</a></p>
+    </div>
+  `;
+}
+
+export function buildAccountSuspendedEmail(params: {
+  reason?: string;
+  supportUrl: string;
+}): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="color: #DC2626;">Account Suspended</h1>
+      <p>Your account has been suspended.</p>
+      ${params.reason ? `<p>Reason: ${params.reason}</p>` : ""}
+      <p>If you believe this is an error, please contact support: <a href="${params.supportUrl}">${params.supportUrl}</a></p>
+    </div>
+  `;
+}
+
+export function buildAccountReactivatedEmail(params: {
+  dashboardUrl: string;
+}): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="color: #16A34A;">Account Reactivated</h1>
+      <p>Your account has been reactivated. You can now use all TWallet services normally.</p>
+      <a href="${params.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">Go to Dashboard</a>
+    </div>
+  `;
+}
+
+export function buildTicketReceivedEmail(params: {
+  ticketId: string;
+  subject: string;
+  dashboardUrl: string;
+}): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="color: #2563eb;">Support Ticket Received</h1>
+      <p>Your ticket <strong>${params.ticketId}</strong> regarding &ldquo;${params.subject}&rdquo; has been received.</p>
+      <p>We will respond within 24 hours.</p>
+      <p>View your ticket: <a href="${params.dashboardUrl}">${params.dashboardUrl}</a></p>
+    </div>
+  `;
+}

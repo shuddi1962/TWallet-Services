@@ -1,14 +1,16 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, TrendingUp, Users, DollarSign } from "lucide-react";
+import { getAdminStats, getAnalyticsChartData } from "@/lib/admin/actions";
+import { Card, CardContent } from "@/components/ui/card";
+import { AnalyticsCharts } from "@/components/admin/analytics-charts";
+import { TrendingUp, Users, BarChart3, DollarSign } from "lucide-react";
 
-export default function AdminAnalyticsPage() {
+export default async function AdminAnalyticsPage() {
+  const [stats, chartData] = await Promise.all([getAdminStats(), getAnalyticsChartData()]);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="mt-1 text-sm text-surface-400">
-          Platform metrics and insights
-        </p>
+        <p className="mt-1 text-sm text-surface-400">Platform metrics and insights</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -20,7 +22,7 @@ export default function AdminAnalyticsPage() {
               </div>
               <div>
                 <p className="text-sm text-surface-400">Total Revenue</p>
-                <p className="text-xl font-bold text-white">$0.00</p>
+                <p className="text-xl font-bold text-white">${stats.revenue.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -33,7 +35,7 @@ export default function AdminAnalyticsPage() {
               </div>
               <div>
                 <p className="text-sm text-surface-400">Total Users</p>
-                <p className="text-xl font-bold text-white">0</p>
+                <p className="text-xl font-bold text-white">{stats.totalUsers}</p>
               </div>
             </div>
           </CardContent>
@@ -45,8 +47,8 @@ export default function AdminAnalyticsPage() {
                 <BarChart3 className="h-5 w-5 text-green-400" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm text-surface-400">Total Orders</p>
-                <p className="text-xl font-bold text-white">0</p>
+                <p className="text-sm text-surface-400">Completed Orders</p>
+                <p className="text-xl font-bold text-white">{stats.completedOrders}</p>
               </div>
             </div>
           </CardContent>
@@ -58,36 +60,15 @@ export default function AdminAnalyticsPage() {
                 <DollarSign className="h-5 w-5 text-purple-400" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm text-surface-400">Cards Issued</p>
-                <p className="text-xl font-bold text-white">0</p>
+                <p className="text-sm text-surface-400">Today Transactions</p>
+                <p className="text-xl font-bold text-white">{stats.todayTransactions}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue (30 days)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-white/10">
-              <p className="text-sm text-surface-400">Chart placeholder — install Recharts for live charts</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Orders (30 days)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-white/10">
-              <p className="text-sm text-surface-400">Chart placeholder — install Recharts for live charts</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <AnalyticsCharts data={chartData} />
     </div>
   );
 }

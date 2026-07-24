@@ -15,6 +15,15 @@ async function sb() {
   );
 }
 
+export async function getAllTickets(options?: { status?: string; page?: number; pageSize?: number }) {
+  const supabase: any = await sb();
+  const { status, page = 0, pageSize = 50 } = options ?? {};
+  let q: any = supabase.from("support_tickets").select("*, profiles(full_name, email)", { count: "exact" });
+  if (status && status !== "all") q = q.eq("status", status);
+  const res: any = await q.range(page * pageSize, (page + 1) * pageSize - 1).order("created_at", { ascending: false });
+  return { tickets: res.data ?? [], count: res.count ?? 0 };
+}
+
 export async function getAdminStats() {
   const supabase: any = await sb();
   const today = new Date().toISOString().split("T")[0];
@@ -135,6 +144,62 @@ export async function suspendUser(userId: string): Promise<ActionResult> {
   if (error) return { success: false, error: error.message as string };
   revalidatePath("/admin/users");
   return { success: true };
+}
+/** Aggregated chart data for the admin analytics dashboard. */
+export async function getAnalyticsChartData() {
+  const supabase: any = await sb();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [revenueRes, ordersRes, signupsRes, cardTypesRes]: any = await Promise.all([
+    supabase
+      .from("payment_transactions")
+      .select("amount, created_at")
+      .eq("status", "confirmed")
+      .gte("created_at", thirtyDaysAgo),
+    supabase.from("card_orders").select("created_at").gte("created_at", thirtyDaysAgo),
+    supabase.from("profiles").select("created_at").gte("created_at", thirtyDaysAgo),
+    supabase
+      .from("card_orders")
+      .select("card_product_id, card_products(name)")
+      .gte("created_at", thirtyDaysAgo),
+  ]);
+
+  // Helper: aggregate records by calendar date using plain JS
+  function aggregateByDate(records: any[], dateField: string, valueField?: string) {
+    const map: Record<string, number> = {};
+    for (const r of records) {
+      const date: string = (r[dateField] as string)?.split("T")[0] ?? "unknown";
+      map[date] = (map[date] ?? 0) + (valueField ? (r[valueField] as number) : 1);
+    }
+    return Object.entries(map)
+      .map(([date, value]) => ({ date, value }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  const revenueData = aggregateByDate(revenueRes.data ?? [], "created_at", "amount").map((d) => ({
+    date: d.date,
+    revenue: d.value,
+  }));
+
+  const orderData = aggregateByDate(ordersRes.data ?? [], "created_at").map((d) => ({
+    date: d.date,
+    orders: d.value,
+  }));
+
+  const userSignups = aggregateByDate(signupsRes.data ?? [], "created_at").map((d) => ({
+    date: d.date,
+    signups: d.value,
+  }));
+
+  // Group card orders by product name
+  const cardTypeMap: Record<string, number> = {};
+  for (const r of cardTypesRes.data ?? []) {
+    const name: string = r.card_products?.name ?? "Unknown";
+    cardTypeMap[name] = (cardTypeMap[name] ?? 0) + 1;
+  }
+  const cardTypes = Object.entries(cardTypeMap).map(([name, count]) => ({ name, count }));
+
+  return { revenueData, orderData, userSignups, cardTypes };
 }
 
 export async function reactivateUser(userId: string): Promise<ActionResult> {
