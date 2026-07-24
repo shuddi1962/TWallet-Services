@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
-import { getOrders } from "@/features/orders/server/queries";
+import { getOrders } from "@/features/orders/server/actions";
 
 const STATUS_TABS = [
   { label: "All Orders", value: "all" },

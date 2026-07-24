@@ -6,7 +6,15 @@ import { sendEmail, buildOrderConfirmationEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
-export { getOrders, getOrder } from "./queries";
+export async function getOrders() {
+  const { getOrders: q } = await import("./queries");
+  return q();
+}
+
+export async function getOrder(orderId: string) {
+  const { getOrder: q } = await import("./queries");
+  return q(orderId);
+}
 
 function generateOrderNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
