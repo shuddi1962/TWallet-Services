@@ -5,13 +5,15 @@ export const dynamic = "force-dynamic";
 
 async function checkDatabase() {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } },
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL!}/rest/v1/`,
+      {
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        },
+      },
     );
-    const { error } = await supabase.from("_schema").select("id").limit(1);
-    if (error && error.code !== "42P01") throw error;
+    if (res.status >= 500) throw new Error("Database API error");
     return { status: "ok" as const };
   } catch (e) {
     return { status: "error" as const, message: e instanceof Error ? e.message : "Database unreachable" };
@@ -33,13 +35,15 @@ function checkEnvVars() {
 
 async function checkStorage() {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } },
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL!}/storage/v1/bucket`,
+      {
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        },
+      },
     );
-    const { data } = await supabase.storage.listBuckets();
-    return { status: "ok" as const, buckets: data?.length ?? 0 };
+    return { status: "ok" as const, buckets: res.ok ? 1 : 0 };
   } catch (e) {
     return { status: "error" as const, message: e instanceof Error ? e.message : "Storage unreachable" };
   }
