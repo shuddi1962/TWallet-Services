@@ -3,6 +3,8 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, Suspense, type ReactNode } from "react";
 import posthog from "posthog-js";
+import { createClient } from "@/lib/supabase/client";
+import type { AuthChangeEvent, Session } from "@supabase/auth-js";
 
 function PostHogPageView() {
   const pathname = usePathname();
@@ -15,23 +17,34 @@ function PostHogPageView() {
   return null;
 }
 
-export function PostHogProvider({ children }: { children: ReactNode }) {
+function PostHogIdentify() {
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    if (typeof window !== "undefined" && key && !posthog.__loaded) {
-      posthog.init(key, {
-        api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://app.posthog.com",
-        capture_pageview: false,
-        loaded: (ph) => {
-          if (process.env.NODE_ENV !== "production") ph.opt_out_capturing();
-        },
-      });
-    }
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+      if (session?.user) {
+        posthog.identify(session.user.id, {
+          email: session.user.email,
+          name: (session.user.user_metadata?.full_name as string | undefined) ?? undefined,
+        });
+      } else if (event === "SIGNED_OUT") {
+        posthog.reset();
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
+  return null;
+}
+
+export function PostHogProvider({ children }: { children: ReactNode }) {
   return (
     <>
-      <Suspense fallback={null}><PostHogPageView /></Suspense>
+      <Suspense fallback={null}>
+        <PostHogPageView />
+      </Suspense>
+      <PostHogIdentify />
       {children}
     </>
   );

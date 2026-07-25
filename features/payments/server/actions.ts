@@ -3,9 +3,10 @@
 import { createServerSupabaseClient } from "@/lib";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { headers } from "next/headers";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function getPaymentDetails(orderId: string) {
-  const supabase = await createServerSupabaseClient() as any;
+  const supabase = (await createServerSupabaseClient()) as any;
 
   const {
     data: { user },
@@ -33,10 +34,7 @@ export async function getPaymentDetails(orderId: string) {
     .select("*")
     .eq("active", true);
 
-  const { data: tokens } = await supabase
-    .from("supported_tokens")
-    .select("*")
-    .eq("active", true);
+  const { data: tokens } = await supabase.from("supported_tokens").select("*").eq("active", true);
 
   const { data: paymentTx } = await supabase
     .from("payment_transactions")
@@ -71,7 +69,7 @@ export async function submitPaymentTx(_prev: unknown, formData: FormData) {
   if (!txHash) return { error: "Transaction hash is required" };
   if (!fromAddress) return { error: "From address is required" };
 
-  const supabase = await createServerSupabaseClient() as any;
+  const supabase = (await createServerSupabaseClient()) as any;
 
   const {
     data: { user },
@@ -93,6 +91,20 @@ export async function submitPaymentTx(_prev: unknown, formData: FormData) {
     .eq("id", orderId);
 
   if (error) return { error: error.message };
+
+  const posthog = getPostHogClient();
+  if (posthog) {
+    posthog.capture({
+      distinctId: user.id,
+      event: "server_payment_submitted",
+      properties: {
+        order_id: orderId,
+        network: order.network,
+        amount_usdc: order.amount_usdc,
+      },
+    });
+    await posthog.flush();
+  }
 
   return { success: true, message: "Payment submitted for verification" };
 }

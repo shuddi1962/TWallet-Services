@@ -3,6 +3,23 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
+  skipTrailingSlashRedirect: true,
+  async rewrites() {
+    return [
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://us-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/ingest/array/:path*",
+        destination: "https://us-assets.i.posthog.com/array/:path*",
+      },
+      {
+        source: "/ingest/:path*",
+        destination: "https://us.i.posthog.com/:path*",
+      },
+    ];
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "2mb",
@@ -22,15 +39,15 @@ const nextConfig: NextConfig = {
     ],
   },
   headers: async () => [
-      {
-        source: "/(.*)",
-        headers: [
-          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
-          { key: "X-Frame-Options", value: "DENY" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-          { key: "X-XSS-Protection", value: "1; mode=block" },
+    {
+      source: "/(.*)",
+      headers: [
+        { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+        { key: "X-Frame-Options", value: "DENY" },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        { key: "X-XSS-Protection", value: "1; mode=block" },
         {
           key: "Content-Security-Policy",
           value: [
@@ -38,7 +55,7 @@ const nextConfig: NextConfig = {
             "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.walletconnect.com https://*.walletconnect.org",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: https://*.supabase.co https://*.walletconnect.com https://lh3.googleusercontent.com",
-            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.rpc.alchemyapi.io wss://*.rpc.alchemyapi.io https://*.alchemy.com",
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.walletconnect.com wss://*.walletconnect.com https://*.rpc.alchemyapi.io wss://*.rpc.alchemyapi.io https://*.alchemy.com https://us.posthog.com https://us-assets.i.posthog.com",
             "frame-src 'self' https://*.walletconnect.com https://*.walletconnect.org",
             "font-src 'self'",
             "object-src 'none'",
@@ -61,7 +78,9 @@ const nextConfig: NextConfig = {
       "@reown/appkit-ui": `${stubs}/reown-ui.mjs`,
       "@reown/appkit-scaffold-ui/basic": `${stubs}/reown-scaffold.mjs`,
       "@reown/appkit-scaffold-ui/w3m-modal": `${stubs}/reown-scaffold.mjs`,
-      "@walletconnect/ethereum-provider": path.resolve("node_modules/@web3modal/wagmi/node_modules/@walletconnect/ethereum-provider/dist/index.es.js"),
+      "@walletconnect/ethereum-provider": path.resolve(
+        "node_modules/@web3modal/wagmi/node_modules/@walletconnect/ethereum-provider/dist/index.es.js",
+      ),
     };
     config.module.rules.push({
       test: /\.m?js/,
@@ -72,7 +91,7 @@ const nextConfig: NextConfig = {
       ...config.resolve.fallback,
       "pino-pretty": false,
       "@react-native-async-storage/async-storage": false,
-      "accounts": false,
+      accounts: false,
       ...(isServer ? {} : { net: false, tls: false }),
     };
 
@@ -83,9 +102,10 @@ const nextConfig: NextConfig = {
 };
 
 export default async function () {
-  const withBundleAnalyzer = process.env.ANALYZE === "true"
-    ? (await import("@next/bundle-analyzer")).default({ enabled: true })
-    : (config: NextConfig) => config;
+  const withBundleAnalyzer =
+    process.env.ANALYZE === "true"
+      ? (await import("@next/bundle-analyzer")).default({ enabled: true })
+      : (config: NextConfig) => config;
 
   const config = withBundleAnalyzer(nextConfig);
 

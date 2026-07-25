@@ -5,6 +5,7 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { sendEmail, buildOrderConfirmationEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function getOrders() {
   const { getOrders: q } = await import("./queries");
@@ -35,7 +36,7 @@ export async function createOrder(_prev: unknown, formData: FormData) {
   if (!network) return { error: "Network is required" };
   if (!token) return { error: "Token is required" };
 
-  const supabase = await createServerSupabaseClient() as any;
+  const supabase = (await createServerSupabaseClient()) as any;
 
   const {
     data: { user },
@@ -69,6 +70,22 @@ export async function createOrder(_prev: unknown, formData: FormData) {
     .single();
 
   if (orderError) return { error: orderError.message };
+
+  const posthog = getPostHogClient();
+  if (posthog) {
+    posthog.capture({
+      distinctId: user.id,
+      event: "server_order_created",
+      properties: {
+        order_number: orderNumber,
+        product_id: productId,
+        network,
+        token,
+        amount_usdc: product.price_usdc,
+      },
+    });
+    await posthog.flush();
+  }
 
   // Fire-and-forget order confirmation email
   if (user?.email) {
