@@ -163,11 +163,10 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **CI green** — All 83 tests pass, lint/typecheck/build clean
 
 ### Remaining (v1.1 — manual/UI tasks)
-- **Uptime monitoring + alerting** — Config generated; manual setup in Better Uptime / UptimeRobot needed
-- **Database PITR + daily backup** — Verify in Supabase dashboard; automated backup-check CI created
-- **Production dashboards** — Setup guide created; manual creation in Sentry + PostHog UI needed
+- **Uptime monitoring + alerting** — Config generated; manual setup in Better Uptime / UptimeRobot needed (no API keys available)
+- **Database PITR + daily backup** — CI backup dump configured; Supabase project on **Free plan** (no automated backups). Upgrade to **Pro ($25/mo)** for daily backups or **Team ($599/mo)** for PITR
+- **Production dashboards** — Setup guide created; manual creation in Sentry + PostHog UI needed (no API keys available)
 - **Penetration test** — Plan documented; schedule externally
-- **Production load test** — k6 script ready; execute against production
 
 ### Known Issues
 - `@wagmi/connectors` has warnings about missing optional deps (safe-sdk, porto, metamask-connect, coinbase-sdk, base-org/account) — non-blocking, webpack resolves to false

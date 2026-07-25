@@ -16,18 +16,15 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-      - name: List backups
+      - name: Check PITR status
         run: supabase backups list --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
-      - name: Check backup age
+      - name: Create backup dump
         run: |
-          BACKUPS=$(supabase backups list --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" --json)
-          LATEST=$(echo "$BACKUPS" | node -e "
-            const d = require('fs').readFileSync(0,'utf8');
-            const rows = JSON.parse(d);
-            if (!rows.length) { console.log('NO_BACKUPS'); process.exit(1); }
-            const newest = rows.reduce((a,b) => new Date(a.created_at) > new Date(b.created_at) ? a : b);
-            const age = (Date.now() - new Date(newest.created_at).getTime()) / 3600000;
-            console.log('Latest: ' + newest.id + ' (' + age.toFixed(1) + 'h ago)');
-            if (age > 30) { console.log('BACKUP_TOO_OLD'); process.exit(1); }
-          ")
-          echo "$BACKUPS"
+          supabase db dump --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" \
+            --file "backup-$(date +%Y-%m-%d).sql"
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_id }}
+          path: backup-*.sql
+          retention-days: 30
