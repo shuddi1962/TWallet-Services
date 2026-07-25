@@ -10,6 +10,7 @@ import Link from "next/link";
 import { getCardProducts } from "@/features/cards/server/actions";
 import { createOrder } from "@/features/orders/server/actions";
 import { useActionState } from "react";
+import { trackOrderPlaced } from "@/lib/analytics";
 
 interface CardProduct {
   id: string;
@@ -55,9 +56,13 @@ export default function NewOrderPage() {
 
   useEffect(() => {
     if (state?.success && state?.order?.id) {
+      const product = products.find((p) => p.id === selectedProduct);
+      if (product) {
+        trackOrderPlaced(product.name, selectedNetwork, selectedToken, product.price_usdc);
+      }
       router.push(`/dashboard/orders/${state.order.id}/confirmation`);
     }
-  }, [state, router]);
+  }, [state, router, products, selectedProduct, selectedNetwork, selectedToken]);
 
   const selected = products.find((p) => p.id === selectedProduct);
 
@@ -72,13 +77,11 @@ export default function NewOrderPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-white">New Order</h1>
-          <p className="mt-1 text-sm text-surface-400">Choose your card and configure payment.</p>
+          <p className="text-surface-400 mt-1 text-sm">Choose your card and configure payment.</p>
         </div>
       </div>
 
-      {state?.error && (
-        <Alert variant="error">{state.error}</Alert>
-      )}
+      {state?.error && <Alert variant="error">{state.error}</Alert>}
 
       <form action={formAction}>
         <input type="hidden" name="productId" value={selectedProduct} />
@@ -89,17 +92,18 @@ export default function NewOrderPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-white">
-                <CreditCard className="h-5 w-5" aria-hidden="true" />Select Card
+                <CreditCard className="h-5 w-5" aria-hidden="true" />
+                Select Card
               </CardTitle>
               <CardDescription>Choose a card type to order.</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-surface-400" />
+                  <Loader2 className="text-surface-400 h-6 w-6 animate-spin" />
                 </div>
               ) : products.length === 0 ? (
-                <p className="text-sm text-surface-400">No cards available at this time.</p>
+                <p className="text-surface-400 text-sm">No cards available at this time.</p>
               ) : (
                 <div className="space-y-3">
                   {products.map((product) => (
@@ -117,14 +121,16 @@ export default function NewOrderPage() {
                         value={product.id}
                         checked={selectedProduct === product.id}
                         onChange={() => setSelectedProduct(product.id)}
-                        className="h-4 w-4 accent-brand-500"
+                        className="accent-brand-500 h-4 w-4"
                       />
                       <div className="flex-1">
-                        <p className="font-semibold text-surface-200">{product.name}</p>
-                        <p className="text-sm text-surface-400">{product.description}</p>
-                        <p className="mt-1 text-sm font-medium text-brand-400">{product.price_usdc} USDC</p>
+                        <p className="text-surface-200 font-semibold">{product.name}</p>
+                        <p className="text-surface-400 text-sm">{product.description}</p>
+                        <p className="text-brand-400 mt-1 text-sm font-medium">
+                          {product.price_usdc} USDC
+                        </p>
                       </div>
-                      <span className="rounded-full bg-surface-800 px-3 py-1 text-xs text-surface-400">
+                      <span className="bg-surface-800 text-surface-400 rounded-full px-3 py-1 text-xs">
                         {product.type}
                       </span>
                     </label>
@@ -138,7 +144,8 @@ export default function NewOrderPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-white">
-                  <Network className="h-5 w-5" aria-hidden="true" />Network
+                  <Network className="h-5 w-5" aria-hidden="true" />
+                  Network
                 </CardTitle>
                 <CardDescription>Select the network for payment.</CardDescription>
               </CardHeader>
@@ -166,7 +173,8 @@ export default function NewOrderPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-white">
-                  <Coins className="h-5 w-5" aria-hidden="true" />Token
+                  <Coins className="h-5 w-5" aria-hidden="true" />
+                  Token
                 </CardTitle>
                 <CardDescription>Select the token for payment.</CardDescription>
               </CardHeader>
@@ -208,16 +216,20 @@ export default function NewOrderPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-surface-400">Network</span>
-                      <span className="text-surface-200">{networks.find((n) => n.id === selectedNetwork)?.name}</span>
+                      <span className="text-surface-200">
+                        {networks.find((n) => n.id === selectedNetwork)?.name}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-surface-400">Token</span>
-                      <span className="text-surface-200">{tokens.find((t) => t.id === selectedToken)?.name}</span>
+                      <span className="text-surface-200">
+                        {tokens.find((t) => t.id === selectedToken)?.name}
+                      </span>
                     </div>
-                    <div className="border-t border-surface-800 pt-3">
+                    <div className="border-surface-800 border-t pt-3">
                       <div className="flex justify-between text-base">
-                        <span className="font-semibold text-surface-200">Total</span>
-                        <span className="font-bold text-brand-400">{selected.price_usdc} USDC</span>
+                        <span className="text-surface-200 font-semibold">Total</span>
+                        <span className="text-brand-400 font-bold">{selected.price_usdc} USDC</span>
                       </div>
                     </div>
                   </div>

@@ -20,22 +20,43 @@ export const trackLogin = () => trackEvent("user_logged_in");
 export const trackLogout = () => trackEvent("user_logged_out");
 
 // Wallet events
-export const trackWalletConnected = (provider: string) => trackEvent("wallet_connected", { provider });
+export const trackWalletConnected = (provider: string) =>
+  trackEvent("wallet_connected", { provider });
 export const trackWalletDisconnected = () => trackEvent("wallet_disconnected");
-export const trackNetworkSwitched = (chainId: number) => trackEvent("network_switched", { chainId: String(chainId) });
+export const trackNetworkSwitched = (chainId: number) =>
+  trackEvent("network_switched", { chainId: String(chainId) });
 
 // Card events
-export const trackCardOrdered = (productName: string) => trackEvent("card_ordered", { product: productName });
+export const trackCardOrdered = (productName: string) =>
+  trackEvent("card_ordered", { product: productName });
 export const trackCardViewed = (cardType: string) => trackEvent("card_viewed", { type: cardType });
 
 // Payment events
-export const trackPaymentInitiated = (amount: string, network: string) => trackEvent("payment_initiated", { amount, network });
-export const trackPaymentConfirmed = (txHash: string) => trackEvent("payment_confirmed", { txHash: txHash.slice(0, 10) });
+export const trackPaymentInitiated = (amount: string, network: string) =>
+  trackEvent("payment_initiated", { amount, network });
+export const trackPaymentConfirmed = (txHash: string) =>
+  trackEvent("payment_confirmed", { txHash: txHash.slice(0, 10) });
 export const trackPaymentFailed = (reason: string) => trackEvent("payment_failed", { reason });
+export const trackPaymentVerified = (orderId: string) =>
+  trackEvent("payment_verified", { orderId });
+export const trackWalletAddressCopied = () => trackEvent("wallet_address_copied");
 
 // Order events
 export const trackOrderCreated = () => trackEvent("order_created");
-export const trackOrderStatusChanged = (status: string) => trackEvent("order_status_changed", { status });
+export const trackOrderPlaced = (
+  productName: string,
+  network: string,
+  token: string,
+  amountUsdc: number,
+) =>
+  trackEvent("order_placed", {
+    product: productName,
+    network,
+    token,
+    amount_usdc: String(amountUsdc),
+  });
+export const trackOrderStatusChanged = (status: string) =>
+  trackEvent("order_status_changed", { status });
 
 // Support events
 export const trackTicketCreated = () => trackEvent("support_ticket_created");

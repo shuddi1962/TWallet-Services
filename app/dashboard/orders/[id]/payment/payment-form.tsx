@@ -5,9 +5,23 @@ import { useAccount, useChainId, useSwitchChain, useSendTransaction } from "wagm
 import { submitPaymentTx } from "@/features/payments/server/actions";
 import { createClient } from "@/lib/supabase/client";
 import { formatPaymentError } from "@/lib/payment-errors";
+import {
+  trackPaymentInitiated,
+  trackPaymentVerified,
+  trackPaymentFailed,
+  trackWalletAddressCopied,
+} from "@/lib/analytics";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Copy,
+  Check,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 import Link from "next/link";
 
 type Order = {
@@ -63,7 +77,14 @@ interface PaymentFormProps {
   existingTx: PaymentTx;
 }
 
-export function PaymentForm({ orderId, order, networks, receivingWallets, tokens, existingTx }: PaymentFormProps) {
+export function PaymentForm({
+  orderId,
+  order,
+  networks,
+  receivingWallets,
+  tokens,
+  existingTx,
+}: PaymentFormProps) {
   const [copied, setCopied] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
     existingTx?.tx_hash ? "verifying" : "idle",
@@ -77,18 +98,25 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
   const { switchChainAsync } = useSwitchChain();
   const { sendTransactionAsync } = useSendTransaction();
 
-  const [submitState, setSubmitState] = useState<{ error?: string; success?: boolean; message?: string } | null>(null);
+  const [submitState, setSubmitState] = useState<{
+    error?: string;
+    success?: boolean;
+    message?: string;
+  } | null>(null);
   const [isPending, setIsPending] = useState(false);
 
   const network = networks.find((n) => n.name.toLowerCase() === order.network.toLowerCase());
   const wallet = receivingWallets.find((w) => w.network_id === network?.id);
-  const token = tokens.find((t) => t.symbol === order.token.toUpperCase() && t.network_id === network?.id);
+  const token = tokens.find(
+    (t) => t.symbol === order.token.toUpperCase() && t.network_id === network?.id,
+  );
 
   const copyAddress = useCallback(() => {
     if (wallet?.address) {
       navigator.clipboard.writeText(wallet.address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      trackWalletAddressCopied();
     }
   }, [wallet]);
 
@@ -107,6 +135,7 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
 
     setVerificationStatus("sending");
     setVerificationMessage("");
+    trackPaymentInitiated(String(order.amount_usdc), order.network);
 
     try {
       const tx = await sendTransactionAsync({
@@ -130,8 +159,19 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
       const formatted = formatPaymentError(msg);
       setVerificationStatus("failed");
       setVerificationMessage(formatted.message);
+      trackPaymentFailed(formatted.message);
     }
-  }, [wallet, network, address, chainId, switchChainAsync, sendTransactionAsync, order, token, orderId]);
+  }, [
+    wallet,
+    network,
+    address,
+    chainId,
+    switchChainAsync,
+    sendTransactionAsync,
+    order,
+    token,
+    orderId,
+  ]);
 
   useEffect(() => {
     if (verificationStatus !== "submitted" && verificationStatus !== "verifying") return;
@@ -159,9 +199,12 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
         if (data.verified) {
           setVerificationStatus("verified");
           setVerificationMessage("Payment verified on-chain!");
+          trackPaymentVerified(orderId);
           clearInterval(interval);
         } else if (data.confirmations && data.confirmations > 0) {
-          setVerificationMessage(`Waiting for confirmations (${data.confirmations}/${data.required_confirmations ?? 6})`);
+          setVerificationMessage(
+            `Waiting for confirmations (${data.confirmations}/${data.required_confirmations ?? 6})`,
+          );
         } else {
           setVerificationMessage("Checking transaction...");
         }
@@ -177,7 +220,10 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
     switch (verificationStatus) {
       case "sending":
         return (
-          <div className="flex items-center gap-2 rounded-lg bg-blue-500/10 p-3 text-sm text-blue-400" role="alert">
+          <div
+            className="flex items-center gap-2 rounded-lg bg-blue-500/10 p-3 text-sm text-blue-400"
+            role="alert"
+          >
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             Sending transaction...
           </div>
@@ -185,21 +231,30 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
       case "submitted":
       case "verifying":
         return (
-          <div className="flex items-center gap-2 rounded-lg bg-yellow-500/10 p-3 text-sm text-yellow-400" role="alert">
+          <div
+            className="flex items-center gap-2 rounded-lg bg-yellow-500/10 p-3 text-sm text-yellow-400"
+            role="alert"
+          >
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             {verificationMessage || "Waiting for verification..."}
           </div>
         );
       case "verified":
         return (
-          <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-3 text-sm text-green-400" role="alert">
+          <div
+            className="flex items-center gap-2 rounded-lg bg-green-500/10 p-3 text-sm text-green-400"
+            role="alert"
+          >
             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             {verificationMessage}
           </div>
         );
       case "failed":
         return (
-          <div className="flex items-center gap-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-400" role="alert">
+          <div
+            className="flex items-center gap-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-400"
+            role="alert"
+          >
             <AlertCircle className="h-4 w-4" aria-hidden="true" />
             {verificationMessage}
           </div>
@@ -226,7 +281,9 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
               <CheckCircle2 className="h-8 w-8 text-green-400" aria-hidden="true" />
             </div>
             <h2 className="text-xl font-bold text-white">Payment Verified!</h2>
-            <p className="mt-2 text-surface-400">Your payment for order {order.order_number} has been confirmed on-chain.</p>
+            <p className="text-surface-400 mt-2">
+              Your payment for order {order.order_number} has been confirmed on-chain.
+            </p>
             <Button className="mt-6" asChild>
               <Link href="/dashboard/orders">View My Orders</Link>
             </Button>
@@ -248,7 +305,9 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-white">Complete Payment</h1>
-            <p className="mt-1 text-sm text-surface-400">Connect your wallet to pay for order {order.order_number}</p>
+            <p className="text-surface-400 mt-1 text-sm">
+              Connect your wallet to pay for order {order.order_number}
+            </p>
           </div>
         </div>
         <Card>
@@ -271,8 +330,9 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-white">Complete Payment</h1>
-          <p className="mt-1 text-sm text-surface-400">
-            Send crypto to complete order <span className="font-medium text-surface-200">{order.order_number}</span>
+          <p className="text-surface-400 mt-1 text-sm">
+            Send crypto to complete order{" "}
+            <span className="text-surface-200 font-medium">{order.order_number}</span>
           </p>
         </div>
       </div>
@@ -292,35 +352,39 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
             <CardDescription>Send the exact amount to the address below</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-xl border border-surface-800 bg-surface-900/50 p-4">
-              <p className="mb-1 text-xs text-surface-500">Amount to Pay</p>
+            <div className="border-surface-800 bg-surface-900/50 rounded-xl border p-4">
+              <p className="text-surface-500 mb-1 text-xs">Amount to Pay</p>
               <p className="text-2xl font-bold text-white">
                 {order.amount_usdc} {order.token.toUpperCase()}
               </p>
-              <p className="text-sm text-surface-400">≈ ${order.amount_usdc.toFixed(2)} USD</p>
+              <p className="text-surface-400 text-sm">≈ ${order.amount_usdc.toFixed(2)} USD</p>
             </div>
 
             <div>
-              <p className="mb-2 text-xs text-surface-500">Network</p>
-              <div className="flex items-center gap-2 rounded-lg border border-surface-800 bg-surface-900/50 px-4 py-3">
+              <p className="text-surface-500 mb-2 text-xs">Network</p>
+              <div className="border-surface-800 bg-surface-900/50 flex items-center gap-2 rounded-lg border px-4 py-3">
                 <div className="h-2 w-2 rounded-full bg-[#627EEA]" />
                 <span className="text-sm text-white">{network?.name ?? order.network}</span>
               </div>
             </div>
 
             <div>
-              <p className="mb-2 text-xs text-surface-500">Receiving Address</p>
-              <div className="flex items-center gap-2 rounded-lg border border-surface-800 bg-surface-900/50 px-4 py-3">
-                <code className="flex-1 break-all font-mono text-xs text-surface-300">
+              <p className="text-surface-500 mb-2 text-xs">Receiving Address</p>
+              <div className="border-surface-800 bg-surface-900/50 flex items-center gap-2 rounded-lg border px-4 py-3">
+                <code className="text-surface-300 flex-1 font-mono text-xs break-all">
                   {wallet?.address ?? "No address available"}
                 </code>
                 {wallet?.address && (
                   <button
                     onClick={copyAddress}
-                    className="shrink-0 rounded-md p-1.5 text-surface-500 hover:bg-surface-800 hover:text-white"
+                    className="text-surface-500 hover:bg-surface-800 shrink-0 rounded-md p-1.5 hover:text-white"
                     aria-label="Copy receiving address"
                   >
-                    {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                    {copied ? (
+                      <Check className="text-success h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
                   </button>
                 )}
               </div>
@@ -328,9 +392,9 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
 
             {txHash && (
               <div>
-                <p className="mb-2 text-xs text-surface-500">Transaction Hash</p>
-                <div className="rounded-lg border border-surface-800 bg-surface-900/50 px-4 py-3">
-                  <code className="break-all font-mono text-xs text-surface-300">{txHash}</code>
+                <p className="text-surface-500 mb-2 text-xs">Transaction Hash</p>
+                <div className="border-surface-800 bg-surface-900/50 rounded-lg border px-4 py-3">
+                  <code className="text-surface-300 font-mono text-xs break-all">{txHash}</code>
                 </div>
               </div>
             )}
@@ -338,7 +402,7 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
             {wallet?.address && network && verificationStatus === "idle" && (
               <Button
                 fullWidth
-                className="bg-gradient-to-r from-brand-500 to-brand-700 text-white"
+                className="from-brand-500 to-brand-700 bg-gradient-to-r text-white"
                 onClick={handleSendPayment}
                 disabled={verificationStatus !== "idle" || !isConnected || isPending}
               >
@@ -353,22 +417,51 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
           <CardHeader>
             <CardTitle>Instructions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm text-surface-400">
+          <CardContent className="text-surface-400 space-y-4 text-sm">
             <div className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">1</span>
-              <p>Click <strong className="text-white">Send Payment with Wallet</strong> to open your connected wallet.</p>
+              <span
+                className="bg-brand-500/20 text-brand-400 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                aria-hidden="true"
+              >
+                1
+              </span>
+              <p>
+                Click <strong className="text-white">Send Payment with Wallet</strong> to open your
+                connected wallet.
+              </p>
             </div>
             <div className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">2</span>
-              <p>Review the transaction details and confirm in your wallet. Use the <strong className="text-white">{network?.name ?? order.network}</strong> network.</p>
+              <span
+                className="bg-brand-500/20 text-brand-400 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                aria-hidden="true"
+              >
+                2
+              </span>
+              <p>
+                Review the transaction details and confirm in your wallet. Use the{" "}
+                <strong className="text-white">{network?.name ?? order.network}</strong> network.
+              </p>
             </div>
             <div className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">3</span>
+              <span
+                className="bg-brand-500/20 text-brand-400 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                aria-hidden="true"
+              >
+                3
+              </span>
               <p>The system will automatically verify the transaction on-chain once sent.</p>
             </div>
             <div className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">4</span>
-              <p>Your order status will update once payment is confirmed. This page refreshes automatically.</p>
+              <span
+                className="bg-brand-500/20 text-brand-400 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                aria-hidden="true"
+              >
+                4
+              </span>
+              <p>
+                Your order status will update once payment is confirmed. This page refreshes
+                automatically.
+              </p>
             </div>
           </CardContent>
         </Card>
