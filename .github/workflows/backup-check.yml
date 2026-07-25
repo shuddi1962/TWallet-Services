@@ -1,0 +1,33 @@
+name: Backup Check
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+env:
+  SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+jobs:
+  verify-backups:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: List backups
+        run: supabase backups list --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+      - name: Check backup age
+        run: |
+          BACKUPS=$(supabase backups list --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" --json)
+          LATEST=$(echo "$BACKUPS" | node -e "
+            const d = require('fs').readFileSync(0,'utf8');
+            const rows = JSON.parse(d);
+            if (!rows.length) { console.log('NO_BACKUPS'); process.exit(1); }
+            const newest = rows.reduce((a,b) => new Date(a.created_at) > new Date(b.created_at) ? a : b);
+            const age = (Date.now() - new Date(newest.created_at).getTime()) / 3600000;
+            console.log('Latest: ' + newest.id + ' (' + age.toFixed(1) + 'h ago)');
+            if (age > 30) { console.log('BACKUP_TOO_OLD'); process.exit(1); }
+          ")
+          echo "$BACKUPS"

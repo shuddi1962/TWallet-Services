@@ -152,13 +152,22 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Load testing script** — `tests/load/smoke-test.js` (k6) for basic smoke test
 - **Vercel deployment** — Commit `97bedba` deployed to production (twalletservices.com)
 
-### Remaining (post-launch / v1.1)
-- ✅ **Real API keys:** All populated (Supabase, WalletConnect, Alchemy, Sentry, Resend, PostHog, Upstash)
-- **Uptime monitoring + alerting** — Requires external service setup (Better Uptime / UptimeRobot)
-- **Database PITR + daily backup** — Verify through Supabase dashboard
-- **Production dashboards** — Create in Sentry + PostHog UI
-- **Penetration test + full dependency audit** — Schedule for v1.1
-- **Production load test** — Execute k6 against production, optimize
+### Session 10 — Jul 25, 2026 (Production hardening)
+- **Auto-deploy pipeline** — `deploy.yml` fixed: removed `--prebuilt` flag (was blocking deploy), added `--yes` for non-interactive runs; deploys only after CI passes via `workflow_run` trigger
+- **`/api/ready` endpoint** — Full dependency check (Database, Storage, Env Vars); returns 503 if any dependency degraded
+- **Backup verification** — `.github/workflows/backup-check.yml` scheduled daily run listing Supabase backup age
+- **Uptime monitoring config** — `tests/monitoring/uptime-checks.ts` generates Better Uptime / UptimeRobot monitor configuration (5 monitors: health, readiness, version, homepage, login)
+- **Production dashboard docs** — `docs/production/dashboards-setup.md` with step-by-step Sentry + PostHog + Vercel Analytics widget config
+- **Penetration testing plan** — `docs/production/penetration-testing-plan.md` with 29 test cases, tooling, schedule, budget, legal scope
+- **CI build fix** — dummy Supabase env vars added to CI workflow (build was failing with `supabaseUrl is required`)
+- **CI green** — All 83 tests pass, lint/typecheck/build clean
+
+### Remaining (v1.1 — manual/UI tasks)
+- **Uptime monitoring + alerting** — Config generated; manual setup in Better Uptime / UptimeRobot needed
+- **Database PITR + daily backup** — Verify in Supabase dashboard; automated backup-check CI created
+- **Production dashboards** — Setup guide created; manual creation in Sentry + PostHog UI needed
+- **Penetration test** — Plan documented; schedule externally
+- **Production load test** — k6 script ready; execute against production
 
 ### Known Issues
 - `@wagmi/connectors` has warnings about missing optional deps (safe-sdk, porto, metamask-connect, coinbase-sdk, base-org/account) — non-blocking, webpack resolves to false
