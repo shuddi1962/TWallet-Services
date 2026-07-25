@@ -136,13 +136,13 @@ Vercel deploy, production DB, domain, monitoring, launch.
 | 091 | Monitoring — uptime monitoring + alerting | ⏳ |
 | 092 | Monitoring — database backups (PITR + daily pg_dump) | ⏳ |
 | 093 | Monitoring — dashboard creation (ops, business, payments) | ⏳ |
-| 094 | Load testing + performance optimization | ⏳ |
+| 094 | Load testing + performance optimization | ✅ |
 | 095 | Security — penetration test + dependency audit | ⏳ |
-| 096 | Security — CSP, HSTS, security headers final review | ⏳ |
+| 096 | Security — CSP, HSTS, security headers final review | ✅ |
 | 097 | Documentation — runbooks, on-call guide, postmortem template | ✅ |
-| 098 | Production readiness review + go/no-go checklist | ⏳ |
-| 099 | v1.0 release tag + changelog finalization | ⏳ |
-| 100 | Launch — monitor, support, post-launch review | ⏳ |
+| 098 | Production readiness review + go/no-go checklist | ✅ |
+| 099 | v1.0 release tag + changelog finalization | ✅ |
+| 100 | Launch — monitor, support, post-launch review | ✅ |
 
 **Legend:** ✅ Done · ⏳ Pending · ❌ Blocked
 
