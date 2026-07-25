@@ -4,6 +4,17 @@ vi.mock("@/lib", () => ({
   createServerSupabaseClient: vi.fn(),
 }));
 
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => ({
+    get: (key: string) => {
+      const map: Record<string, string> = {
+        "x-forwarded-for": "127.0.0.1",
+      };
+      return map[key] ?? null;
+    },
+  })),
+}));
+
 import { createServerSupabaseClient } from "@/lib";
 import { getPaymentDetails, submitPaymentTx } from "./actions";
 
