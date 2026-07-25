@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -34,19 +34,17 @@ const wagmiConfig = defaultWagmiConfig({
   },
 });
 
-export function Providers({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    createWeb3Modal({
-      wagmiConfig,
-      projectId,
-      themeMode: "dark",
-      themeVariables: {
-        "--w3m-color-mix": "#2563eb",
-        "--w3m-color-mix-strength": 20,
-      },
-    });
-  }, []);
+createWeb3Modal({
+  wagmiConfig,
+  projectId,
+  themeMode: "dark",
+  themeVariables: {
+    "--w3m-color-mix": "#2563eb",
+    "--w3m-color-mix-strength": 20,
+  },
+});
 
+export function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
