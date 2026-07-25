@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConnectButton } from "@/components/wallet/connect-button";
 import { cn } from "@/lib/utils/cn";
 
 const navLinks = [
@@ -61,6 +62,9 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <div className="hidden sm:block">
+            <ConnectButton />
+          </div>
           <Button
             className="hidden sm:flex items-center gap-2 px-5 h-9 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-semibold border-0 shadow-lg shadow-[#2563eb]/20"
             asChild

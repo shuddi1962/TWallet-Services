@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import {
   CalendarDays, Camera, Check, Clock, Globe, Hash, Languages, Mail,
-  MapPin, Package, Pencil, Plus, ShieldCheck, Trash2, User, X,
+  MapPin, Package, Pencil, Plus, ShieldCheck, Trash2, User, X, Wallet,
 } from "lucide-react";
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
@@ -247,7 +247,34 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* 7. Account Status */}
+      {/* 7. Connected Wallets */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white"><Wallet className="h-5 w-5" aria-hidden="true" />Connected Wallets</CardTitle>
+          <CardDescription>Manage your connected crypto wallets</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between rounded-lg border border-surface-800 bg-surface-900/50 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 ring-1 ring-brand-500/20">
+                <Wallet className="h-5 w-5 text-brand-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-surface-50">Wallet Connection</p>
+                <p className="text-xs text-surface-400">Connect or switch your wallet for payments and card orders</p>
+              </div>
+            </div>
+            <a
+              href="/dashboard/wallet"
+              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600"
+            >
+              Manage Wallet
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 8. Account Status */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white"><ShieldCheck className="h-5 w-5" aria-hidden="true" />Account Status</CardTitle>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Menu, X, CreditCard, Bell } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
+import { ConnectButton } from "@/components/wallet/connect-button";
 
 export function DashboardHeader() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -31,7 +32,8 @@ export function DashboardHeader() {
         </span>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        <ConnectButton />
         <Link
           href="/dashboard/notifications"
           className="relative rounded-full p-2 text-surface-400 transition-colors hover:bg-white/5 hover:text-white"

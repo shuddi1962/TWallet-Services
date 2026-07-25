@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
+import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -44,6 +46,9 @@ export default function NewOrderPage() {
   const [selectedToken, setSelectedToken] = useState<string>("usdc");
   const [loading, setLoading] = useState(true);
 
+  const { isConnected } = useAccount();
+  const { open: openWallet } = useWeb3Modal();
+
   const [state, formAction, pending] = useActionState(createOrder, undefined);
 
   useEffect(() => {
@@ -78,6 +83,15 @@ export default function NewOrderPage() {
 
       {state?.error && (
         <Alert variant="error">{state.error}</Alert>
+      )}
+
+      {!isConnected && (
+        <Alert variant="warning" className="flex items-center justify-between">
+          <span>Connect your wallet to place orders and make crypto payments</span>
+          <Button size="sm" variant="primary" onClick={() => openWallet()}>
+            <Wallet className="h-4 w-4" />Connect Wallet
+          </Button>
+        </Alert>
       )}
 
       <form action={formAction}>
