@@ -21,7 +21,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
         onClick={onMenuToggle}
         className="lg:hidden p-2 rounded-lg hover:bg-surface-100 text-body"
         aria-label="Toggle sidebar"
-        aria-expanded={undefined}
+        aria-expanded={false}
       >
         <Menu className="w-5 h-5" aria-hidden="true" />
       </button>

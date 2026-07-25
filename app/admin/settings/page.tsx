@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Save } from "lucide-react";
 import { toast } from "sonner";
+import { updateSettings } from "@/lib/admin/actions";
 
 const sections = ["General", "Payments", "Security", "Notifications", "KYC"] as const;
 
@@ -48,6 +49,7 @@ const settingsConfig: Record<string, SettingField[]> = {
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<(typeof sections)[number]>(sections[0]);
+  const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Record<string, SettingValue>>(() => {
     const initial: Record<string, SettingValue> = {};
     for (const [, fields] of Object.entries(settingsConfig)) {
@@ -58,8 +60,17 @@ export default function AdminSettingsPage() {
     return initial;
   });
 
-  const handleSave = () => {
-    toast.success("Settings saved");
+  const handleSave = async () => {
+    setSaving(true);
+    const result = await updateSettings(activeTab.toLowerCase(), Object.fromEntries(
+      settingsConfig[activeTab]?.map((f) => [f.label, values[f.label]]) ?? [],
+    ));
+    setSaving(false);
+    if (result.success) {
+      toast.success("Settings saved");
+    } else {
+      toast.error(result.error ?? "Failed to save settings");
+    }
   };
 
   return (
@@ -131,10 +142,11 @@ export default function AdminSettingsPage() {
         <div className="mt-6 pt-4 border-t border-surface-200 flex justify-end">
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            Save Changes
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>

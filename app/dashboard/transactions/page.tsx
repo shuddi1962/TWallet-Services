@@ -103,7 +103,16 @@ export default function TransactionsPage() {
 
   const explorerUrl = (tx: Transaction) => {
     if (!tx.tx_hash) return null;
-    return `https://etherscan.io/tx/${tx.tx_hash}`;
+    const explorers: Record<string, string> = {
+      ethereum: "https://etherscan.io/tx/",
+      sepolia: "https://sepolia.etherscan.io/tx/",
+      polygon: "https://polygonscan.com/tx/",
+      base: "https://basescan.org/tx/",
+      arbitrum: "https://arbiscan.io/tx/",
+      optimism: "https://optimistic.etherscan.io/tx/",
+    };
+    const base = (tx.network_id && explorers[tx.network_id]) || "https://etherscan.io/tx/";
+    return `${base}${tx.tx_hash}`;
   };
 
   if (loading) {

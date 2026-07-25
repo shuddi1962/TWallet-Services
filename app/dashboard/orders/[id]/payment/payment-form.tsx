@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAccount, useChainId, useSwitchChain, useSendTransaction } from "wagmi";
+import { useAccount, useChainId, useSwitchChain, useSendTransaction, useWriteContract } from "wagmi";
+import { erc20Abi } from "viem";
 import { submitPaymentTx } from "@/features/payments/server/actions";
 import { createClient } from "@/lib/supabase/client";
 import { formatPaymentError } from "@/lib/payment-errors";
@@ -76,6 +77,7 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
   const chainId = useChainId();
   const { switchChainAsync } = useSwitchChain();
   const { sendTransactionAsync } = useSendTransaction();
+  const { writeContractAsync } = useWriteContract();
 
   const [submitState, setSubmitState] = useState<{ error?: string; success?: boolean; message?: string } | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -109,10 +111,21 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
     setVerificationMessage("");
 
     try {
-      const tx = await sendTransactionAsync({
-        to: wallet.address as `0x${string}`,
-        value: BigInt(Math.floor(order.amount_usdc * 10 ** (token?.decimals ?? 6))),
-      });
+      const tokenDecimals = token?.decimals ?? 6;
+      const rawAmount = BigInt(Math.floor(order.amount_usdc * 10 ** tokenDecimals));
+      const isErc20 = token?.contract_address && token.contract_address.length > 0;
+
+      const tx = isErc20 && writeContractAsync
+        ? await writeContractAsync({
+            address: token!.contract_address as `0x${string}`,
+            abi: erc20Abi,
+            functionName: "transfer",
+            args: [wallet.address as `0x${string}`, rawAmount],
+          })
+        : await sendTransactionAsync({
+            to: wallet.address as `0x${string}`,
+            value: rawAmount,
+          });
 
       setTxHash(tx);
       setVerificationStatus("submitted");

@@ -56,11 +56,11 @@ ON CONFLICT (slug) DO NOTHING;
 -- =============================================================================
 INSERT INTO system_settings (category, settings)
 VALUES
-  ('general',          '{"site_name":"TWallet Card","support_email":"support@twallet.com","support_phone":"+1-800-TWALLET","platform_fee_percent":1.5,"min_order_amount":9.99,"max_order_amount":10000,"default_currency":"USD"}'),
+  ('general',          '{"site_name":"TWallet Card","support_email":"support@twalletservices.com","support_phone":"+1-800-TWALLET","platform_fee_percent":1.5,"min_order_amount":9.99,"max_order_amount":10000,"default_currency":"USD"}'),
   ('payment',          '{"min_confirmations":12,"allow_refunds":true,"refund_window_hours":48,"payment_timeout_hours":48,"allowed_networks":["polygon","ethereum","arbitrum","optimism","base","solana"],"allowed_tokens":["USDC","USDT","DAI"]}'),
   ('shipping',         '{"domestic_shipping_days":"3-5","international_shipping_days":"7-14","free_shipping_threshold":50,"tracking_enabled":true,"carriers":["USPS","FedEx","DHL"]}'),
   ('kyc',              '{"required_tier":"none","verification_providers":[],"max_attempts":3}'),
-  ('notifications',    '{"email_enabled":true,"push_enabled":true,"sms_enabled":false,"admin_email":"admin@twallet.com"}'),
+  ('notifications',    '{"email_enabled":true,"push_enabled":true,"sms_enabled":false,"admin_email":"admin@twalletservices.com"}'),
   ('limits',           '{"daily_order_limit":10,"monthly_order_limit":50,"max_wallets_per_user":5,"min_payment_amount":1,"max_payment_amount":50000}')
 ON CONFLICT (category) DO NOTHING;
 

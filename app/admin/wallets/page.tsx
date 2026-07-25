@@ -1,25 +1,18 @@
-import { getAdminWallets } from "@/lib/admin/actions";
-import { AdminWalletsTable } from "@/components/admin/wallets-table";
+import { getAdminReceivingWallets } from "@/lib/admin/actions";
+import { AdminReceivingWalletsTable } from "@/components/admin/receiving-wallets-table";
 
-export default async function AdminWalletsPage(props: {
-  searchParams?: Promise<{ search?: string; network?: string; status?: string }>;
-}) {
-  const sp = await props.searchParams;
-  const { wallets, count } = await getAdminWallets({
-    search: sp?.search,
-    network: sp?.network,
-    status: sp?.status,
-  });
+export default async function AdminWalletsPage() {
+  const { wallets, count } = await getAdminReceivingWallets();
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-heading">Wallet Addresses</h1>
-          <p className="text-sm text-body">{count} wallets</p>
+          <h1 className="text-2xl font-bold text-heading">Receiving Wallets</h1>
+          <p className="text-sm text-body">{count} wallets — users send crypto here</p>
         </div>
       </div>
-      <AdminWalletsTable wallets={wallets} count={count} />
+      <AdminReceivingWalletsTable wallets={wallets} count={count} />
     </div>
   );
 }

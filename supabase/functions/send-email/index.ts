@@ -36,7 +36,7 @@ serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "TWallet <noreply@twallet.com>",
+        from: "TWallet <noreply@twalletservices.com>",
         to,
         subject,
         html,

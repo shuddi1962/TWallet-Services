@@ -548,6 +548,69 @@ export async function getAdminWallets(options?: { search?: string; network?: str
   return { wallets: (res.data ?? []) as WalletRecord[], count: (res.count ?? 0) as number };
 }
 
+export type ReceivingWalletRecord = {
+  id: string;
+  network_id: string;
+  network_name: string;
+  address: string;
+  label: string | null;
+  active: boolean;
+  total_received: number;
+  tx_count: number;
+  last_used_at: string | null;
+  created_at: string;
+};
+
+export async function getAdminReceivingWallets(): Promise<{ wallets: ReceivingWalletRecord[]; count: number }> {
+  const supabase: any = await sb();
+  const res: any = await supabase
+    .from("supported_wallet_addresses")
+    .select("*, supported_networks!inner(name)", { count: "exact" })
+    .order("created_at", { ascending: false });
+  const data = (res.data ?? []) as any[];
+  return {
+    wallets: data.map((w: any) => ({
+      id: w.id,
+      network_id: w.network_id,
+      network_name: w.supported_networks?.name ?? w.network_id,
+      address: w.address,
+      label: w.label,
+      active: w.active,
+      total_received: w.total_received,
+      tx_count: w.tx_count,
+      last_used_at: w.last_used_at,
+      created_at: w.created_at,
+    })),
+    count: res.count ?? 0,
+  };
+}
+
+export async function createAdminReceivingWallet(data: {
+  network_id: string;
+  address: string;
+  label?: string;
+}): Promise<ActionResult> {
+  const supabase: any = await sb();
+  const { error }: any = await supabase.from("supported_wallet_addresses").insert({
+    network_id: data.network_id,
+    address: data.address,
+    label: data.label ?? null,
+    active: true,
+  });
+  if (error) return { success: false, error: error.message as string };
+  revalidatePath("/admin/wallets");
+  return { success: true };
+}
+
+export async function getAdminSweepTransactions(): Promise<{ sweeps: any[]; count: number }> {
+  const supabase: any = await sb();
+  const res: any = await supabase
+    .from("sweep_transactions")
+    .select("*, admins!inner(profile_id, profiles!inner(full_name, email))", { count: "exact" })
+    .order("created_at", { ascending: false });
+  return { sweeps: res.data ?? [], count: res.count ?? 0 };
+}
+
 export async function getAdminRoles(): Promise<{ admins: AdminRoleUser[] }> {
   const supabase: any = await sb();
   const res: any = await supabase
@@ -1006,4 +1069,29 @@ export async function exportPayments(
   const res: any = await q.order("created_at", { ascending: false });
   if (res.error) return { success: false, error: res.error.message as string };
   return { success: true, data: res.data ?? [], format };
+}
+
+export async function updateSettings(
+  category: string,
+  settings: Record<string, unknown>,
+): Promise<ActionResult> {
+  const supabase: any = await sb();
+  const { error } = await supabase.from("system_settings").upsert(
+    { category, settings },
+    { onConflict: "category" },
+  );
+  if (error) return { success: false, error: error.message as string };
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+export async function getSettings(
+  category?: string,
+): Promise<{ success: true; data: any[] } | { success: false; error: string }> {
+  const supabase: any = await sb();
+  let q: any = supabase.from("system_settings").select("*");
+  if (category) q = q.eq("category", category);
+  const res: any = await q.order("created_at", { ascending: false });
+  if (res.error) return { success: false, error: res.error.message as string };
+  return { success: true, data: res.data ?? [] };
 }

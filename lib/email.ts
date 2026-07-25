@@ -15,7 +15,7 @@ export async function sendEmail(params: EmailParams): Promise<{ success: boolean
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "TWallet <noreply@twallet.com>",
+        from: "TWallet <noreply@twalletservices.com>",
         to: params.to,
         subject: params.subject,
         html: params.html,

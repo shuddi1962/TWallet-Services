@@ -3,6 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Minus, Plus, Wallet, Check } from "lucide-react";
+import { useAccount } from "wagmi";
+import { useWeb3Modal } from "@web3modal/wagmi/react";
+import Link from "next/link";
 
 const networks = [
   { id: "ethereum", name: "Ethereum", color: "#627EEA", icon: "⟠" },
@@ -134,6 +137,8 @@ export function OrderWidget() {
   const [country, setCountry] = useState("nigeria");
   const [quantity, setQuantity] = useState(1);
   const [token, setToken] = useState("USDT");
+  const { isConnected } = useAccount();
+  const { open } = useWeb3Modal();
 
   const price = activeTab === "Physical Card" ? 50 : 5;
   const total = price * quantity;
@@ -234,10 +239,23 @@ export function OrderWidget() {
         />
       </div>
 
-      <button className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052cc] hover:from-[#0052cc] hover:to-[#0044aa] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5">
-        <Wallet className="w-4 h-4" strokeWidth={2} />
-        Connect Wallet to Continue
-      </button>
+      {isConnected ? (
+        <Link
+          href="/dashboard/orders/new"
+          className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052cc] hover:from-[#0052cc] hover:to-[#0044aa] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5"
+        >
+          <Wallet className="w-4 h-4" strokeWidth={2} />
+          Continue to Order
+        </Link>
+      ) : (
+        <button
+          onClick={() => open()}
+          className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052cc] hover:from-[#0052cc] hover:to-[#0044aa] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5"
+        >
+          <Wallet className="w-4 h-4" strokeWidth={2} />
+          Connect Wallet to Continue
+        </button>
+      )}
     </motion.div>
   );
 }

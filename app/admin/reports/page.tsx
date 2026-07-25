@@ -112,7 +112,8 @@ export default function AdminReportsPage() {
       ...report.data.map((row) => headers.map((h) => escapeCsvCell(row[h])).join(",")),
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const mimeType = report.format === "excel" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : report.format === "pdf" ? "application/pdf" : "text/csv;charset=utf-8;";
+    const blob = new Blob([csvContent], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

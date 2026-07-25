@@ -24,7 +24,7 @@ function generateOrderNumber(): string {
 
 export async function createOrder(_prev: unknown, formData: FormData) {
   const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = checkRateLimit(ip, "createOrder", RATE_LIMITS.createOrder);
+  const { allowed } = await checkRateLimit(ip, "createOrder", RATE_LIMITS.createOrder);
   if (!allowed) return { error: "Too many requests. Please try again later." };
 
   const productId = String(formData.get("productId") ?? "");

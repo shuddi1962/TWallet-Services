@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useActionState } from "react";
 import {
   MessageCircle, ShoppingCart, CreditCard, DollarSign, Wallet, Wrench,
   HelpCircle, Ticket, CheckCircle2, ChevronRight, LifeBuoy,
 } from "lucide-react";
-import { toast } from "sonner";
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
 } from "@/components/ui/card";
@@ -16,11 +15,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils/cn";
-import { validateSupportTicket, type SupportTicketFormData } from "@/lib/validations";
+import { createTicket } from "@/features/support/server/actions";
 
 type Tab = "open" | "resolved" | "create" | "kb";
-type Category = SupportTicketFormData["category"];
-type Priority = SupportTicketFormData["priority"];
+type Category = "general" | "order" | "card" | "payment" | "wallet" | "technical" | "other";
+type Priority = "low" | "medium" | "high" | "urgent";
 
 interface Ticket {
   id: string; ticketNumber: string; subject: string; category: Category;
@@ -61,35 +60,13 @@ const FAQS: { q: string; a: string }[] = [
   { q: "Can I cancel an order?", a: "Orders can be cancelled while still 'pending'. Once 'processing', contact support for help." },
 ];
 
-function submitTicketStub(_data: SupportTicketFormData): Promise<void> {
-  return new Promise((r) => setTimeout(r, 500));
-}
-
 export default function SupportPage() {
   const [activeTab, setActiveTab] = useState<Tab>("open");
   const [tickets] = useState<Ticket[]>([]);
-  const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState<Category>("general");
-  const [priority, setPriority] = useState<Priority>("medium");
-  const [orderId, setOrderId] = useState("");
-  const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [state, formAction, pending] = useActionState(createTicket, undefined);
 
   const openTickets = tickets.filter((t) => t.status === "open" || t.status === "pending");
   const resolvedTickets = tickets.filter((t) => t.status === "resolved" || t.status === "closed");
-
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const payload = { subject: subject.trim(), category, priority, message: message.trim(), ...(orderId.trim() ? { orderId: orderId.trim() } : {}) };
-    const parsed = validateSupportTicket(payload);
-    if (!parsed.success) { parsed.error.issues.forEach((issue) => toast.error(issue.message)); return; }
-    setSubmitting(true);
-    await submitTicketStub(parsed.data);
-    setSubmitting(false);
-    toast.success("Ticket submitted");
-    setSubject(""); setCategory("general"); setPriority("medium"); setOrderId(""); setMessage("");
-    setActiveTab("open");
-  };
 
   const renderTicketCard = (t: Ticket) => {
     const cat = CATEGORY_META[t.category];
@@ -171,36 +148,40 @@ export default function SupportPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4" onSubmit={onSubmit}>
+              {state?.success && (
+                <div className="mb-4 rounded-xl border border-success/20 bg-success/10 p-4 text-sm text-success" role="alert">{state.success}</div>
+              )}
+              {state?.error && (
+                <div className="mb-4 rounded-xl border border-error/20 bg-error/10 p-4 text-sm text-error" role="alert">{state.error}</div>
+              )}
+              <form className="space-y-4" action={formAction}>
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject <span className="text-error">*</span></Label>
-                  <Input id="subject" placeholder="Briefly describe your issue" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={200} />
-                  <p className="text-xs text-surface-500">{subject.length}/200 characters</p>
+                  <Input id="subject" name="subject" placeholder="Briefly describe your issue" maxLength={200} required />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="category">Category <span className="text-error">*</span></Label>
-                    <select id="category" value={category} onChange={(e) => setCategory(e.target.value as Category)} className="flex h-10 w-full rounded-md border border-white/10 bg-surface-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                    <select id="category" name="category" defaultValue="general" className="flex h-10 w-full rounded-md border border-white/10 bg-surface-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                       {Object.entries(CATEGORY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>
-                    <select id="priority" value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="flex h-10 w-full rounded-md border border-white/10 bg-surface-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                    <select id="priority" name="priority" defaultValue="medium" className="flex h-10 w-full rounded-md border border-white/10 bg-surface-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                       <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option>
                     </select>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="orderId">Related Order ID (optional)</Label>
-                  <Input id="orderId" placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" value={orderId} onChange={(e) => setOrderId(e.target.value)} />
+                  <Input id="orderId" name="orderId" placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Message <span className="text-error">*</span></Label>
-                  <Textarea id="message" placeholder="Describe your issue in as much detail as possible..." rows={6} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={5000} />
-                  <p className="text-xs text-surface-500">{message.length}/5000 characters</p>
+                  <Textarea id="message" name="message" placeholder="Describe your issue in as much detail as possible..." rows={6} maxLength={5000} required />
                 </div>
-                <div className="flex justify-end"><Button type="submit" loading={submitting}>Submit</Button></div>
+                <div className="flex justify-end"><Button type="submit" loading={pending}>Submit</Button></div>
               </form>
             </CardContent>
           </Card>

@@ -10,27 +10,25 @@ import { Input } from "@/components/ui/input";
 const footerLinks = {
   Company: [
     { href: "/about", label: "About Us" },
-    { href: "/blog", label: "Blog" },
-    { href: "/careers", label: "Careers" },
     { href: "/contact", label: "Contact" },
+    { href: "/support", label: "Support" },
+    { href: "/faq", label: "FAQ" },
   ],
   Resources: [
-    { href: "/docs", label: "Documentation" },
-    { href: "/support", label: "Support Center" },
-    { href: "/status", label: "System Status" },
-    { href: "/api", label: "API Reference" },
+    { href: "/how-it-works", label: "How It Works" },
+    { href: "/cards", label: "Cards" },
+    { href: "/pricing", label: "Pricing" },
+    { href: "/faq", label: "FAQ" },
   ],
   Legal: [
     { href: "/terms", label: "Terms of Service" },
     { href: "/privacy", label: "Privacy Policy" },
-    { href: "/security", label: "Security" },
-    { href: "/compliance", label: "Compliance" },
   ],
-  Developers: [
-    { href: "/docs/getting-started", label: "Getting Started" },
-    { href: "/docs/sdk", label: "SDK & Tools" },
-    { href: "/docs/integration", label: "Integration Guide" },
-    { href: "/changelog", label: "Changelog" },
+  Links: [
+    { href: "/about", label: "About" },
+    { href: "/contact", label: "Contact" },
+    { href: "/auth/login", label: "Dashboard" },
+    { href: "/faq", label: "FAQ" },
   ],
 };
 

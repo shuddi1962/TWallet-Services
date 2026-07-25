@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, ShoppingBag, CreditCard, Coins,
   LifeBuoy, BarChart3, Settings, ScrollText, LogOut,
-  ChevronLeft, Search,
+  ChevronLeft, Search, Wallet, Send,
 } from "lucide-react";
 
 const navItems = [
@@ -15,6 +15,8 @@ const navItems = [
   { label: "Orders", icon: ShoppingBag, route: "/admin/orders", roles: ["super_admin", "operations", "finance"] },
   { label: "Cards", icon: CreditCard, route: "/admin/cards", roles: ["super_admin", "operations"] },
   { label: "Payments", icon: Coins, route: "/admin/payments", roles: ["super_admin", "finance"] },
+  { label: "Wallets", icon: Wallet, route: "/admin/wallets", roles: ["super_admin", "finance"] },
+  { label: "Sweep", icon: Send, route: "/admin/sweep", roles: ["super_admin", "finance"] },
   { label: "Analytics", icon: BarChart3, route: "/admin/analytics", roles: ["super_admin", "finance", "viewer"] },
   { label: "Support", icon: LifeBuoy, route: "/admin/support", roles: ["super_admin", "support", "operations"] },
   { label: "Settings", icon: Settings, route: "/admin/settings", roles: ["super_admin"] },

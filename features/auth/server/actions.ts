@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 
 export async function signUp(_prev: unknown, formData: FormData) {
   const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = checkRateLimit(ip, "register", RATE_LIMITS.register);
+  const { allowed } = await checkRateLimit(ip, "register", RATE_LIMITS.register);
   if (!allowed) return { error: "Too many requests. Please try again later." };
 
   const email = emailSchema.safeParse(formData.get("email"));
@@ -46,7 +46,7 @@ export async function signUp(_prev: unknown, formData: FormData) {
 
 export async function signIn(_prev: unknown, formData: FormData) {
   const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = checkRateLimit(ip, "login", RATE_LIMITS.login);
+  const { allowed } = await checkRateLimit(ip, "login", RATE_LIMITS.login);
   if (!allowed) return { error: "Too many requests. Please try again later." };
 
   const email = emailSchema.safeParse(formData.get("email"));
@@ -80,7 +80,7 @@ export async function signOut() {
 
 export async function sendPasswordResetEmail(_prev: unknown, formData: FormData) {
   const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = checkRateLimit(ip, "forgotPassword", RATE_LIMITS.forgotPassword);
+  const { allowed } = await checkRateLimit(ip, "forgotPassword", RATE_LIMITS.forgotPassword);
   if (!allowed) return { error: "Too many requests. Please try again later." };
 
   const email = emailSchema.safeParse(formData.get("email"));

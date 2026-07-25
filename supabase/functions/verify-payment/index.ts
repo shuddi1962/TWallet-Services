@@ -72,6 +72,36 @@ serve(async (req: Request) => {
       verified: result.verified,
     });
 
+    if (result.verified) {
+      const { data: txData } = await supabase
+        .from("payment_transactions")
+        .select("order_id")
+        .eq("tx_hash", tx_hash)
+        .maybeSingle();
+
+      if (txData?.order_id) {
+        const internalSecret = Deno.env.get("INTERNAL_SECRET");
+        if (internalSecret) {
+          await fetch(
+            `${Deno.env.get("SUPABASE_URL") ?? ""}/functions/v1/transition-order`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${internalSecret}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                order_id: txData.order_id,
+                status: "paid",
+                tx_hash,
+                from_address: result.fromAddress,
+              }),
+            },
+          ).catch((e) => console.error("Failed to transition order:", e));
+        }
+      }
+    }
+
     return successResponse({
       verified: result.verified,
       confirmations: result.confirmations,

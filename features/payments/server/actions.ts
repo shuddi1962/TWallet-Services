@@ -60,7 +60,7 @@ export async function getPaymentDetails(orderId: string) {
 
 export async function submitPaymentTx(_prev: unknown, formData: FormData) {
   const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = checkRateLimit(ip, "paymentVerify", RATE_LIMITS.paymentVerify);
+  const { allowed } = await checkRateLimit(ip, "paymentVerify", RATE_LIMITS.paymentVerify);
   if (!allowed) return { error: "Too many requests. Please try again later." };
 
   const orderId = String(formData.get("orderId") ?? "");
