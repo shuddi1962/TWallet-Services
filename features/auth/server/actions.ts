@@ -3,13 +3,13 @@
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib";
 import { emailSchema, passwordSchema } from "@/lib/validations";
-import { sendEmail, buildWelcomeEmail, buildPasswordResetEmail, buildPasswordChangedEmail } from "@/lib/email";
-import { headers } from "next/headers";
+import { sendEmail, buildPasswordResetEmail, buildPasswordChangedEmail } from "@/lib/email";
 import { redirect } from "next/navigation";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://twalletservices.com";
+
 export async function signUp(_prev: unknown, formData: FormData) {
-  const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = await checkRateLimit(ip, "register", RATE_LIMITS.register);
+  const { allowed } = await checkRateLimit("signup", "register", RATE_LIMITS.register);
   if (!allowed) return { error: "Too many requests. Please try again later." };
 
   const email = emailSchema.safeParse(formData.get("email"));
@@ -21,32 +21,23 @@ export async function signUp(_prev: unknown, formData: FormData) {
   if (!name) return { error: "Name is required" };
 
   const supabase = await createServerSupabaseClient();
-  const origin = (await headers()).get("origin");
 
   const { error } = await supabase.auth.signUp({
     email: email.data,
     password: password.data,
     options: {
       data: { full_name: name },
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: `${SITE_URL}/auth/callback`,
     },
   });
 
   if (error) return { error: error.message };
 
-  // Fire-and-forget welcome email
-  sendEmail({
-    to: email.data,
-    subject: "Welcome to TWallet!",
-    html: buildWelcomeEmail({ name, dashboardUrl: `${origin}/dashboard` }),
-  });
-
   redirect("/auth/verify?email=" + encodeURIComponent(email.data));
 }
 
 export async function signIn(_prev: unknown, formData: FormData) {
-  const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = await checkRateLimit(ip, "login", RATE_LIMITS.login);
+  const { allowed } = await checkRateLimit("signin", "login", RATE_LIMITS.login);
   if (!allowed) return { error: "Too many requests. Please try again later." };
 
   const email = emailSchema.safeParse(formData.get("email"));
@@ -79,27 +70,24 @@ export async function signOut() {
 }
 
 export async function sendPasswordResetEmail(_prev: unknown, formData: FormData) {
-  const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = await checkRateLimit(ip, "forgotPassword", RATE_LIMITS.forgotPassword);
+  const { allowed } = await checkRateLimit("forgot-password", "forgotPassword", RATE_LIMITS.forgotPassword);
   if (!allowed) return { error: "Too many requests. Please try again later." };
 
   const email = emailSchema.safeParse(formData.get("email"));
   if (!email.success) return { error: email.error.errors[0]!.message };
 
   const supabase = await createServerSupabaseClient();
-  const origin = (await headers()).get("origin");
 
   const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
-    redirectTo: `${origin}/auth/reset-password`,
+    redirectTo: `${SITE_URL}/auth/reset-password`,
   });
 
   if (error) return { error: error.message };
 
-  // Fire-and-forget reset email via Resend
   sendEmail({
     to: email.data,
     subject: "Reset Your TWallet Password",
-    html: buildPasswordResetEmail({ resetUrl: `${origin}/auth/reset-password` }),
+    html: buildPasswordResetEmail({ resetUrl: `${SITE_URL}/auth/reset-password` }),
   });
 
   return { success: "Check your email for a reset link" };
