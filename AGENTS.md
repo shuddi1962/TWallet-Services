@@ -139,13 +139,22 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Vercel deploy** — Production deploy `c5bb975` built READY at `https://twallet-services-kh78u5461.vercel.app` (aliased to `twalletservices.com`)
 - **Remaining work documented** — Full gap analysis performed (see below)
 
-### Remaining
-- **Missing pages (14):** `/how-it-works`, `/cards`, `/pricing`, `/about`, `/faq` (public), `/auth/verify-email`, `not-found.tsx`, `error.tsx`, `loading.tsx` (global), order detail/new/confirmation/tracking (dashboard)
-- **Missing Edge Functions:** `transition-order`, `send-email`
-- **Empty email templates:** `emails/` directory — no `.tsx` templates exist
-- **`.tasks/` directory:** Does not exist on disk (referenced in docs but never created)
-- **Production checklist:** All 10 items unchecked (domain, SSL, prod DB, real API keys, Sentry, monitoring, backups, rollback)
-- **Real API keys:** WalletConnect Project ID, Alchemy, Sentry DSN, Resend, Supabase credentials — all placeholders
+### Session 8 — Jul 25, 2026
+- **`.tasks/` directory created** — `./tasks/README.md` indexes all 100 implementation tasks with status per phase
+- **Dead code removed** — `emails/templates.ts` (unused, all email templates live in `lib/email.ts`)
+- **AGENTS.md updated** — Remaining section reflects current state
+
+### Remaining (Deployment phase — tasks 091–100)
+- **Uptime monitoring + alerting** — Not yet configured
+- **Database PITR + daily backup** — Not verified on production
+- **Production dashboards** (ops, business, payments) — Not created
+- **Load testing + performance optimization** — Not executed
+- **Security penetration test + dependency audit** — Not completed
+- **Security headers final review** — CSP/HSTS not finalized for production
+- **Production readiness go/no-go** — Not conducted
+- **v1.0 release tag** — Not created
+- **Launch** — Not executed
+- **Real API keys:** All populated (Supabase, WalletConnect, Alchemy, Sentry, Resend, PostHog, Upstash)
 
 ### Known Issues
 - `@wagmi/connectors` has warnings about missing optional deps (safe-sdk, porto, metamask-connect, coinbase-sdk, base-org/account) — non-blocking, webpack resolves to false
