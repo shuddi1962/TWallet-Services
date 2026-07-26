@@ -1,20 +1,31 @@
 "use client";
 
-import { useConnect, useAccount } from "wagmi";
+import { useCallback } from "react";
+import { useConnect, useAccount, type Connector } from "wagmi";
+import { useWalletModal } from "@/lib/wallet-modal-context";
 
 export function useWalletConnect() {
   const { isConnected } = useAccount();
   const { connectAsync, connectors, isPending } = useConnect();
+  const modal = useWalletModal();
 
-  return {
-    openWallet: async () => {
-      if (!isConnected && connectors.length > 0) {
+  const openWallet = useCallback(
+    async (connector?: Connector) => {
+      if (isConnected) return;
+      if (connector) {
         try {
-          const connector = connectors[0];
-          if (connector) await connectAsync({ connector });
+          await connectAsync({ connector });
         } catch {}
+      } else {
+        modal.open(connectors);
       }
     },
+    [isConnected, connectAsync, connectors, modal],
+  );
+
+  return {
+    openWallet,
+    connectors,
     connecting: isPending,
     isConnected,
   };
