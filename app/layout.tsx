@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 import { WalletProviders } from "@/components/wallet-providers";
-import { PostHogProvider } from "@/components/posthog-provider";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 
@@ -49,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <PostHogProvider><WalletProviders>{children}</WalletProviders></PostHogProvider>
+        <WalletProviders>{children}</WalletProviders>
       </body>
     </html>
   );
