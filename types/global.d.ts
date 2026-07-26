@@ -52,24 +52,6 @@ declare module "framer-motion" {
   export function isValidMotionProp(key: string): boolean;
 }
 
-declare module "@web3modal/wagmi/react" {
-  import type { Config } from "wagmi";
-  import type { Chain } from "wagmi/chains";
-
-  type CreateWeb3ModalOptions = {
-    wagmiConfig: Config;
-    projectId: string;
-    metadata?: Record<string, string | string[]>;
-    themeMode?: "dark" | "light";
-    defaultChain?: Chain;
-    [key: string]: unknown;
-  };
-
-  export function createWeb3Modal(options: CreateWeb3ModalOptions): void;
-  export function useWeb3Modal(): { open: () => void };
-  export function defaultWagmiConfig(options: Record<string, unknown>): Config;
-}
-
 declare module "tailwind-merge" {
   export function twMerge(...inputs: (string | undefined | null | false)[]): string;
   export function twJoin(...inputs: (string | undefined | null | false)[]): string;
