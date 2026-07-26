@@ -10,7 +10,8 @@ export function useWalletConnect() {
     openWallet: async () => {
       if (!isConnected && connectors.length > 0) {
         try {
-          await connectAsync({ connector: connectors[0] });
+          const connector = connectors[0];
+          if (connector) await connectAsync({ connector });
         } catch {}
       }
     },
