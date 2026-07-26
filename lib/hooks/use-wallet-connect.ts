@@ -1,15 +1,20 @@
 "use client";
 
-import { useAccount } from "wagmi";
-import { useAppKit } from "@reown/appkit/react";
+import { useConnect, useAccount } from "wagmi";
 
 export function useWalletConnect() {
   const { isConnected } = useAccount();
-  const { open } = useAppKit();
+  const { connectAsync, connectors, isPending } = useConnect();
 
   return {
-    openWallet: () => { if (!isConnected) open(); },
-    connecting: false,
+    openWallet: async () => {
+      if (!isConnected && connectors.length > 0) {
+        try {
+          await connectAsync({ connector: connectors[0] });
+        } catch {}
+      }
+    },
+    connecting: isPending,
     isConnected,
   };
 }

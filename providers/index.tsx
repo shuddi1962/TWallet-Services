@@ -2,50 +2,32 @@
 
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider, type Config } from "wagmi";
+import { WagmiProvider, createConfig, http } from "wagmi";
+import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createAppKit } from "@reown/appkit/react";
-import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { mainnet, sepolia, polygon, base, arbitrum, optimism, type AppKitNetwork } from "@reown/appkit/networks";
+import { injected, walletConnect } from "@wagmi/connectors";
 
 const queryClient = new QueryClient();
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 
-const networks = [mainnet, sepolia, polygon, base, arbitrum, optimism] as [AppKitNetwork, ...AppKitNetwork[]];
-
-let wagmiConfig: Config | null = null;
-
-try {
-  const adapter = new WagmiAdapter({ networks, projectId });
-  wagmiConfig = adapter.wagmiConfig;
-  createAppKit({
-    adapters: [adapter],
-    networks,
-    projectId,
-    metadata: {
-      name: "TWALLET",
-      description: "Non-custodial crypto card platform",
-      url: "https://twalletservices.com",
-      icons: ["https://twalletservices.com/opengraph-image.png"],
-    },
-    themeMode: "dark",
-    features: { analytics: false },
-  });
-} catch (e) {
-  console.error("[Providers] AppKit init failed:", e);
-}
+const wagmiConfig = createConfig({
+  chains: [mainnet, sepolia, polygon, base, arbitrum, optimism],
+  transports: {
+    [mainnet.id]: http(),
+    [sepolia.id]: http(),
+    [polygon.id]: http(),
+    [base.id]: http(),
+    [arbitrum.id]: http(),
+    [optimism.id]: http(),
+  },
+  connectors: [
+    injected({ shimDisconnect: true }),
+    walletConnect({ projectId }),
+  ],
+});
 
 export function Providers({ children }: { children: ReactNode }) {
-  if (!wagmiConfig) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        {children}
-        <Toaster richColors position="top-right" />
-      </QueryClientProvider>
-    );
-  }
-
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
