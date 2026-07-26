@@ -1,8 +1,8 @@
 "use client";
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider } from "wagmi";
+import { WagmiProvider, type Config } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
@@ -14,8 +14,7 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 
 const networks = [mainnet, sepolia, polygon, base, arbitrum, optimism] as [AppKitNetwork, ...AppKitNetwork[]];
 
-let wagmiConfig: ReturnType<WagmiAdapter["wagmiConfig"]> | null = null;
-let appKitInitialized = false;
+let wagmiConfig: Config | null = null;
 
 try {
   const adapter = new WagmiAdapter({ networks, projectId });
@@ -33,7 +32,6 @@ try {
     themeMode: "dark",
     features: { analytics: false },
   });
-  appKitInitialized = true;
 } catch (e) {
   console.error("[Providers] AppKit init failed:", e);
 }
