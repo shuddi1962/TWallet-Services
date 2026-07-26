@@ -17,7 +17,6 @@ const networks = [mainnet, sepolia, polygon, base, arbitrum, optimism] as [AppKi
 const wagmiAdapter = new WagmiAdapter({
   networks,
   projectId,
-  ssr: true,
 });
 
 createAppKit({
