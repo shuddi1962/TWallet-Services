@@ -60,11 +60,10 @@ const nextConfig: NextConfig = {
       "@x402/evm": `${stubs}/x402-evm.mjs`,
       "@x402/core/client": `${stubs}/x402-core.mjs`,
       "@x402/svm/exact/client": `${stubs}/x402-svm.mjs`,
-      "@reown/appkit-ui": `${stubs}/reown-ui.mjs`,
-      "@reown/appkit-scaffold-ui/basic": `${stubs}/reown-scaffold.mjs`,
-      "@reown/appkit-scaffold-ui/w3m-modal": `${stubs}/reown-scaffold.mjs`,
-      "@walletconnect/ethereum-provider": path.resolve("node_modules/@web3modal/wagmi/node_modules/@walletconnect/ethereum-provider/dist/index.es.js"),
+      "porto": false,
     };
+
+    config.externals.push("pino-pretty", "lokijs", "encoding");
     config.module.rules.push({
       test: /\.m?js/,
       resolve: { fullySpecified: false },
@@ -75,6 +74,10 @@ const nextConfig: NextConfig = {
       "pino-pretty": false,
       "@react-native-async-storage/async-storage": false,
       "accounts": false,
+      "bufferutil": false,
+      "utf-8-validate": false,
+      "@emotion/is-prop-valid": false,
+      "@metamask/connect-evm": false,
       ...(isServer ? {} : { net: false, tls: false }),
     };
 

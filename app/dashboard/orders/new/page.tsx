@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
-import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -12,6 +11,7 @@ import Link from "next/link";
 import { getCardProducts } from "@/features/cards/server/actions";
 import { createOrder } from "@/features/orders/server/actions";
 import { useActionState } from "react";
+import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 
 interface CardProduct {
   id: string;
@@ -47,7 +47,7 @@ export default function NewOrderPage() {
   const [loading, setLoading] = useState(true);
 
   const { isConnected } = useAccount();
-  const { open: openWallet } = useWeb3Modal();
+  const { openWallet, connecting } = useWalletConnect();
 
   const [state, formAction, pending] = useActionState(createOrder, undefined);
 
@@ -88,8 +88,9 @@ export default function NewOrderPage() {
       {!isConnected && (
         <Alert variant="warning" className="flex items-center justify-between">
           <span>Connect your wallet to place orders and make crypto payments</span>
-          <Button size="sm" variant="primary" onClick={() => openWallet()}>
-            <Wallet className="h-4 w-4" />Connect Wallet
+          <Button size="sm" variant="primary" onClick={() => openWallet()} disabled={connecting}>
+            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+            {connecting ? "Connecting..." : "Connect Wallet"}
           </Button>
         </Alert>
       )}

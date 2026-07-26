@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAccount, useBalance, useDisconnect, useChainId } from "wagmi";
-import { Copy, Check, Wallet, Plug, ExternalLink } from "lucide-react";
+import { Copy, Check, Wallet, Plug, ExternalLink, Loader2 } from "lucide-react";
 import { trackWalletDisconnected } from "@/lib/analytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
+import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 
 const CHAIN_NAMES: Record<number, string> = {
   1: "Ethereum",
@@ -29,6 +30,7 @@ export function WalletOverview() {
   const chainId = useChainId();
   const { data: balance } = useBalance({ address });
   const { disconnect } = useDisconnect();
+  const { openWallet, connecting } = useWalletConnect();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -54,8 +56,10 @@ export function WalletOverview() {
             title="No wallet connected"
             description="Connect your crypto wallet to manage payments and track your balance."
             action={
-              <Button asChild>
-                <a href="/dashboard/wallet">Connect Wallet</a>
+              <Button onClick={() => openWallet()} disabled={connecting}>
+                {connecting ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
+                ) : "Connect Wallet"}
               </Button>
             }
           />

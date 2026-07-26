@@ -4,49 +4,41 @@ import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { defaultWagmiConfig } from "@web3modal/wagmi/react/config";
-import { createWeb3Modal } from "@web3modal/wagmi/react";
-import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
+import { createAppKit } from "@reown/appkit/react";
+import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import { mainnet, sepolia, polygon, base, arbitrum, optimism, type AppKitNetwork } from "@reown/appkit/networks";
 
 const queryClient = new QueryClient();
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "YOUR_PROJECT_ID";
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 
-const metadata = {
-  name: "TWALLET",
-  description: "Premium crypto-funded card platform",
-  url: "https://twalletservices.com",
-  icons: ["/icon.png"],
-};
+const networks = [mainnet, sepolia, polygon, base, arbitrum, optimism] as [AppKitNetwork, ...AppKitNetwork[]];
 
-const wagmiConfig = defaultWagmiConfig({
-  chains: [mainnet, sepolia, polygon, base, arbitrum, optimism],
+const wagmiAdapter = new WagmiAdapter({
+  networks,
   projectId,
-  metadata,
-  enableEIP6963: true,
-  enableCoinbase: true,
-  enableInjected: true,
-  enableWalletConnect: true,
-  auth: {
-    email: true,
-    showWallets: true,
-    walletFeatures: true,
-  },
+  ssr: true,
 });
 
-createWeb3Modal({
-  wagmiConfig,
+createAppKit({
+  adapters: [wagmiAdapter],
+  networks,
   projectId,
+  metadata: {
+    name: "TWALLET",
+    description: "Non-custodial crypto card platform",
+    url: "https://twalletservices.com",
+    icons: ["https://twalletservices.com/opengraph-image.png"],
+  },
   themeMode: "dark",
-  themeVariables: {
-    "--w3m-color-mix": "#2563eb",
-    "--w3m-color-mix-strength": 20,
+  features: {
+    analytics: false,
   },
 });
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         {children}
         <Toaster richColors position="top-right" />

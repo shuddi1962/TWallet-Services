@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAccount, useBalance, useDisconnect, useChainId } from "wagmi";
-import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatUnits } from "viem";
-import { Wallet, ChevronDown, Copy, Check, ExternalLink, LogOut } from "lucide-react";
+import { Wallet, ChevronDown, Copy, Check, ExternalLink, LogOut, Loader2 } from "lucide-react";
+import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 
 const CHAIN_NAMES: Record<number, string> = {
   1: "Ethereum", 11155111: "Sepolia", 137: "Polygon",
@@ -21,7 +21,7 @@ export function ConnectButton() {
   const chainId = useChainId();
   const { data: balance } = useBalance({ address });
   const { disconnect } = useDisconnect();
-  const { open } = useWeb3Modal();
+  const { openWallet, connecting } = useWalletConnect();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -53,11 +53,12 @@ export function ConnectButton() {
   if (!isConnected || !address) {
     return (
       <button
-        onClick={() => open()}
-        className="flex items-center gap-2 rounded-lg bg-brand-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600"
+        onClick={() => openWallet()}
+        disabled={connecting}
+        className="flex items-center gap-2 rounded-lg bg-brand-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600 disabled:opacity-60"
       >
-        <Wallet className="h-4 w-4" />
-        <span className="hidden sm:inline">Connect Wallet</span>
+        {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+        <span className="hidden sm:inline">{connecting ? "Connecting..." : "Connect Wallet"}</span>
       </button>
     );
   }

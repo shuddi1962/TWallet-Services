@@ -1,14 +1,14 @@
 "use client";
 
 import { useAccount } from "wagmi";
-import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, Plug } from "lucide-react";
+import { Wallet, Plug, Loader2 } from "lucide-react";
+import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 
 export function WalletConnect() {
   const { isConnected, address } = useAccount();
-  const { open } = useWeb3Modal();
+  const { openWallet, connecting } = useWalletConnect();
 
   return (
     <Card>
@@ -31,9 +31,9 @@ export function WalletConnect() {
               ? `${address?.slice(0, 6)}...${address?.slice(-4)}`
               : "Connect your self-custody wallet to start ordering cards and making crypto payments."}
           </p>
-          <Button className="mt-6" onClick={() => open()}>
-            {isConnected ? <Plug className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
-            {isConnected ? "Switch Wallet" : "Connect Wallet"}
+          <Button className="mt-6" onClick={() => openWallet()} disabled={connecting}>
+            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : isConnected ? <Plug className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+            {connecting ? "Connecting..." : isConnected ? "Switch Wallet" : "Connect Wallet"}
           </Button>
         </div>
       </CardContent>

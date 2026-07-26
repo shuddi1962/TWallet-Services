@@ -9,8 +9,8 @@ import { FadeIn, StaggerChildren, StaggerItem } from "@/components/ui/motion-sec
 
 const plans = [
   { name: "Virtual Card", price: "$5", period: "one-time", description: "Perfect for online shopping and subscriptions", features: ["Instant issuance", "Online purchases", "Subscription payments", "No monthly fee", "1% top-up fee"], cta: "Get Virtual Card", popular: false },
-  { name: "Physical Card", price: "$25", period: "one-time + $3/mo", description: "For in-store purchases and ATM withdrawals", features: ["Global shipping", "Contactless payments", "ATM withdrawals", "In-store purchases", "$3/month maintenance", "1% top-up fee"], cta: "Get Physical Card", popular: true },
-  { name: "Premium", price: "$50", period: "one-time + $8/mo", description: "Both cards with premium benefits", features: ["Virtual + Physical cards", "Priority verification", "Higher spending limits", "Dedicated support", "Zero top-up fees", "$8/month maintenance"], cta: "Go Premium", popular: false },
+  { name: "Physical Card", price: "$10", period: "one-time + $3/mo", description: "For in-store purchases and ATM withdrawals", features: ["Global shipping", "Contactless payments", "ATM withdrawals", "In-store purchases", "$3/month maintenance", "1% top-up fee"], cta: "Get Physical Card", popular: true },
+  { name: "Premium", price: "$15", period: "one-time + $8/mo", description: "Both cards with premium benefits", features: ["Virtual + Physical cards", "Priority verification", "Higher spending limits", "Dedicated support", "Zero top-up fees", "$8/month maintenance"], cta: "Go Premium", popular: false },
 ];
 
 export function Pricing() {
