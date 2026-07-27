@@ -17,7 +17,7 @@ function shortenAddress(address: string): string {
 }
 
 export function ConnectButton() {
-  const { address, isConnected, connector } = useAccount();
+  const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { data: balance } = useBalance({ address });
   const { disconnect } = useDisconnect();
