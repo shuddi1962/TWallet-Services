@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
-  Wallet,
+  Smartphone,
   CreditCard,
   Package,
   ArrowRightLeft,
@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 const actions = [
-  { label: "Connect Wallet", href: "/dashboard/wallet", icon: Wallet, primary: true },
+  { label: "Connect Trust Wallet", href: "/dashboard/wallet", icon: Smartphone, primary: true },
   { label: "Order Card", href: "/dashboard/orders", icon: CreditCard, primary: false },
   { label: "Track Order", href: "/dashboard/orders", icon: Package, primary: false },
   { label: "Transactions", href: "/dashboard/transactions", icon: ArrowRightLeft, primary: false },

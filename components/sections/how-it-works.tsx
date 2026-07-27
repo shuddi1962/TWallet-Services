@@ -1,15 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { UserPlus, MailCheck, Wallet, CreditCard, Bitcoin, PackageSearch, PackageCheck } from "lucide-react";
+import { UserPlus, MailCheck, Smartphone, CreditCard, Bitcoin, PackageSearch, PackageCheck } from "lucide-react";
 import { Container } from "@/components/layout/container";
 
 const steps = [
   { icon: UserPlus, title: "Create Account", description: "Sign up with your email and verify your identity in minutes." },
   { icon: MailCheck, title: "Verify Email", description: "Confirm your email address to activate your account." },
-  { icon: Wallet, title: "Connect Wallet", description: "Link your self-custodial wallet — MetaMask, WalletConnect, or Coinbase." },
+  { icon: Smartphone, title: "Connect Trust Wallet", description: "Open Trust Wallet on your phone and scan the QR code to connect securely." },
   { icon: CreditCard, title: "Choose Card", description: "Select physical or virtual card. Pick your network and quantity." },
-  { icon: Bitcoin, title: "Pay with Crypto", description: "Send the exact amount from your wallet. You sign the transaction." },
+  { icon: Bitcoin, title: "Pay with Crypto", description: "Send the exact amount from Trust Wallet. You sign the transaction." },
   { icon: PackageSearch, title: "Track Order", description: "Monitor your order status in real-time from the dashboard." },
   { icon: PackageCheck, title: "Receive Card", description: "Virtual cards issued instantly. Physical cards shipped globally." },
 ];

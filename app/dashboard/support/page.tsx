@@ -56,7 +56,7 @@ const FAQS: { q: string; a: string }[] = [
   { q: "How do I order a TWallet Card?", a: "Open the Cards page, pick your preferred card variant, and complete checkout. You pay with crypto from a connected wallet and can follow progress under Orders." },
   { q: "Which cryptocurrencies can I pay with?", a: "TWallet supports stablecoin payments (USDC, USDT) across Ethereum, Polygon, Base, Arbitrum, Optimism, and BNB Smart Chain." },
   { q: "How long does card delivery take?", a: "Virtual cards are issued instantly after payment confirmation. Physical cards ship within 3–7 business days with tracking in Orders." },
-  { q: "How do I connect my wallet?", a: "Click 'Connect Wallet' in the header and choose your provider. TWallet never holds your keys — every transaction is approved in your own wallet." },
+  { q: "How do I connect Trust Wallet?", a: "Click 'Connect Trust Wallet' in the header. Trust Wallet will open on your phone to approve the connection. TWallet never holds your keys — every transaction is approved in your wallet." },
   { q: "Can I cancel an order?", a: "Orders can be cancelled while still 'pending'. Once 'processing', contact support for help." },
 ];
 

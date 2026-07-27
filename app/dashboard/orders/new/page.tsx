@@ -6,7 +6,7 @@ import { useAccount } from "wagmi";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
-import { ArrowLeft, CreditCard, Wallet, Network, Coins, Loader2, Check } from "lucide-react";
+import { ArrowLeft, CreditCard, Smartphone, Network, Coins, Loader2, Check } from "lucide-react";
 import Link from "next/link";
 import { getCardProducts } from "@/features/cards/server/actions";
 import { createOrder } from "@/features/orders/server/actions";
@@ -87,10 +87,10 @@ export default function NewOrderPage() {
 
       {!isConnected && (
         <Alert variant="warning" className="flex items-center justify-between">
-          <span>Connect your wallet to place orders and make crypto payments</span>
+          <span>Connect Trust Wallet to place orders and make crypto payments</span>
           <Button size="sm" variant="primary" onClick={() => openWallet()} disabled={connecting}>
-            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-            {connecting ? "Connecting..." : "Connect Wallet"}
+            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
+            {connecting ? "Connecting..." : "Connect Trust Wallet"}
           </Button>
         </Alert>
       )}
@@ -243,7 +243,7 @@ export default function NewOrderPage() {
                     loading={pending}
                     disabled={!selectedProduct}
                   >
-                    <Wallet className="h-4 w-4" aria-hidden="true" />
+                    <Smartphone className="h-4 w-4" aria-hidden="true" />
                     Place Order
                   </Button>
                 </CardContent>

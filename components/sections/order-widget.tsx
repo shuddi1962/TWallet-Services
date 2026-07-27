@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Minus, Plus, Wallet, Check, Loader2 } from "lucide-react";
+import { ChevronDown, Minus, Plus, Smartphone, Check, Loader2 } from "lucide-react";
 import { useAccount } from "wagmi";
 import Link from "next/link";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
@@ -244,7 +244,7 @@ export function OrderWidget() {
           href="/dashboard/orders/new"
           className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052cc] hover:from-[#0052cc] hover:to-[#0044aa] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5"
         >
-          <Wallet className="w-4 h-4" strokeWidth={2} />
+          <Smartphone className="w-4 h-4" strokeWidth={2} />
           Continue to Order
         </Link>
       ) : (
@@ -253,8 +253,8 @@ export function OrderWidget() {
           disabled={connecting}
           className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052cc] hover:from-[#0052cc] hover:to-[#0044aa] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5 disabled:opacity-60"
         >
-          {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" strokeWidth={2} />}
-          {connecting ? "Connecting..." : "Connect Wallet to Continue"}
+          {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" strokeWidth={2} />}
+          {connecting ? "Connecting..." : "Connect Trust Wallet to Continue"}
         </button>
       )}
     </motion.div>

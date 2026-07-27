@@ -4,7 +4,7 @@ test.describe("Wallet Connection — Task 071", () => {
   test.describe("Dashboard wallet page", () => {
     test("renders wallet connection section", async ({ page }) => {
       await page.goto("/dashboard/wallet");
-      await expect(page.getByRole("heading", { name: /wallet/i })).toBeVisible();
+      await expect(page.getByRole("heading", { name: /trust wallet/i })).toBeVisible();
     });
 
     test("shows wallet stats cards", async ({ page }) => {

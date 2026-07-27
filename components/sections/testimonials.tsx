@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { FadeIn, StaggerChildren, StaggerItem } from "@/components/ui/motion-section";
 
 const testimonials = [
-  { name: "Alex Thompson", role: "Crypto Trader", avatar: "AT", rating: 5, content: "Finally a card that doesn't ask for my seed phrase. Connected my MetaMask, paid in USDC on Polygon, and had my virtual card in under 5 minutes. This is how crypto spending should work." },
+  { name: "Alex Thompson", role: "Crypto Trader", avatar: "AT", rating: 5, content: "Finally a card that doesn't ask for my seed phrase. Connected my Trust Wallet, paid in USDC on Polygon, and had my virtual card in under 5 minutes. This is how crypto spending should work." },
   { name: "Sarah Chen", role: "DeFi Developer", avatar: "SC", rating: 5, content: "The non-custodial approach is exactly what the space needs. I verified the on-chain payment myself before the platform even confirmed it. Full transparency, zero trust required." },
   { name: "Marcus Johnson", role: "NFT Collector", avatar: "MJ", rating: 5, content: "Got the physical card shipped to me in 4 days. Used it at a coffee shop on day one. The fact that I funded it with ETH on Base and it just works is mind-blowing." },
 ];

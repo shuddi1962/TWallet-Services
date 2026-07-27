@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Bell, Wallet, CreditCard, ArrowUpRight, ArrowDownRight, CircleCheck, Package, TrendingUp, LayoutDashboard } from "lucide-react";
+import { ArrowRight, Bell, Wallet, CreditCard, ArrowUpRight, ArrowDownRight, CircleCheck, Package, TrendingUp, LayoutDashboard, Smartphone } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +93,7 @@ export function DashboardPreview() {
                     </div>
                     <div className="mt-4 flex items-center gap-2 text-xs text-surface-500">
                       <CircleCheck className="h-3.5 w-3.5 text-success" />
-                      <span>Connected to MetaMask</span>
+                      <span>Connected to Trust Wallet</span>
                     </div>
                   </div>
 
@@ -143,14 +143,14 @@ export function DashboardPreview() {
               </div>
 
               <div className="rounded-xl border border-surface-200 bg-surface-50 p-5 flex flex-col">
-                <h4 className="text-sm font-semibold text-surface-900 mb-4">Wallet</h4>
+                <h4 className="text-sm font-semibold text-surface-900 mb-4">Trust Wallet</h4>
                 <div className="rounded-xl bg-white border border-surface-200 p-4 mb-4">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
-                      <Wallet className="h-5 w-5 text-brand-600" />
+                      <Smartphone className="h-5 w-5 text-brand-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-surface-900">MetaMask</p>
+                      <p className="text-sm font-semibold text-surface-900">Trust Wallet</p>
                       <p className="text-xs text-surface-500 font-mono">0x7a9...f3e2</p>
                     </div>
                   </div>

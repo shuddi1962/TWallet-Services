@@ -5,15 +5,19 @@ import { Footer } from "@/components/layout/footer";
 const faqItems = [
   {
     q: "How do I order a card?",
-    a: "Sign up for an account, verify your email, connect your wallet, choose a card design, and pay with crypto. Your card will be issued once the payment is confirmed on-chain.",
+    a: "Sign up for an account, verify your email, connect Trust Wallet, choose a card design, and pay with crypto. Your card will be issued once the payment is confirmed on-chain.",
   },
   {
-    q: "Which wallets are supported?",
-    a: "MetaMask, Coinbase Wallet, Trust Wallet, and any WalletConnect v2 compatible wallet. We support 7 EVM chains including Ethereum, Polygon, Arbitrum, Optimism, Base, Avalanche, and BNB Smart Chain.",
+    q: "Why Trust Wallet?",
+    a: "Trust Wallet offers a simple and secure way to connect and pay using cryptocurrency. It is the official recommended wallet for TWallet Services, providing a seamless experience for ordering cards and making crypto payments.",
+  },
+  {
+    q: "Why does the platform use WalletConnect?",
+    a: "WalletConnect is the secure connection technology that allows Trust Wallet to communicate safely with TWallet Services. You only interact with Trust Wallet while WalletConnect works behind the scenes.",
   },
   {
     q: "How long does delivery take?",
-    a: "Virtual cards are available immediately after payment confirmation. Physical cards ship within 5–7 business days and tracking information is provided.",
+    a: "Virtual cards are available immediately after payment confirmation. Physical cards ship within 5-7 business days and tracking information is provided.",
   },
   {
     q: "What cryptocurrencies can I use to pay?",
@@ -25,7 +29,7 @@ const faqItems = [
   },
   {
     q: "Is my private key safe?",
-    a: "Absolutely. We never request or store your private keys or recovery phrases. All wallet connections use standard protocols (WalletConnect v2) and you sign transactions locally.",
+    a: "Absolutely. We never request or store your private keys or recovery phrases. All wallet connections use WalletConnect and you sign transactions locally in Trust Wallet.",
   },
   {
     q: "Can I cancel my order?",

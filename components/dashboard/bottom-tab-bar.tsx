@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Home,
   ShoppingBag,
-  Wallet,
+  Smartphone,
   Bell,
   User,
 } from "lucide-react";
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils/cn";
 const tabs = [
   { label: "Home", href: "/dashboard", icon: Home },
   { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
-  { label: "Wallet", href: "/dashboard/wallet", icon: Wallet },
+  { label: "Trust Wallet", href: "/dashboard/wallet", icon: Smartphone },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
   { label: "Profile", href: "/dashboard/settings", icon: User },
 ] as const;

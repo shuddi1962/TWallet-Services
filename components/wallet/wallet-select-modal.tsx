@@ -3,13 +3,7 @@
 import { useEffect, useRef } from "react";
 import { type Connector } from "wagmi";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Wallet } from "lucide-react";
-
-const CONNECTOR_ICONS: Record<string, string> = {
-  MetaMask: "https://registry.walletconnect.com/api/v2/logo/md/0c405f3b-1482-4e3e-9a58-d8b2c3e2c2b1",
-  WalletConnect: "https://registry.walletconnect.com/api/v2/logo/md/0c405f3b-1482-4e3e-9a58-d8b2c3e2c2b1",
-  "Coinbase Wallet": "https://registry.walletconnect.com/api/v2/logo/md/0c405f3b-1482-4e3e-9a58-d8b2c3e2c2b1",
-};
+import { X, Smartphone } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -58,7 +52,7 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect }: Props
             className="relative w-full max-w-sm rounded-2xl border border-surface-700 bg-surface-900 p-6 shadow-2xl"
           >
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-surface-50">Connect Wallet</h2>
+              <h2 className="text-lg font-semibold text-surface-50">Connect Trust Wallet</h2>
               <button
                 onClick={onClose}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 transition-colors hover:bg-surface-800 hover:text-surface-50"
@@ -76,22 +70,12 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect }: Props
                   className="flex w-full items-center gap-3 rounded-xl border border-surface-700 bg-surface-800/50 px-4 py-3 text-left transition-colors hover:border-surface-600 hover:bg-surface-800"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-700">
-                    {c.icon ? (
-                      <img src={c.icon} alt="" className="h-6 w-6" />
-                    ) : CONNECTOR_ICONS[c.name] ? (
-                      <img src={CONNECTOR_ICONS[c.name]} alt="" className="h-6 w-6" />
-                    ) : (
-                      <Wallet className="h-5 w-5 text-surface-400" />
-                    )}
+                    <Smartphone className="h-5 w-5 text-surface-400" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-surface-50">{c.name}</p>
+                    <p className="text-sm font-medium text-surface-50">Trust Wallet</p>
                     <p className="text-xs text-surface-400">
-                      {c.name === "MetaMask"
-                        ? "Browser extension"
-                        : c.name === "WalletConnect"
-                          ? "Scan QR with mobile wallet"
-                          : "Connect your wallet"}
+                      Open Trust Wallet to connect
                     </p>
                   </div>
                 </button>
@@ -99,7 +83,7 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect }: Props
             </div>
 
             <p className="mt-4 text-center text-xs text-surface-500">
-              By connecting, you agree to our Terms of Service.
+              WalletConnect powers the secure connection between Trust Wallet and TWallet Services.
             </p>
           </motion.div>
         </div>

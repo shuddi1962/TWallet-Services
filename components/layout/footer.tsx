@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CreditCard, Twitter, Github, Send, Linkedin, CheckCircle2 } from "lucide-react";
+import { CreditCard, Twitter, Github, Send, Linkedin, CheckCircle2, Smartphone } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,8 +73,18 @@ export function Footer() {
                   </span>
               </Link>
               <p className="mt-4 max-w-xs text-sm text-surface-500 leading-relaxed">
-                Order premium crypto cards with secure blockchain payments. Non-custodial. Global. Yours.
+                Order premium crypto cards with secure blockchain payments. Optimized for Trust Wallet.
               </p>
+
+              <div className="mt-4 flex items-center gap-2 text-xs text-surface-400">
+                <Smartphone className="h-3.5 w-3.5" />
+                <span>Optimized for Trust Wallet</span>
+              </div>
+
+              <div className="mt-2 text-xs text-surface-400">
+                Powered by WalletConnect
+              </div>
+
               <div className="mt-6 flex gap-3">
                 {socialLinks.map((social) => (
                   <a

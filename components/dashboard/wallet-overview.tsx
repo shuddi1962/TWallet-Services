@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAccount, useBalance, useDisconnect, useChainId } from "wagmi";
-import { Copy, Check, Wallet, Plug, ExternalLink, Loader2 } from "lucide-react";
+import { Copy, Check, Smartphone, Plug, ExternalLink, Loader2 } from "lucide-react";
 import { trackWalletDisconnected } from "@/lib/analytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ function shortenAddress(address: string): string {
 }
 
 export function WalletOverview() {
-  const { address, isConnected, connector } = useAccount();
+  const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { data: balance } = useBalance({ address });
   const { disconnect } = useDisconnect();
@@ -48,18 +48,18 @@ export function WalletOverview() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Wallet</CardTitle>
+          <CardTitle>Trust Wallet</CardTitle>
         </CardHeader>
         <CardContent>
           <EmptyState
-            icon={Wallet}
+            icon={Smartphone}
             title="No wallet connected"
-            description="Connect your crypto wallet to manage payments and track your balance."
+            description="Connect your Trust Wallet to manage payments and track your balance."
             action={
               <Button onClick={() => openWallet()} disabled={connecting}>
                 {connecting ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
-                ) : "Connect Wallet"}
+                ) : "Connect Trust Wallet"}
               </Button>
             }
           />
@@ -77,7 +77,7 @@ export function WalletOverview() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Wallet</CardTitle>
+            <CardTitle>Trust Wallet</CardTitle>
             <Badge variant="success" className="gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
               Connected
@@ -88,19 +88,11 @@ export function WalletOverview() {
           {/* Provider & Address */}
           <div className="flex items-center gap-3 rounded-xl border border-surface-800 bg-surface-950/50 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 ring-1 ring-brand-500/20">
-              {connector?.icon ? (
-                <img
-                  src={connector.icon}
-                  alt={connector.name ?? "Wallet provider"}
-                  className="h-5 w-5"
-                />
-              ) : (
-                <Wallet className="h-5 w-5 text-brand-400" aria-hidden="true" />
-              )}
+              <Smartphone className="h-5 w-5 text-brand-400" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-surface-50">
-                {connector?.name ?? "Wallet"}
+                Trust Wallet
               </p>
               <p className="mt-0.5 font-mono text-xs text-surface-400">
                 {shortenAddress(address)}

@@ -15,7 +15,7 @@ const benefits = [
   {
     icon: Globe,
     title: "Full Control",
-    description: "You hold the keys. Connect any self-custodial wallet, sign your own transactions, and never give up custody of your crypto.",
+    description: "You hold the keys. Connect your Trust Wallet, sign your own transactions, and never give up custody of your crypto.",
     gradient: "from-brand-500 to-brand-700",
     light: "from-brand-50 to-blue-50",
   },
@@ -29,7 +29,7 @@ const benefits = [
   {
     icon: Code2,
     title: "Built for Web3",
-    description: "Native wallet connections. Multi-chain support. Smart contract verified payments. The future of spending is here.",
+    description: "Native Trust Wallet connection. Multi-chain support. Smart contract verified payments. The future of spending is here.",
     gradient: "from-amber-500 to-orange-600",
     light: "from-amber-50 to-orange-50",
   },

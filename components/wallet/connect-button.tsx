@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAccount, useBalance, useDisconnect, useChainId } from "wagmi";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatUnits } from "viem";
-import { Wallet, ChevronDown, Copy, Check, ExternalLink, LogOut, Loader2 } from "lucide-react";
+import { Smartphone, ChevronDown, Copy, Check, ExternalLink, LogOut, Loader2 } from "lucide-react";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 
 const CHAIN_NAMES: Record<number, string> = {
@@ -57,8 +57,8 @@ export function ConnectButton() {
         disabled={connecting}
         className="flex items-center gap-2 rounded-lg bg-brand-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600 disabled:opacity-60"
       >
-        {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-        <span className="hidden sm:inline">{connecting ? "Connecting..." : "Connect Wallet"}</span>
+        {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
+        <span className="hidden sm:inline">{connecting ? "Connecting..." : "Connect Trust Wallet"}</span>
       </button>
     );
   }
@@ -85,14 +85,10 @@ export function ConnectButton() {
           >
             <div className="flex items-center gap-3 rounded-lg bg-surface-800/50 p-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 ring-1 ring-brand-500/20">
-                {connector?.icon ? (
-                  <img src={connector.icon} alt={connector.name ?? ""} className="h-5 w-5" />
-                ) : (
-                  <Wallet className="h-5 w-5 text-brand-400" />
-                )}
+                <Smartphone className="h-5 w-5 text-brand-400" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-surface-50">{connector?.name ?? "Wallet"}</p>
+                <p className="text-sm font-medium text-surface-50">Trust Wallet</p>
                 <p className="truncate font-mono text-xs text-surface-400">{address}</p>
               </div>
               <button

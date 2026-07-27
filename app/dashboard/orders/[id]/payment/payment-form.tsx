@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatPaymentError } from "@/lib/payment-errors";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2, Smartphone } from "lucide-react";
 import Link from "next/link";
 
 type Order = {
@@ -261,12 +261,12 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-white">Complete Payment</h1>
-            <p className="mt-1 text-sm text-surface-400">Connect your wallet to pay for order {order.order_number}</p>
+            <p className="mt-1 text-sm text-surface-400">Connect your Trust Wallet to pay for order {order.order_number}</p>
           </div>
         </div>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-surface-400">Please connect your wallet to proceed with payment.</p>
+            <p className="text-surface-400">Please connect your Trust Wallet to proceed with payment.</p>
           </CardContent>
         </Card>
       </div>
@@ -301,8 +301,8 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Payment Details</CardTitle>
-            <CardDescription>Send the exact amount to the address below</CardDescription>
+            <CardTitle>Pay Using Trust Wallet</CardTitle>
+            <CardDescription>Send the exact amount to the address below using Trust Wallet</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-xl border border-surface-800 bg-surface-900/50 p-4">
@@ -311,6 +311,14 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
                 {order.amount_usdc} {order.token.toUpperCase()}
               </p>
               <p className="text-sm text-surface-400">≈ ${order.amount_usdc.toFixed(2)} USD</p>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-xl border border-surface-800 bg-surface-900/50 p-4">
+              <Smartphone className="h-5 w-5 text-brand-400" />
+              <div>
+                <p className="text-sm font-medium text-surface-50">Trust Wallet</p>
+                <p className="text-xs text-surface-400">Connected Wallet</p>
+              </div>
             </div>
 
             <div>
@@ -356,7 +364,7 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
                 disabled={verificationStatus !== "idle" || !isConnected || isPending}
               >
                 <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                Send Payment with Wallet
+                Send Payment with Trust Wallet
               </Button>
             )}
           </CardContent>
@@ -369,11 +377,11 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
           <CardContent className="space-y-4 text-sm text-surface-400">
             <div className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">1</span>
-              <p>Click <strong className="text-white">Send Payment with Wallet</strong> to open your connected wallet.</p>
+              <p>Click <strong className="text-white">Send Payment with Trust Wallet</strong> to open Trust Wallet on your phone.</p>
             </div>
             <div className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">2</span>
-              <p>Review the transaction details and confirm in your wallet. Use the <strong className="text-white">{network?.name ?? order.network}</strong> network.</p>
+              <p>Review the transaction details and confirm in Trust Wallet. Use the <strong className="text-white">{network?.name ?? order.network}</strong> network.</p>
             </div>
             <div className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">3</span>

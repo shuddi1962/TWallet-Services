@@ -4,10 +4,10 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { Play, Zap, Globe, Headphones, Shield } from "lucide-react";
+import { Play, Zap, Globe, Headphones, Shield, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
-import { OrderWidget } from "@/components/sections/order-widget";
+import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 
 const CARD_IMAGE =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuB4kIr2XwzwDH8GGE6TbF23yoAi0hgE531M8geP32Cjq1mXYPGqLgX5RomAPAvL8_a31uz8iWMQ2z8bQVqlCgpbFDegzDuB4uw-g3stjGIrqdtoMF9CoWU6flYr36umlpNYm_tJRxYT4mHEFM9HDsv2HdwoHwHoBhy3NMXS0tJOZYYIpIEzOCWpa62ZB_RYk63ExlxwSjO61Ve_DI09AExScnco3FJwHpl6yClmGjB2yLuid6y4Q-vTWqABr5GJaUJjzyk";
@@ -121,6 +121,8 @@ function CardReveal() {
 }
 
 export function Hero() {
+  const { openWallet, connecting } = useWalletConnect();
+
   return (
     <section className="relative bg-[#05070a] overflow-hidden pt-16 pb-10 lg:pt-24 lg:pb-14">
       <Stars />
@@ -151,9 +153,8 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.15 }}
               className="text-[2rem] leading-[1.08] sm:text-4xl lg:text-[2.8rem] xl:text-[3.2rem] xl:leading-[1.05] font-bold tracking-tight text-white"
             >
-              Your Card.<br />
-              Your Crypto.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2563eb] to-[#3b82f6]">Your Freedom.</span>
+              Your Crypto Card.<br />
+              Powered by <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2563eb] to-[#3b82f6]">Trust Wallet</span>.
             </motion.h1>
 
             <motion.p
@@ -162,7 +163,7 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-white/55 text-sm sm:text-base leading-relaxed max-w-md"
             >
-              Order a premium card, pay with crypto and spend worldwide. Non-custodial, secure, and built for Web3.
+              Order premium physical and virtual cards using secure cryptocurrency payments with Trust Wallet.
             </motion.p>
 
             <motion.div
@@ -175,12 +176,14 @@ export function Hero() {
                 <div className="absolute inset-0 rounded-xl bg-[#2563eb]/40 blur-xl animate-glow-pulse" />
                 <Button
                   className="relative px-5 h-10 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af] text-white font-semibold text-sm shadow-lg shadow-[#2563eb]/30 border-0 transition-all overflow-hidden"
-                  asChild
+                  onClick={() => openWallet()}
+                  disabled={connecting}
                 >
-                  <Link href="/auth/register">
-                    <span className="relative z-10">Order Your Card</span>
-                    <span className="absolute inset-0 -z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                  </Link>
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Smartphone className="w-4 h-4" />
+                    {connecting ? "Connecting..." : "Connect Trust Wallet"}
+                  </span>
+                  <span className="absolute inset-0 -z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
                 </Button>
               </div>
               <Button
@@ -188,9 +191,9 @@ export function Hero() {
                 variant="outline"
                 asChild
               >
-                <Link href="/#how-it-works">
+                <Link href="/#cards">
                   <Play className="w-3.5 h-3.5 fill-white" />
-                  How It Works
+                  Explore Cards
                 </Link>
               </Button>
             </motion.div>
@@ -229,14 +232,46 @@ export function Hero() {
             <CardReveal />
           </motion.div>
 
-          {/* Right column - Order widget */}
+          {/* Right column - Connect Trust Wallet widget */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             className="lg:col-span-4"
           >
-            <OrderWidget />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="bg-[#0c0e14] border border-white/[0.07] rounded-2xl p-6 lg:p-6 shadow-2xl shadow-black/50 w-full max-w-sm backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0500FF]/20 ring-1 ring-[#0500FF]/30">
+                  <Smartphone className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Trust Wallet</h3>
+                  <p className="text-sm text-white/50">Connect to get started</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-white/60 mb-6 leading-relaxed">
+                Connect your Trust Wallet to order premium cards and pay with cryptocurrency. Secure, fast, and non-custodial.
+              </p>
+
+              <button
+                onClick={() => openWallet()}
+                disabled={connecting}
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0500FF] to-[#0066FF] hover:from-[#0066FF] hover:to-[#0052cc] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5 disabled:opacity-60"
+              >
+                <Smartphone className="w-4 h-4" strokeWidth={2} />
+                {connecting ? "Connecting..." : "Connect Trust Wallet"}
+              </button>
+
+              <p className="mt-4 text-center text-xs text-white/30">
+                Powered by WalletConnect technology
+              </p>
+            </motion.div>
           </motion.div>
         </div>
       </Container>
