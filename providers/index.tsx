@@ -2,8 +2,8 @@
 
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider, http } from "wagmi";
-import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
+import { WagmiProvider } from "wagmi";
+import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "@reown/appkit/networks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
@@ -15,14 +15,7 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 const wagmiAdapter = new WagmiAdapter({
   networks: [mainnet, sepolia, polygon, base, arbitrum, optimism],
   projectId,
-  transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
-    [polygon.id]: http(),
-    [base.id]: http(),
-    [arbitrum.id]: http(),
-    [optimism.id]: http(),
-  },
+  ssr: true,
 });
 
 if (projectId) {
