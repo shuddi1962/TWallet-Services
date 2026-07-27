@@ -23,7 +23,7 @@ const wagmiConfig = createConfig({
     [optimism.id]: http(),
   },
   connectors: [
-    walletConnect({ projectId, showQrModal: true }),
+    walletConnect({ projectId, showQrModal: false }),
   ],
 });
 
