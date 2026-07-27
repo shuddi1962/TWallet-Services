@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback } from "react";
-import { useConnect, useAccount } from "wagmi";
+import { useAccount } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 
 export function useWalletConnect() {
   const { isConnected } = useAccount();
-  const { connectAsync, connectors, isPending } = useConnect();
   const { open: openModal } = useWeb3Modal();
 
   const openWallet = useCallback(async () => {
@@ -16,8 +15,7 @@ export function useWalletConnect() {
 
   return {
     openWallet,
-    connectors,
-    connecting: isPending,
+    connecting: false,
     isConnected,
   };
 }
