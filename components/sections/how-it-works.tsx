@@ -7,7 +7,7 @@ import { Container } from "@/components/layout/container";
 const steps = [
   { icon: UserPlus, title: "Create Account", description: "Sign up with your email and verify your identity in minutes." },
   { icon: MailCheck, title: "Verify Email", description: "Confirm your email address to activate your account." },
-  { icon: Smartphone, title: "Connect Trust Wallet", description: "Open Trust Wallet on your phone and scan the QR code to connect securely." },
+  { icon: Smartphone, title: "Connect Wallet", description: "Open Trust Wallet on your phone and scan the QR code to connect securely." },
   { icon: CreditCard, title: "Choose Card", description: "Select physical or virtual card. Pick your network and quantity." },
   { icon: Bitcoin, title: "Pay with Crypto", description: "Send the exact amount from Trust Wallet. You sign the transaction." },
   { icon: PackageSearch, title: "Track Order", description: "Monitor your order status in real-time from the dashboard." },

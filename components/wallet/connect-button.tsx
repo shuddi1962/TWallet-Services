@@ -58,7 +58,7 @@ export function ConnectButton() {
         className="flex items-center gap-2 rounded-lg bg-brand-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600 disabled:opacity-60"
       >
         {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
-        <span className="hidden sm:inline">{connecting ? "Connecting..." : "Connect Trust Wallet"}</span>
+        <span className="hidden sm:inline">{connecting ? "Connecting..." : "Connect Wallet"}</span>
       </button>
     );
   }

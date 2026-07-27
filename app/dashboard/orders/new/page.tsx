@@ -87,10 +87,10 @@ export default function NewOrderPage() {
 
       {!isConnected && (
         <Alert variant="warning" className="flex items-center justify-between">
-          <span>Connect Trust Wallet to place orders and make crypto payments</span>
+          <span>Connect your wallet to place orders and make crypto payments</span>
           <Button size="sm" variant="primary" onClick={() => openWallet()} disabled={connecting}>
             {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
-            {connecting ? "Connecting..." : "Connect Trust Wallet"}
+            {connecting ? "Connecting..." : "Connect Wallet"}
           </Button>
         </Alert>
       )}

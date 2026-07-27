@@ -181,7 +181,7 @@ export function Hero() {
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     <Smartphone className="w-4 h-4" />
-                    {connecting ? "Connecting..." : "Connect Trust Wallet"}
+                    {connecting ? "Connecting..." : "Connect Wallet"}
                   </span>
                   <span className="absolute inset-0 -z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
                 </Button>
@@ -232,7 +232,7 @@ export function Hero() {
             <CardReveal />
           </motion.div>
 
-          {/* Right column - Connect Trust Wallet widget */}
+          {/* Right column - Wallet Connect widget */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -265,7 +265,7 @@ export function Hero() {
                 className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0500FF] to-[#0066FF] hover:from-[#0066FF] hover:to-[#0052cc] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5 disabled:opacity-60"
               >
                 <Smartphone className="w-4 h-4" strokeWidth={2} />
-                {connecting ? "Connecting..." : "Connect Trust Wallet"}
+                {connecting ? "Connecting..." : "Connect Wallet"}
               </button>
 
               <p className="mt-4 text-center text-xs text-white/30">

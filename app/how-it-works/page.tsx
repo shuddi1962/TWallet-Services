@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/footer";
 const steps = [
   { number: "01", title: "Create Account", description: "Sign up with your email and create a secure password to get started." },
   { number: "02", title: "Verify Email", description: "Confirm your email address to activate your account and enable all features." },
-  { number: "03", title: "Connect Trust Wallet", description: "Open Trust Wallet on your phone and scan the QR code to connect securely via WalletConnect." },
+  { number: "03", title: "Connect Wallet", description: "Open Trust Wallet on your phone and scan the QR code to connect securely via WalletConnect." },
   { number: "04", title: "Choose Card", description: "Browse available card designs and select the one that suits your needs — virtual or physical." },
   { number: "05", title: "Pay with Crypto", description: "Send the exact amount in USDC or USDT from Trust Wallet to the provided receiving address on your chosen network." },
   { number: "06", title: "On-Chain Verification", description: "Our system automatically verifies the transaction on-chain — correct address, amount, chain, and confirmations." },

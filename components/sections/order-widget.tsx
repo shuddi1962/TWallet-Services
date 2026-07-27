@@ -254,7 +254,7 @@ export function OrderWidget() {
           className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052cc] hover:from-[#0052cc] hover:to-[#0044aa] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5 disabled:opacity-60"
         >
           {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" strokeWidth={2} />}
-          {connecting ? "Connecting..." : "Connect Trust Wallet to Continue"}
+          {connecting ? "Connecting..." : "Connect Wallet to Continue"}
         </button>
       )}
     </motion.div>

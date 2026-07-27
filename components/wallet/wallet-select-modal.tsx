@@ -52,7 +52,7 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect }: Props
             className="relative w-full max-w-sm rounded-2xl border border-surface-700 bg-surface-900 p-6 shadow-2xl"
           >
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-surface-50">Connect Trust Wallet</h2>
+              <h2 className="text-lg font-semibold text-surface-50">Connect Wallet</h2>
               <button
                 onClick={onClose}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 transition-colors hover:bg-surface-800 hover:text-surface-50"

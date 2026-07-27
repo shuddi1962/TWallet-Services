@@ -3,7 +3,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 
 const faqs = [
-  { q: "How do I order a card?", a: "Connect Trust Wallet, choose a card type, enter your shipping address, and pay with crypto." },
+  { q: "How do I order a card?", a: "Connect Trust Wallet (or any WalletConnect-compatible wallet), choose a card type, enter your shipping address, and pay with crypto." },
   { q: "Which wallet is recommended?", a: "Trust Wallet is the official recommended wallet for TWallet Services. All connections use WalletConnect technology." },
   { q: "How long does delivery take?", a: "Physical cards ship within 5-7 business days. Virtual cards are available immediately." },
   { q: "What chains are supported for payment?", a: "Ethereum, Polygon, Arbitrum, Optimism, Base, Avalanche, and BNB Smart Chain." },
