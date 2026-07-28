@@ -22,7 +22,16 @@ const wagmiConfig = createConfig({
     [optimism.id]: http(),
   },
   connectors: [
-    walletConnect({ projectId, showQrModal: true }),
+    walletConnect({
+      projectId,
+      showQrModal: true,
+      metadata: {
+        name: "TWALLET",
+        description: "Non-custodial crypto card platform",
+        url: "https://twalletservices.com",
+        icons: ["https://twalletservices.com/opengraph-image.png"],
+      },
+    }),
   ],
 });
 

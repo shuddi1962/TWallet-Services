@@ -10,10 +10,15 @@ export function useWalletConnect() {
   const openWallet = useCallback(async () => {
     if (isConnected) return;
     const wcConnector = connectors.find((c) => c.id === "walletConnect");
-    if (!wcConnector) return;
+    if (!wcConnector) {
+      console.error("[useWalletConnect] walletConnect connector not found");
+      return;
+    }
     try {
       await connectAsync({ connector: wcConnector });
-    } catch {}
+    } catch (err) {
+      console.error("[useWalletConnect] connection failed:", err);
+    }
   }, [isConnected, connectAsync, connectors]);
 
   return {
