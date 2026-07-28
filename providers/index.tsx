@@ -5,7 +5,7 @@ import { Toaster } from "sonner";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { walletConnect } from "@wagmi/connectors";
+import { walletConnect } from "wagmi/connectors";
 
 const queryClient = new QueryClient();
 
