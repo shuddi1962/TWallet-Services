@@ -21,11 +21,11 @@ function getOrCreateProvider(): Promise<WcProvider> {
         throw err;
       })
       .then((m) => {
-        const EthereumProvider =
-          m.EthereumProvider ?? (m.default as unknown);
+        const EthereumProvider = m.EthereumProvider ?? m.default;
         if (!EthereumProvider)
           throw new Error("EthereumProvider class not found in module");
-        return (EthereumProvider as { init: (o: Record<string, unknown>) => Promise<WcProvider> }).init({
+        const init = EthereumProvider.init as unknown as (o: unknown) => Promise<WcProvider>;
+        return init({
           projectId: "00e085516112e43f7ba31f5790328b65",
           showQrModal: false,
           chains: [1, 11155111, 137, 8453, 42161, 10],
