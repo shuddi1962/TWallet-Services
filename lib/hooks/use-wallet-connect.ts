@@ -25,7 +25,7 @@ export function useWalletConnect() {
     try {
       const provider = (await wcConnector.getProvider().catch(() => null)) as WcProvider | null;
       if (!provider) return;
-      const onUri = (u: string) => setUri(u);
+      const onUri: (...args: unknown[]) => void = (u) => setUri(u as string);
       provider.on("display_uri", onUri);
       await connectAsync({ connector: wcConnector });
       provider.removeListener("display_uri", onUri);
