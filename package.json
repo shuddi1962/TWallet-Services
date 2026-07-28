@@ -32,7 +32,7 @@
 
     "@upstash/redis": "^1.38.0",
     "@walletconnect/sign-client": "^2.23.10",
-    "@walletconnect/ethereum-provider": "^2.16.2",
+    "@walletconnect/ethereum-provider": "^2.23.10",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "date-fns": "^4.1.0",
