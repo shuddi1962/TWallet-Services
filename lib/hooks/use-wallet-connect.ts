@@ -4,6 +4,11 @@ import { useCallback } from "react";
 import { useConnect, useAccount } from "wagmi";
 import { useWalletConnectionState } from "./wallet-connection-context";
 
+type ProviderWithEvents = {
+  on: (event: string, cb: (...args: unknown[]) => void) => void;
+  removeListener: (event: string, cb: (...args: unknown[]) => void) => void;
+};
+
 export function useWalletConnect() {
   const { isConnected } = useAccount();
   const { connectAsync, connectors, isPending } = useConnect();
@@ -17,15 +22,18 @@ export function useWalletConnect() {
     setConnecting(true);
     setUri(null);
 
+    let provider: ProviderWithEvents | null = null;
+    const onUri: (...args: unknown[]) => void = (u) => setUri(String(u));
+
     try {
-      await connectAsync({
-        connector: wcConnector,
-        onDisplayUri: (uri) => setUri(uri),
-      });
+      provider = (await wcConnector.getProvider()) as ProviderWithEvents;
+      provider?.on("display_uri", onUri);
+      await connectAsync({ connector: wcConnector });
     } catch (e) {
       console.error("WalletConnect error:", e);
     }
 
+    provider?.removeListener("display_uri", onUri);
     setUri(null);
     setConnecting(false);
   }, [isConnected, connectAsync, connectors, setUri, setConnecting]);
