@@ -2,27 +2,34 @@
 
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider } from "wagmi";
-import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "@reown/appkit/networks";
+import { WagmiProvider, createConfig, http } from "wagmi";
+import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createAppKit } from "@reown/appkit/react";
-import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import { walletConnect } from "@wagmi/connectors";
+import { createWeb3Modal } from "@web3modal/wagmi/react";
 
 const queryClient = new QueryClient();
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 
-const wagmiAdapter = new WagmiAdapter({
-  networks: [mainnet, sepolia, polygon, base, arbitrum, optimism],
-  projectId,
-  ssr: true,
+const wagmiConfig = createConfig({
+  chains: [mainnet, sepolia, polygon, base, arbitrum, optimism],
+  transports: {
+    [mainnet.id]: http(),
+    [sepolia.id]: http(),
+    [polygon.id]: http(),
+    [base.id]: http(),
+    [arbitrum.id]: http(),
+    [optimism.id]: http(),
+  },
+  connectors: [
+    walletConnect({ projectId, showQrModal: false }),
+  ],
 });
 
 if (projectId) {
-  createAppKit({
-    adapters: [wagmiAdapter],
-    networks: [mainnet, sepolia, polygon, base, arbitrum, optimism],
-    defaultNetwork: mainnet,
+  createWeb3Modal({
+    wagmiConfig,
     projectId,
     themeMode: "dark",
     themeVariables: {
@@ -35,15 +42,12 @@ if (projectId) {
       url: "https://twalletservices.com",
       icons: ["https://twalletservices.com/opengraph-image.png"],
     },
-    features: {
-      analytics: true,
-    },
   });
 }
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <WagmiProvider config={wagmiAdapter.wagmiConfig}>
+    <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         {children}
         <Toaster richColors position="top-right" />
