@@ -6,6 +6,8 @@ import { WagmiProvider, createConfig, http } from "wagmi";
 import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { walletConnect } from "wagmi/connectors";
+import { WalletConnectionProvider } from "@/lib/hooks/wallet-connection-context";
+import { WalletQRModal } from "@/components/wallet/qr-modal";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +26,7 @@ const wagmiConfig = createConfig({
   connectors: [
     walletConnect({
       projectId,
-      showQrModal: true,
+      showQrModal: false,
       metadata: {
         name: "TWALLET",
         description: "Non-custodial crypto card platform",
@@ -39,7 +41,10 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <WalletConnectionProvider>
+          {children}
+          <WalletQRModal />
+        </WalletConnectionProvider>
         <Toaster richColors position="top-right" />
       </QueryClientProvider>
     </WagmiProvider>
