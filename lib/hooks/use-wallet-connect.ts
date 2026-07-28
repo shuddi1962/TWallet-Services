@@ -4,21 +4,28 @@ import { useCallback } from "react";
 import { useConnect, useAccount } from "wagmi";
 import { useWalletConnectionState } from "./wallet-connection-context";
 
-let providerSingleton: Promise<any> | null = null;
+type WcProvider = {
+  on: (e: string, cb: (...a: unknown[]) => void) => void;
+  off: (e: string, cb: (...a: unknown[]) => void) => void;
+  connect: (params?: Record<string, unknown>) => Promise<{ accounts: string[]; chainId: number }>;
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+};
 
-function getOrCreateProvider() {
+let providerSingleton: Promise<WcProvider> | null = null;
+
+function getOrCreateProvider(): Promise<WcProvider> {
   if (!providerSingleton) {
     providerSingleton = import("@walletconnect/ethereum-provider")
       .catch((err) => {
         providerSingleton = null;
-        console.error("[WC] import failed:", err);
         throw err;
       })
       .then((m) => {
-        const EthereumProvider = m.EthereumProvider ?? m.default;
+        const EthereumProvider =
+          m.EthereumProvider ?? (m.default as unknown);
         if (!EthereumProvider)
           throw new Error("EthereumProvider class not found in module");
-        return EthereumProvider.init({
+        return (EthereumProvider as { init: (o: Record<string, unknown>) => Promise<WcProvider> }).init({
           projectId: "00e085516112e43f7ba31f5790328b65",
           showQrModal: false,
           chains: [1, 11155111, 137, 8453, 42161, 10],
@@ -50,11 +57,11 @@ export function useWalletConnect() {
 
     try {
       const provider = await getOrCreateProvider();
-      console.log("[WC] provider ready, injecting into connector");
 
-      (wcConnector as Record<string, unknown>).getProvider = async () => provider;
+      type ConnWithProvider = { getProvider: () => Promise<WcProvider> };
+      (wcConnector as unknown as ConnWithProvider).getProvider = async () => provider;
 
-      const onUri = (u: string) => setUri(u);
+      const onUri = (u: unknown) => setUri(u as string);
       provider.on("display_uri", onUri);
       await connectAsync({ connector: wcConnector });
       provider.off("display_uri", onUri);
