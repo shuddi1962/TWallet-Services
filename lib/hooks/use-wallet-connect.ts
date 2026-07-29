@@ -10,6 +10,32 @@ import {
 } from "wagmi";
 import { toast } from "sonner";
 
+type Providerish = {
+  on: (e: string, fn: (...args: unknown[]) => void) => void;
+  off: (e: string, fn: (...args: unknown[]) => void) => void;
+};
+
+function getProvider(connector: Connector): Promise<Providerish | null> {
+  const c = connector as Record<string, unknown>;
+  if (typeof c.getProvider !== "function") return Promise.resolve(null);
+  try {
+    const p = c.getProvider() as unknown;
+    const resolved = p instanceof Promise ? p : Promise.resolve(p);
+    return resolved.then(
+      (prov: unknown) => {
+        const p2 = prov as Record<string, unknown>;
+        if (p2 && typeof p2.on === "function" && typeof p2.off === "function") {
+          return p2 as unknown as Providerish;
+        }
+        return null;
+      },
+      () => null,
+    );
+  } catch {
+    return Promise.resolve(null);
+  }
+}
+
 export function useWalletConnect() {
   const { isConnected, address, chainId, status } = useAccount();
   const { connectAsync, isPending, error: connectError } = useConnect();
@@ -18,63 +44,21 @@ export function useWalletConnect() {
   const [selectOpen, setSelectOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [qrUri, setQrUri] = useState<string | null>(null);
-  const unsubRef = useRef<(() => void) | null>(null);
-  const cancelledRef = useRef(false);
+  const providerRef = useRef<{
+    prov: Providerish;
+    handler: (...args: unknown[]) => void;
+  } | null>(null);
 
   const available = connectors.filter((c) => c && c.id !== "safe");
 
-  const cleanup = useCallback(() => {
-    if (unsubRef.current) {
-      unsubRef.current();
-      unsubRef.current = null;
-    }
-  }, []);
-
   useEffect(() => {
-    return () => cleanup();
-  }, [cleanup]);
-
-  const listenForUri = useCallback(
-    (connector: Connector): Promise<string> =>
-      new Promise((resolve, reject) => {
-        // wagmi v3 Connector extends EventEmitter; TS hides on/off
-        const c = connector as unknown as {
-          on(event: string, fn: (e: { type?: string; data?: unknown }) => void): () => void;
-          off(event: string, fn: (e: { type?: string; data?: unknown }) => void): void;
-        };
-
-        const handler = (event: { type?: string; data?: unknown }) => {
-          if (event.type === "display_uri" && typeof event.data === "string") {
-            cleanup();
-            resolve(event.data);
-          }
-        };
-
-        const unsub = c.on("message", handler);
-        unsubRef.current = () => {
-          unsub();
-          c.off("message", handler);
-        };
-
-        setTimeout(() => {
-          cleanup();
-          reject(new Error("timeout"));
-        }, 300_000);
-      }),
-    [cleanup],
-  );
-
-  const cancelQr = useCallback(async () => {
-    cancelledRef.current = true;
-    cleanup();
-    setQrUri(null);
-    setBusyId(null);
-    try {
-      await disconnectAsync();
-    } catch {
-      // ignore
-    }
-  }, [cleanup, disconnectAsync]);
+    return () => {
+      const p = providerRef.current;
+      if (p) {
+        try { p.prov.off("display_uri", p.handler); } catch { /* ok */ }
+      }
+    };
+  }, []);
 
   const connectWith = useCallback(
     async (connector: Connector | string) => {
@@ -92,22 +76,43 @@ export function useWalletConnect() {
         target.id === "walletConnect" ||
         target.name.toLowerCase().includes("walletconnect");
 
-      cancelledRef.current = false;
       setBusyId(target.uid || target.id);
       setSelectOpen(false);
       setQrUri(null);
 
       try {
         if (isConnected) {
-          try {
-            await disconnectAsync();
-          } catch {
-            // ignore
-          }
+          try { await disconnectAsync(); } catch { /* ok */ }
         }
 
         if (isWc) {
-          const uriPromise = listenForUri(target);
+          // Get the WalletConnect provider BEFORE connectAsync to catch display_uri
+          const provider = await getProvider(target);
+
+          if (!provider) {
+            toast.error("WalletConnect provider unavailable. Try Browser Wallet instead.");
+            return;
+          }
+
+          const uriPromise = new Promise<string>((resolve, reject) => {
+            const handler = (...args: unknown[]) => {
+              const uri = args[0];
+              if (typeof uri === "string" && uri.startsWith("wc:")) {
+                providerRef.current = null;
+                try { provider.off("display_uri", handler); } catch { /* ok */ }
+                resolve(uri);
+              }
+            };
+            providerRef.current = { prov: provider, handler };
+            provider.on("display_uri", handler);
+
+            setTimeout(() => {
+              providerRef.current = null;
+              try { provider.off("display_uri", handler); } catch { /* ok */ }
+              reject(new Error("timeout"));
+            }, 300_000);
+          });
+
           const connectPromise = connectAsync({ connector: target });
 
           const result = await Promise.race([
@@ -115,12 +120,12 @@ export function useWalletConnect() {
             connectPromise.then(() => ({ type: "connected" as const })),
           ]);
 
-          if (cancelledRef.current) return;
+          providerRef.current = null;
 
           if (result.type === "uri") {
             setQrUri(result.uri);
             await connectPromise;
-            if (cancelledRef.current) return;
+            setQrUri(null);
           }
 
           toast.success("Wallet connected");
@@ -130,7 +135,6 @@ export function useWalletConnect() {
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Connection failed";
-        if (cancelledRef.current) return;
         if (
           /reject|denied|cancel|closed|user/i.test(msg) ||
           (e as { code?: number })?.code === 4001
@@ -143,13 +147,11 @@ export function useWalletConnect() {
           toast.error(msg.slice(0, 140));
         }
       } finally {
-        if (!cancelledRef.current) {
-          setBusyId(null);
-          setQrUri(null);
-        }
+        setBusyId(null);
+        setQrUri(null);
       }
     },
-    [available, connectAsync, disconnectAsync, isConnected, listenForUri],
+    [available, connectAsync, disconnectAsync, isConnected],
   );
 
   const openWallet = useCallback(async () => {
@@ -157,31 +159,37 @@ export function useWalletConnect() {
       setSelectOpen(true);
       return;
     }
-
     if (available.length > 1) {
       setSelectOpen(true);
       return;
     }
-
     const only = available[0];
     if (only) {
       await connectWith(only);
       return;
     }
-
     toast.error("No wallet connectors loaded. Refresh and try again.");
   }, [available, connectWith, isConnected]);
 
   const handleDisconnect = useCallback(async () => {
-    cleanup();
-    cancelledRef.current = true;
     try {
       await disconnectAsync();
       toast.message("Wallet disconnected");
     } catch (e) {
       console.error(e);
     }
-  }, [cleanup, disconnectAsync]);
+  }, [disconnectAsync]);
+
+  const cancelQr = useCallback(async () => {
+    const p = providerRef.current;
+    if (p) {
+      try { p.prov.off("display_uri", p.handler); } catch { /* ok */ }
+      providerRef.current = null;
+    }
+    setQrUri(null);
+    setBusyId(null);
+    try { await disconnectAsync(); } catch { /* ok */ }
+  }, [disconnectAsync]);
 
   return {
     openWallet,
@@ -197,7 +205,6 @@ export function useWalletConnect() {
     selectOpen,
     setSelectOpen,
     qrUri,
-    setQrUri,
     error: connectError,
   };
 }
