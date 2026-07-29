@@ -1,21 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { type ReactNode } from "react";
+import { Providers } from "@/providers";
 
-/**
- * Client-only wallet stack (avoids SSR indexedDB / window issues).
- * Loading state still renders children so the page shell appears immediately;
- * hooks only run after Providers mounts.
- */
-const Providers = dynamic(
-  () => import("@/providers").then((m) => m.Providers),
-  {
-    ssr: false,
-    loading: () => null,
-  },
-);
-
+/** Thin client boundary — Providers always wraps children with Wagmi. */
 export function WalletProviders({ children }: { children: ReactNode }) {
   return <Providers>{children}</Providers>;
 }
