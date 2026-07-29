@@ -27,6 +27,8 @@
     "@radix-ui/react-tooltip": "^1.2.0",
     "@reown/appkit": "^1.8.23",
     "@reown/appkit-adapter-wagmi": "^1.8.23",
+    "@wagmi/core": "^2.22.1",
+    "@wagmi/connectors": "^6.2.0",
     "@sentry/nextjs": "^9.0.0",
     "@supabase/ssr": "^0.6.0",
     "@supabase/supabase-js": "^2.49.0",
@@ -79,5 +81,9 @@
     "tailwindcss": "^4.1.0",
     "typescript": "^5.8.0",
     "vitest": "^3.1.0"
+  },
+  "overrides": {
+    "@wagmi/core": "^2.22.1",
+    "@wagmi/connectors": "^6.2.0"
   }
 }
