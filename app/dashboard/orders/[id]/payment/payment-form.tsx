@@ -8,8 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 import { formatPaymentError } from "@/lib/payment-errors";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2, Smartphone } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2, Smartphone, Wallet } from "lucide-react";
 import Link from "next/link";
+import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
 
 type Order = {
   id: string;
@@ -251,36 +253,7 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
 
   if (!isConnected) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/dashboard/orders">
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Complete Payment</h1>
-            <p className="mt-1 text-sm text-surface-400">
-              Connect a wallet to pay for order {order.order_number}
-            </p>
-          </div>
-        </div>
-        <Card className="overflow-hidden border-white/10">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/15 ring-1 ring-brand-500/25">
-              <Smartphone className="h-6 w-6 text-brand-300" />
-            </div>
-            <p className="font-medium text-white">Wallet required</p>
-            <p className="mt-2 max-w-sm text-sm text-surface-400">
-              Use the Connect Wallet button in the header (MetaMask, Trust Wallet, or WalletConnect).
-            </p>
-            <Button className="mt-6 rounded-full" asChild>
-              <Link href="/dashboard/wallet">Open wallet page</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <PaymentConnectGate orderNumber={order.order_number} />
     );
   }
 
@@ -405,6 +378,63 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function PaymentConnectGate({ orderNumber }: { orderNumber: string }) {
+  const {
+    openWallet,
+    connectWith,
+    connecting,
+    connectors,
+    selectOpen,
+    setSelectOpen,
+    busyId,
+  } = useWalletConnect();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/dashboard/orders">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-white">Complete Payment</h1>
+          <p className="mt-1 text-sm text-surface-400">
+            Connect a wallet to pay for order {orderNumber}
+          </p>
+        </div>
+      </div>
+      <Card className="overflow-hidden border-white/10">
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/15 ring-1 ring-brand-500/25">
+            <Wallet className="h-6 w-6 text-brand-300" />
+          </div>
+          <p className="font-medium text-white">Wallet required</p>
+          <p className="mt-2 max-w-sm text-sm text-surface-400">
+            Connect with WalletConnect (QR + 300+ wallets) or a browser extension, then send USDC to the platform receiving address.
+          </p>
+          <Button
+            className="mt-6 rounded-full px-8"
+            onClick={() => void openWallet()}
+            disabled={connecting}
+          >
+            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+            {connecting ? "Connecting…" : "Connect Wallet"}
+          </Button>
+        </CardContent>
+      </Card>
+      <WalletSelectModal
+        open={selectOpen}
+        onClose={() => setSelectOpen(false)}
+        connectors={connectors}
+        busyId={busyId}
+        onSelect={(c) => void connectWith(c)}
+      />
     </div>
   );
 }

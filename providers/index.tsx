@@ -1,37 +1,41 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider, createConfig, http, type Config } from "wagmi";
+import { WagmiProvider, createConfig, http } from "wagmi";
 import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
 import { injected, walletConnect } from "wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WalletLinker } from "@/components/wallet/wallet-linker";
 import { SessionTimeout } from "@/components/session-timeout";
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
+const projectId =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+  "00e085516112e43f7ba31f5790328b65";
 
 const metadata = {
   name: "TWALLET",
-  description: "Non-custodial crypto card platform — pay on-chain to the platform receiving wallet",
+  description: "Non-custodial crypto card platform",
   url: "https://twalletservices.com",
   icons: ["https://twalletservices.com/opengraph-image.png"],
 };
 
-/** Stable wagmi config — always available so hooks never run outside provider */
+/**
+ * Single wagmi config only — no second AppKit adapter (that broke connections).
+ * WalletConnect showQrModal:true opens official QR + multi-wallet UI.
+ */
 export const wagmiConfig = createConfig({
   chains: [mainnet, polygon, base, arbitrum, optimism, sepolia],
   connectors: [
-    injected({ shimDisconnect: true }),
-    ...(projectId
-      ? [
-          walletConnect({
-            projectId,
-            showQrModal: true,
-            metadata,
-          }),
-        ]
-      : []),
+    injected({
+      shimDisconnect: true,
+      unstable_shimAsyncInject: 2_000,
+    }),
+    walletConnect({
+      projectId,
+      showQrModal: true,
+      metadata,
+    }),
   ],
   transports: {
     [mainnet.id]: http(),
@@ -42,67 +46,7 @@ export const wagmiConfig = createConfig({
     [optimism.id]: http(),
   },
   ssr: true,
-}) as Config;
-
-let appKitReady = false;
-
-async function initAppKit() {
-  if (appKitReady || !projectId || typeof window === "undefined") return;
-  try {
-    const { createAppKit } = await import("@reown/appkit/react");
-    const { WagmiAdapter } = await import("@reown/appkit-adapter-wagmi");
-    const networks = await import("@reown/appkit/networks");
-
-    const appNetworks = [
-      networks.mainnet,
-      networks.polygon,
-      networks.base,
-      networks.arbitrum,
-      networks.optimism,
-      networks.sepolia,
-    ] as unknown as [typeof networks.mainnet, ...Array<typeof networks.mainnet>];
-
-    const adapter = new WagmiAdapter({
-      networks: appNetworks as never,
-      projectId,
-      ssr: true,
-    });
-
-    createAppKit({
-      adapters: [adapter],
-      networks: appNetworks as never,
-      projectId,
-      metadata,
-      themeMode: "dark",
-      themeVariables: {
-        "--w3m-accent": "#2563eb",
-        "--w3m-border-radius-master": "16px",
-      },
-      features: {
-        analytics: false,
-        email: false,
-        socials: false,
-      },
-      allWallets: "SHOW",
-      enableWalletConnect: true,
-      enableInjected: true,
-      enableCoinbase: true,
-    });
-
-    appKitReady = true;
-    window.dispatchEvent(new Event("twallet:appkit-ready"));
-  } catch (e) {
-    console.error("[AppKit] init failed — falling back to wagmi connectors", e);
-    window.dispatchEvent(new Event("twallet:appkit-failed"));
-  }
-}
-
-function AppKitBootstrap() {
-  useEffect(() => {
-    void initAppKit();
-  }, []);
-  return null;
-}
+});
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -115,9 +59,8 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={wagmiConfig} reconnectOnMount>
       <QueryClientProvider client={queryClient}>
-        <AppKitBootstrap />
         {children}
         <WalletLinker />
         <SessionTimeout />
