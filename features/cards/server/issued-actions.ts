@@ -12,21 +12,69 @@ async function authed() {
   return { supabase, user };
 }
 
+function genPan(network: "visa" | "mastercard") {
+  const bin = network === "mastercard" ? "5424" : "4532";
+  const mid = String(Math.floor(Math.random() * 1e8)).padStart(8, "0");
+  const last4 = String(Math.floor(1000 + Math.random() * 9000));
+  const digits = `${bin}${mid}${last4}`.slice(0, 16);
+  const groups = digits.match(/.{1,4}/g) ?? [digits];
+  return {
+    pan_full: groups.join(""),
+    pan_display: `${groups[0]} •••• •••• ${groups[3] ?? last4}`,
+    pan_last4: groups[3] ?? last4,
+    pan_formatted: groups.join(" "),
+  };
+}
+
+function genCvv() {
+  return String(Math.floor(100 + Math.random() * 900));
+}
+
 export async function getIssuedCards() {
-  const { supabase, user } = await authed();
-  if (!user) return { error: "Not authenticated", data: null };
+  try {
+    const { supabase, user } = await authed();
+    if (!user) return { error: "Not authenticated", data: null };
 
-  const { data, error } = await supabase
-    .from("issued_cards")
-    .select(
-      "*, card_products(id, slug, name, type, price_usdc, features), card_orders(id, order_number, status, amount_usdc)",
-    )
-    .eq("user_id", user.id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    // Simple select first — avoid nested join failures
+    const { data, error } = await supabase
+      .from("issued_cards")
+      .select("*")
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
 
-  if (error) return { error: error.message, data: null };
-  return { data: data ?? [], error: null };
+    if (error) {
+      // table missing
+      if (error.message?.includes("does not exist") || error.code === "42P01") {
+        return { data: [], error: null };
+      }
+      return { error: error.message, data: null };
+    }
+
+    const rows = data ?? [];
+    if (!rows.length) return { data: [], error: null };
+
+    const productIds = [...new Set(rows.map((r: { product_id: string }) => r.product_id).filter(Boolean))];
+    let productsById: Record<string, unknown> = {};
+    if (productIds.length) {
+      const { data: products } = await supabase
+        .from("card_products")
+        .select("id, slug, name, type, price_usdc, features")
+        .in("id", productIds);
+      for (const p of products ?? []) {
+        productsById[p.id] = p;
+      }
+    }
+
+    const enriched = rows.map((r: { product_id: string }) => ({
+      ...r,
+      card_products: productsById[r.product_id] ?? null,
+    }));
+
+    return { data: enriched, error: null };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Unknown error", data: null };
+  }
 }
 
 export async function getIssuedCard(id: string) {
@@ -35,9 +83,7 @@ export async function getIssuedCard(id: string) {
 
   const { data, error } = await supabase
     .from("issued_cards")
-    .select(
-      "*, card_products(id, slug, name, type, price_usdc, features), card_orders(id, order_number, status)",
-    )
+    .select("*")
     .eq("id", id)
     .eq("user_id", user.id)
     .is("deleted_at", null)
@@ -45,6 +91,42 @@ export async function getIssuedCard(id: string) {
 
   if (error) return { error: error.message, data: null };
   return { data, error: null };
+}
+
+/** Reveal full PAN + CVV for the card owner only */
+export async function revealCardSecrets(cardId: string) {
+  const { supabase, user } = await authed();
+  if (!user) return { error: "Not authenticated", data: null };
+
+  const rl = await checkRateLimit(user.id, "revealCard", { window: 60_000, max: 10 });
+  if (!rl.allowed) return { error: `Too many reveals. Retry in ${rl.retryAfter}s`, data: null };
+
+  const { data, error } = await supabase
+    .from("issued_cards")
+    .select("id, pan_full, pan_formatted, pan_display, cvv_hint, expiry_month, expiry_year, holder_name")
+    .eq("id", cardId)
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error) return { error: error.message, data: null };
+  if (!data) return { error: "Card not found", data: null };
+
+  const formatted =
+    data.pan_formatted ||
+    (data.pan_full
+      ? String(data.pan_full).replace(/(.{4})/g, "$1 ").trim()
+      : data.pan_display);
+
+  return {
+    data: {
+      pan: formatted,
+      cvv: data.cvv_hint,
+      expiry: `${String(data.expiry_month).padStart(2, "0")}/${String(data.expiry_year).padStart(2, "0")}`,
+      holder: data.holder_name,
+    },
+    error: null,
+  };
 }
 
 export async function updateCardControls(
@@ -94,7 +176,6 @@ export async function updateCardPin(cardId: string, pin: string) {
   return { success: true };
 }
 
-/** Fund card balance (ledger entry). Amount is USDC units. */
 export async function fundCard(cardId: string, amount: number, note?: string) {
   const { supabase, user } = await authed();
   if (!user) return { error: "Not authenticated" };
@@ -183,65 +264,87 @@ export async function cancelCard(cardId: string) {
   return { success: true };
 }
 
-/** Backfill: issue cards for already-paid orders missing issued_cards */
 export async function syncIssuedCardsFromOrders() {
-  const { supabase, user } = await authed();
-  if (!user) return { error: "Not authenticated", created: 0 };
+  try {
+    const { supabase, user } = await authed();
+    if (!user) return { error: "Not authenticated", created: 0 };
 
-  const { data: orders } = await supabase
-    .from("card_orders")
-    .select("id, product_id, status, card_products(slug, name, type)")
-    .eq("user_id", user.id)
-    .in("status", ["paid", "processing", "shipped", "delivered"]);
+    const { data: orders, error: ordersErr } = await supabase
+      .from("card_orders")
+      .select("id, product_id, status")
+      .eq("user_id", user.id)
+      .in("status", ["paid", "processing", "shipped", "delivered"]);
 
-  let created = 0;
-  for (const o of orders ?? []) {
-    const { data: existing } = await supabase
-      .from("issued_cards")
-      .select("id")
-      .eq("order_id", o.id)
-      .is("deleted_at", null)
-      .maybeSingle();
-    if (existing) continue;
+    if (ordersErr) return { error: ordersErr.message, created: 0 };
 
-    const product = o.card_products as { slug?: string; name?: string; type?: string } | null;
-    const slug = product?.slug ?? "";
-    const finish =
-      slug === "virtual-premium"
-        ? "cyber"
-        : slug === "physical-premium"
-          ? "gold"
-          : slug === "physical-black"
-            ? "obsidian"
-            : "sapphire";
-    const last4 = String(Math.floor(1000 + Math.random() * 9000));
-    const {
-      data: { user: u },
-    } = await supabase.auth.getUser();
-    const holder = ((u?.user_metadata as { full_name?: string })?.full_name ?? "CARDHOLDER").toUpperCase();
-    const expY = (new Date().getFullYear() + 4) % 100;
-    const expM = ((new Date().getMonth() + 3) % 12) + 1;
+    let created = 0;
+    for (const o of orders ?? []) {
+      const { data: existing } = await supabase
+        .from("issued_cards")
+        .select("id")
+        .eq("order_id", o.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (existing) continue;
 
-    const { error } = await supabase.from("issued_cards").insert({
-      user_id: user.id,
-      order_id: o.id,
-      product_id: o.product_id,
-      label: product?.name ?? "TWallet Card",
-      finish,
-      card_type: product?.type === "physical" ? "physical" : "virtual",
-      network: slug === "physical-black" || slug === "virtual-premium" ? "mastercard" : "visa",
-      status: product?.type === "physical" ? "pending_activation" : "active",
-      pan_last4: last4,
-      pan_display: `4532 •••• •••• ${last4}`,
-      expiry_month: expM,
-      expiry_year: expY,
-      cvv_hint: String(Math.floor(100 + Math.random() * 900)),
-      holder_name: holder,
-      balance_usdc: 0,
-    });
-    if (!error) created += 1;
+      const { data: product } = await supabase
+        .from("card_products")
+        .select("slug, name, type")
+        .eq("id", o.product_id)
+        .maybeSingle();
+
+      const slug = product?.slug ?? "";
+      const finish =
+        slug === "virtual-premium"
+          ? "cyber"
+          : slug === "physical-premium"
+            ? "gold"
+            : slug === "physical-black"
+              ? "obsidian"
+              : "sapphire";
+      const network = slug === "physical-black" || slug === "virtual-premium" ? "mastercard" : "visa";
+      const pan = genPan(network as "visa" | "mastercard");
+      const cvv = genCvv();
+      const holder = (
+        (user.user_metadata as { full_name?: string })?.full_name ?? "CARDHOLDER"
+      ).toUpperCase();
+      const expY = (new Date().getFullYear() + 4) % 100;
+      const expM = ((new Date().getMonth() + 3) % 12) + 1;
+
+      const insertPayload: Record<string, unknown> = {
+        user_id: user.id,
+        order_id: o.id,
+        product_id: o.product_id,
+        label: product?.name ?? "TWallet Card",
+        finish,
+        card_type: product?.type === "physical" ? "physical" : "virtual",
+        network,
+        status: product?.type === "physical" ? "pending_activation" : "active",
+        pan_last4: pan.pan_last4,
+        pan_display: pan.pan_display,
+        pan_full: pan.pan_full,
+        pan_formatted: pan.pan_formatted,
+        expiry_month: expM,
+        expiry_year: expY,
+        cvv_hint: cvv,
+        holder_name: holder,
+        balance_usdc: 0,
+      };
+
+      const { error } = await supabase.from("issued_cards").insert(insertPayload);
+      if (error) {
+        // retry without optional columns if migration not applied
+        delete insertPayload.pan_full;
+        delete insertPayload.pan_formatted;
+        const { error: e2 } = await supabase.from("issued_cards").insert(insertPayload);
+        if (!e2) created += 1;
+      } else {
+        created += 1;
+      }
+    }
+
+    return { success: true, created };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "sync failed", created: 0 };
   }
-
-  revalidatePath("/dashboard/cards");
-  return { success: true, created };
 }

@@ -8,7 +8,6 @@ import { Play, Zap, Globe, Headphones, Shield, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
-import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
 
 const CARD_IMAGE =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuB4kIr2XwzwDH8GGE6TbF23yoAi0hgE531M8geP32Cjq1mXYPGqLgX5RomAPAvL8_a31uz8iWMQ2z8bQVqlCgpbFDegzDuB4uw-g3stjGIrqdtoMF9CoWU6flYr36umlpNYm_tJRxYT4mHEFM9HDsv2HdwoHwHoBhy3NMXS0tJOZYYIpIEzOCWpa62ZB_RYk63ExlxwSjO61Ve_DI09AExScnco3FJwHpl6yClmGjB2yLuid6y4Q-vTWqABr5GJaUJjzyk";
@@ -122,8 +121,7 @@ function CardReveal() {
 }
 
 export function Hero() {
-  const { openWallet, connectWith, connecting, connectors, selectOpen, setSelectOpen } =
-    useWalletConnect();
+  const { openWallet, connecting } = useWalletConnect();
 
   return (
     <section className="relative overflow-hidden bg-[#03060d] pt-20 pb-14 lg:pt-28 lg:pb-20">
@@ -254,16 +252,16 @@ export function Hero() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">Connect & order</h3>
-                  <p className="text-sm text-white/50">MetaMask · Trust · WC</p>
+                  <p className="text-sm text-white/50">300+ wallets · QR code</p>
                 </div>
               </div>
 
               <p className="mb-6 text-sm leading-relaxed text-white/60">
-                Link any EVM wallet, pick a real catalog card, pay USDC on-chain. Status updates live in your dashboard.
+                Official WalletConnect modal. Pay USDC on-chain to the platform receiving wallet — you keep your keys.
               </p>
 
               <button
-                onClick={() => openWallet()}
+                onClick={() => void openWallet()}
                 disabled={connecting}
                 className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-700 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:brightness-110 disabled:opacity-60"
               >
@@ -282,12 +280,6 @@ export function Hero() {
           </motion.div>
         </div>
       </Container>
-      <WalletSelectModal
-        open={selectOpen}
-        onClose={() => setSelectOpen(false)}
-        connectors={connectors}
-        onSelect={(c) => void connectWith(c.uid || c.id)}
-      />
     </section>
   );
 }

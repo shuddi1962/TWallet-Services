@@ -2,52 +2,77 @@
 
 import { ReactNode, useState } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
+import { WagmiProvider, cookieToInitialState, type Config } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { injected, walletConnect } from "wagmi/connectors";
-import { WalletConnectionProvider } from "@/lib/hooks/wallet-connection-context";
-import { WalletQRModal } from "@/components/wallet/qr-modal";
+import { createAppKit } from "@reown/appkit/react";
+import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import {
+  mainnet,
+  sepolia,
+  polygon,
+  base,
+  arbitrum,
+  optimism,
+  type AppKitNetwork,
+} from "@reown/appkit/networks";
 import { WalletLinker } from "@/components/wallet/wallet-linker";
+import { AppKitBridge } from "@/components/wallet/appkit-bridge";
 import { SessionTimeout } from "@/components/session-timeout";
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 
+const networks: [AppKitNetwork, ...AppKitNetwork[]] = [
+  mainnet,
+  polygon,
+  base,
+  arbitrum,
+  optimism,
+  sepolia,
+];
+
 const metadata = {
   name: "TWALLET",
-  description: "Non-custodial crypto card platform",
-  url: typeof window !== "undefined" ? window.location.origin : "https://twalletservices.com",
+  description: "Non-custodial crypto card platform — pay on-chain to the platform receiving wallet",
+  url: "https://twalletservices.com",
   icons: ["https://twalletservices.com/opengraph-image.png"],
 };
 
-const connectors = [
-  injected({ shimDisconnect: true }),
-  ...(projectId
-    ? [
-        walletConnect({
-          projectId,
-          showQrModal: true,
-          metadata,
-        }),
-      ]
-    : []),
-];
-
-const wagmiConfig = createConfig({
-  chains: [mainnet, sepolia, polygon, base, arbitrum, optimism],
-  transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
-    [polygon.id]: http(),
-    [base.id]: http(),
-    [arbitrum.id]: http(),
-    [optimism.id]: http(),
-  },
-  connectors,
+const wagmiAdapter = new WagmiAdapter({
+  networks,
+  projectId,
   ssr: true,
 });
 
-export function Providers({ children }: { children: ReactNode }) {
+if (projectId) {
+  createAppKit({
+    adapters: [wagmiAdapter],
+    networks,
+    projectId,
+    metadata,
+    themeMode: "dark",
+    themeVariables: {
+      "--w3m-accent": "#2563eb",
+      "--w3m-border-radius-master": "16px",
+    },
+    features: {
+      analytics: false,
+      email: false,
+      socials: false,
+    },
+    allWallets: "SHOW",
+    enableWalletConnect: true,
+    enableInjected: true,
+    enableCoinbase: true,
+  });
+}
+
+export function Providers({
+  children,
+  cookies,
+}: {
+  children: ReactNode;
+  cookies?: string | null;
+}) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -57,15 +82,15 @@ export function Providers({ children }: { children: ReactNode }) {
       }),
   );
 
+  const initialState = cookieToInitialState(wagmiAdapter.wagmiConfig as Config, cookies ?? undefined);
+
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={wagmiAdapter.wagmiConfig as Config} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
-        <WalletConnectionProvider>
-          {children}
-          <WalletQRModal />
-          <WalletLinker />
-          <SessionTimeout />
-        </WalletConnectionProvider>
+        {children}
+        <AppKitBridge />
+        <WalletLinker />
+        <SessionTimeout />
         <Toaster richColors position="top-right" closeButton />
       </QueryClientProvider>
     </WagmiProvider>

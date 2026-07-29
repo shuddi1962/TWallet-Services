@@ -1,27 +1,16 @@
 "use client";
 
-import { Wallet, Loader2, ChevronDown, LogOut, Copy, Check } from "lucide-react";
+import { Wallet, ChevronDown, LogOut, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
-import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
 
 function short(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
 export function ConnectButton() {
-  const {
-    openWallet,
-    connectWith,
-    disconnect,
-    connecting,
-    isConnected,
-    address,
-    connectors,
-    selectOpen,
-    setSelectOpen,
-  } = useWalletConnect();
+  const { openWallet, disconnect, isConnected, address } = useWalletConnect();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -51,6 +40,17 @@ export function ConnectButton() {
               <button
                 type="button"
                 onClick={() => {
+                  void openWallet();
+                  setMenuOpen(false);
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-surface-200 hover:bg-white/5"
+              >
+                <Wallet className="h-4 w-4" />
+                Wallet account
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   void copy();
                 }}
                 className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-surface-200 hover:bg-white/5"
@@ -77,17 +77,9 @@ export function ConnectButton() {
   }
 
   return (
-    <>
-      <Button onClick={() => openWallet()} disabled={connecting} size="sm" className="rounded-full">
-        {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-        <span>{connecting ? "Connecting…" : "Connect Wallet"}</span>
-      </Button>
-      <WalletSelectModal
-        open={selectOpen}
-        onClose={() => setSelectOpen(false)}
-        connectors={connectors}
-        onSelect={(c) => void connectWith(c.uid || c.id)}
-      />
-    </>
+    <Button onClick={() => void openWallet()} size="sm" className="rounded-full">
+      <Wallet className="h-4 w-4" />
+      <span>Connect Wallet</span>
+    </Button>
   );
 }

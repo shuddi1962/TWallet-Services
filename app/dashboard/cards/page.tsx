@@ -9,21 +9,39 @@ import { MyCards, type IssuedCardRow } from "@/components/cards/my-cards";
 export const dynamic = "force-dynamic";
 
 export default async function CardsPage() {
-  await syncIssuedCardsFromOrders();
+  let catalog: CatalogProduct[] = [];
+  let myCards: IssuedCardRow[] = [];
+  let notice: string | null = null;
 
-  const [{ data: products, error: productsError }, { data: issued, error: issuedError }] =
-    await Promise.all([getCardProducts(), getIssuedCards()]);
+  try {
+    // never revalidate during RSC render — sync is best-effort
+    await syncIssuedCardsFromOrders().catch(() => null);
 
-  const catalog = (products ?? []) as CatalogProduct[];
-  const myCards = (issued ?? []) as IssuedCardRow[];
+    const [productsRes, issuedRes] = await Promise.all([
+      getCardProducts().catch((e: unknown) => ({
+        data: null,
+        error: e instanceof Error ? e.message : "products failed",
+      })),
+      getIssuedCards().catch((e: unknown) => ({
+        data: null,
+        error: e instanceof Error ? e.message : "issued cards failed",
+      })),
+    ]);
+
+    catalog = (productsRes.data ?? []) as CatalogProduct[];
+    myCards = (issuedRes.data ?? []) as IssuedCardRow[];
+
+    const errs = [productsRes.error, issuedRes.error].filter(Boolean);
+    if (errs.length) notice = errs.join(" · ");
+  } catch (e) {
+    notice = e instanceof Error ? e.message : "Failed to load cards";
+  }
 
   return (
     <div className="space-y-12">
-      {(issuedError || productsError) && (
+      {notice && (
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200">
-          {issuedError ? `Cards: ${issuedError}` : null}
-          {issuedError && productsError ? " · " : null}
-          {productsError ? `Catalog: ${productsError}` : null}
+          {notice}
         </div>
       )}
 
