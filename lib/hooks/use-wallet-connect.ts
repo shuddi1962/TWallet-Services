@@ -23,25 +23,12 @@ export function useWalletConnect() {
         try { await disconnectAsync(); } catch { /* ok */ }
       }
 
-      const { EthereumProvider } = await import("@walletconnect/ethereum-provider");
-      const provider = await EthereumProvider.init({
-        projectId:
-          process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
-          "00e085516112e43f7ba31f5790328b65",
-        showQrModal: true,
-        chains: [1, 137, 8453, 42161, 10, 11155111],
-        metadata: {
-          name: "TWALLET",
-          description: "Non-custodial crypto card platform",
-          url: "https://twalletservices.com",
-          icons: ["https://twalletservices.com/opengraph-image.png"],
-        },
-        optionalChains: [1, 137, 8453, 42161, 10, 11155111],
-      });
-
-      await provider.connect();
-      const accounts = provider.accounts as string[];
-      if (!accounts?.length) throw new Error("No accounts returned");
+      const wcConnector = connectors.find((c) => c.id === "walletConnect");
+      if (!wcConnector) {
+        toast.error("WalletConnect connector not available");
+        return;
+      }
+      await connectAsync({ connector: wcConnector });
       toast.success("Wallet connected");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Connection failed";
@@ -57,7 +44,7 @@ export function useWalletConnect() {
     } finally {
       setBusyId(null);
     }
-  }, [disconnectAsync, isConnected]);
+  }, [connectAsync, connectors, disconnectAsync, isConnected]);
 
   const connectInjected = useCallback(
     async (connector?: Connector) => {
