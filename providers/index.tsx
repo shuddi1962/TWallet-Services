@@ -60,17 +60,17 @@ async function initAppKit() {
       networks.arbitrum,
       networks.optimism,
       networks.sepolia,
-    ] as [typeof networks.mainnet, ...typeof networks.mainnet[]];
+    ] as unknown as [typeof networks.mainnet, ...Array<typeof networks.mainnet>];
 
     const adapter = new WagmiAdapter({
-      networks: appNetworks,
+      networks: appNetworks as never,
       projectId,
       ssr: true,
     });
 
     createAppKit({
       adapters: [adapter],
-      networks: appNetworks,
+      networks: appNetworks as never,
       projectId,
       metadata,
       themeMode: "dark",
