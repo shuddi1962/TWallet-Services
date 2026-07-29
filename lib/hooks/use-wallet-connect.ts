@@ -37,6 +37,12 @@ export function useWalletConnect() {
   const listenForUri = useCallback(
     (connector: Connector): Promise<string> =>
       new Promise((resolve, reject) => {
+        // wagmi v3 Connector extends EventEmitter; TS hides on/off
+        const c = connector as unknown as {
+          on(event: string, fn: (e: { type?: string; data?: unknown }) => void): () => void;
+          off(event: string, fn: (e: { type?: string; data?: unknown }) => void): void;
+        };
+
         const handler = (event: { type?: string; data?: unknown }) => {
           if (event.type === "display_uri" && typeof event.data === "string") {
             cleanup();
@@ -44,10 +50,10 @@ export function useWalletConnect() {
           }
         };
 
-        const unsub = connector.on("message", handler);
+        const unsub = c.on("message", handler);
         unsubRef.current = () => {
           unsub();
-          connector.off("message", handler);
+          c.off("message", handler);
         };
 
         setTimeout(() => {
