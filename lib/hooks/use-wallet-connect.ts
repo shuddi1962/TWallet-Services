@@ -39,7 +39,8 @@ export function useWalletConnect() {
         optionalChains: [1, 137, 8453, 42161, 10, 11155111],
       });
 
-      const accounts = (await provider.connect()) as string[];
+      await provider.connect();
+      const accounts = provider.accounts as string[];
       if (!accounts?.length) throw new Error("No accounts returned");
       toast.success("Wallet connected");
     } catch (e) {
