@@ -18,6 +18,7 @@ import { WalletOverview } from "./wallet-overview";
 import { NotificationPanel } from "./notification-panel";
 import { ActivityTimeline } from "./activity-timeline";
 import { Button } from "@/components/ui/button";
+import { TwalletCard, finishForSlug, networkForSlug } from "@/components/cards/twallet-card";
 import type { DashboardData } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
@@ -156,31 +157,16 @@ export function DashboardContent({ data }: { data: DashboardData }) {
 
               {featuredOrder ? (
                 <div className="relative grid gap-5 md:grid-cols-2">
-                  <div className="aspect-[1.586/1] overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-indigo-700 to-violet-900 p-5 text-white shadow-2xl shadow-brand-600/30">
-                    <div className="flex h-full flex-col justify-between">
-                      <div className="flex items-start justify-between">
-                        <div className="h-8 w-11 rounded-md bg-gradient-to-br from-amber-200 to-amber-500" />
-                        <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
-                          {featuredOrder.card_products?.type ?? "card"}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-xs text-white/60">Card balance / order</p>
-                        <p className="mt-1 text-2xl font-bold">
-                          ${Number(featuredOrder.amount_usdc).toFixed(2)}
-                        </p>
-                        <div className="mt-3 flex items-end justify-between">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider text-white/50">Product</p>
-                            <p className="text-sm font-medium">
-                              {featuredOrder.card_products?.name ?? "TWallet Card"}
-                            </p>
-                          </div>
-                          <p className="text-xs font-bold tracking-[0.2em]">VISA</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <TwalletCard
+                    finish={finishForSlug((featuredOrder.card_products as { slug?: string } | null)?.slug)}
+                    holderName={data.userName?.toUpperCase() || "CARDHOLDER"}
+                    panDisplay="4532 •••• •••• ****"
+                    expiry="08/29"
+                    network={networkForSlug((featuredOrder.card_products as { slug?: string } | null)?.slug)}
+                    isVirtual={featuredOrder.card_products?.type !== "physical"}
+                    balanceLabel={`$${Number(featuredOrder.amount_usdc).toFixed(2)}`}
+                    className="max-w-none"
+                  />
 
                   <div className="flex flex-col justify-center space-y-3">
                     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -199,6 +185,9 @@ export function DashboardContent({ data }: { data: DashboardData }) {
                       </span>
                     </div>
                     <Button variant="outline" className="rounded-xl" asChild>
+                      <Link href="/dashboard/cards">Manage card</Link>
+                    </Button>
+                    <Button variant="ghost" className="rounded-xl" asChild>
                       <Link href={`/dashboard/orders/${featuredOrder.id}`}>View order details</Link>
                     </Button>
                   </div>

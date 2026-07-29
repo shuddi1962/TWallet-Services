@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { createOrder } from "@/features/orders/server/actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, CreditCard, Smartphone, Sparkles, Loader2 } from "lucide-react";
+import { Check, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
+import { TwalletCard, finishForSlug, networkForSlug } from "@/components/cards/twallet-card";
 
 export interface CatalogProduct {
   id: string;
@@ -23,14 +24,6 @@ export interface CatalogProduct {
 type OrderResult =
   | { error: string }
   | { success: true; order: { id: string; order_number: string; amount_usdc: number } };
-
-const GRADIENTS: Record<string, string> = {
-  "virtual-standard": "from-slate-700 via-slate-800 to-slate-950",
-  "virtual-premium": "from-violet-600 via-purple-700 to-indigo-900",
-  "physical-standard": "from-blue-600 via-blue-700 to-indigo-900",
-  "physical-premium": "from-amber-500 via-orange-600 to-rose-800",
-  "physical-black": "from-zinc-800 via-black to-zinc-950",
-};
 
 function parseFeatures(features: CatalogProduct["features"]): string[] {
   if (!features) return [];
@@ -74,8 +67,7 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
   if (!products.length) {
     return (
       <div className="rounded-3xl border border-white/10 bg-surface-900/60 px-6 py-16 text-center">
-        <CreditCard className="mx-auto h-10 w-10 text-surface-500" />
-        <p className="mt-4 text-lg font-medium text-white">No cards available</p>
+        <p className="text-lg font-medium text-white">No cards available</p>
         <p className="mt-2 text-sm text-surface-400">Check back soon or contact support.</p>
       </div>
     );
@@ -88,11 +80,11 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
         <div className="relative">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-xs font-medium text-brand-300">
             <Sparkles className="h-3.5 w-3.5" />
-            Live catalog
+            Order catalog
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Choose Your Card</h1>
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Choose Your Card</h2>
           <p className="mt-3 max-w-xl text-surface-400">
-            Real products from our catalog. Pay with crypto on-chain — funds go straight to the receiving wallet.
+            Real TWALLET debit designs. Pay with crypto on-chain — virtual cards activate after payment verification.
           </p>
         </div>
       </div>
@@ -101,8 +93,10 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
         {products.map((product, idx) => {
           const features = parseFeatures(product.features);
           const isPopular = product.slug === "physical-standard" || product.slug === "virtual-premium";
-          const gradient = GRADIENTS[product.slug] ?? "from-brand-600 via-brand-700 to-indigo-900";
+          const finish = finishForSlug(product.slug);
+          const network = networkForSlug(product.slug);
           const annual = Number(product.annual_fee_usdc ?? 0);
+          const last4 = String(4200 + idx).slice(-4);
 
           return (
             <div
@@ -118,41 +112,33 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
                 </div>
               )}
 
-              <div className={cn("relative m-4 aspect-[1.586/1] overflow-hidden rounded-2xl bg-gradient-to-br p-5 text-white shadow-xl", gradient)}>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.15),transparent_45%)]" />
-                <div className="relative flex h-full flex-col justify-between">
-                  <div className="flex items-start justify-between">
-                    <div className="h-8 w-11 rounded-md bg-gradient-to-br from-amber-200 to-amber-500 opacity-90" />
-                    {product.type === "virtual" ? (
-                      <Smartphone className="h-5 w-5 text-white/70" />
-                    ) : (
-                      <CreditCard className="h-5 w-5 text-white/70" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-mono text-sm tracking-[0.2em] text-white/80">•••• •••• •••• {String(idx + 4281).slice(-4)}</p>
-                    <div className="mt-3 flex items-end justify-between">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-white/50">Card</p>
-                        <p className="text-sm font-semibold">{product.name}</p>
-                      </div>
-                      <p className="text-xs font-bold tracking-widest text-white/90">VISA</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="p-4 pb-0">
+                <TwalletCard
+                  finish={finish}
+                  holderName="YOUR NAME"
+                  panDisplay={`4532 •••• •••• ${last4}`}
+                  expiry="08/29"
+                  cvv="•••"
+                  network={network}
+                  isVirtual={product.type === "virtual"}
+                  interactive
+                  className="max-w-none"
+                />
               </div>
 
-              <div className="flex flex-1 flex-col px-5 pb-5">
+              <div className="flex flex-1 flex-col px-5 pb-5 pt-2">
                 <div className="mb-1 flex items-center gap-2">
                   <h3 className="text-lg font-semibold text-white">{product.name}</h3>
                   <Badge variant="outline" className="capitalize text-[10px]">
                     {product.type}
                   </Badge>
                 </div>
-                <p className="text-sm text-surface-400 line-clamp-2">{product.description}</p>
+                <p className="line-clamp-2 text-sm text-surface-400">{product.description}</p>
 
                 <div className="mt-4 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-white">${Number(product.price_usdc).toFixed(2)}</span>
+                  <span className="text-3xl font-bold text-white">
+                    ${Number(product.price_usdc).toFixed(2)}
+                  </span>
                   <span className="text-xs text-surface-500">USDC one-time</span>
                 </div>
                 {annual > 0 && (

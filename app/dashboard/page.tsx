@@ -41,7 +41,7 @@ export default async function DashboardPage() {
       .eq("user_id", user.id),
     adminDb
       .from("card_orders")
-      .select("id, order_number, status, amount_usdc, network, token, created_at, card_products(name, type)")
+      .select("id, order_number, status, amount_usdc, network, token, created_at, card_products(name, type, slug)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(5),

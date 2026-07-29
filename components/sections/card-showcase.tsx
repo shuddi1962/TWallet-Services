@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { FadeIn } from "@/components/ui/motion-section";
-import { RealCard } from "@/components/cards/card-art";
+import { TwalletCard } from "@/components/cards/twallet-card";
 import { cardFinishes, cardOrder, sampleCards } from "@/lib/cards";
 import type { CardFinish } from "@/lib/cards";
 
@@ -74,7 +74,7 @@ export function CardShowcase() {
             </button>
 
             <div
-              className="relative w-full max-w-[320px] h-[204px] sm:h-[212px] flex items-center justify-center"
+              className="relative flex w-full max-w-[380px] items-center justify-center"
               style={{ perspective: "1000px" }}
             >
               <AnimatePresence mode="wait" custom={direction}>
@@ -82,25 +82,29 @@ export function CardShowcase() {
                   key={currentFinish}
                   custom={direction}
                   variants={{
-                    enter: (d: number) => ({ x: d > 0 ? 180 : -180, opacity: 0, rotateY: d > 0 ? 12 : -12 }),
-                    center: { x: 0, opacity: 1, rotateY: 0 },
-                    exit: (d: number) => ({ x: d > 0 ? -180 : 180, opacity: 0, rotateY: d > 0 ? -12 : 12 }),
+                    enter: (d: number) => ({ x: d > 0 ? 180 : -180, opacity: 0 }),
+                    center: { x: 0, opacity: 1 },
+                    exit: (d: number) => ({ x: d > 0 ? -180 : 180, opacity: 0 }),
                   }}
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                  className="absolute inset-0 flex items-center justify-center"
-                  style={{ transformStyle: "preserve-3d" }}
+                  transition={{ duration: 0.35 }}
+                  className="w-full"
+                  style={{
+                    filter: `drop-shadow(0 0 28px ${finishGlow(currentFinish)})`,
+                  }}
                 >
-                  <div
-                    className="rounded-xl transition-shadow duration-300"
-                    style={{
-                      boxShadow: `0 0 40px ${finishGlow(currentFinish)}, 0 8px 32px rgba(0,0,0,0.12)`,
-                    }}
-                  >
-                    <RealCard card={currentCard} />
-                  </div>
+                  <TwalletCard
+                    finish={currentFinish}
+                    holderName={currentCard.holderName}
+                    panDisplay={currentCard.cardNumber.replace(/(.{4})/g, "$1 ").trim()}
+                    expiry={currentCard.expiryDate}
+                    cvv={currentCard.cvc}
+                    network={currentFinish === "obsidian" || currentFinish === "cyber" ? "mastercard" : "visa"}
+                    isVirtual={currentCard.isVirtual}
+                    className="max-w-none"
+                  />
                 </motion.div>
               </AnimatePresence>
             </div>
