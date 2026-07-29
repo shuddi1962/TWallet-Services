@@ -6,6 +6,8 @@ import { WagmiProvider, createConfig, http } from "wagmi";
 import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
 import { injected, walletConnect } from "wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// Required by wagmi walletConnect({ showQrModal: true }) for the official QR / multi-wallet UI
+import "@reown/appkit";
 import { WalletLinker } from "@/components/wallet/wallet-linker";
 import { SessionTimeout } from "@/components/session-timeout";
 
