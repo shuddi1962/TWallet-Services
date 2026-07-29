@@ -91,7 +91,7 @@ export function WalletOverview() {
                 <p className="text-[11px] font-medium uppercase tracking-wider text-white/70">Native balance</p>
                 <p className="mt-2 text-2xl font-bold">
                   {balance
-                    ? `${Number(balance.formatted).toLocaleString(undefined, { maximumFractionDigits: 5 })} ${balance.symbol}`
+                    ? `${(Number(balance.value) / 10 ** balance.decimals).toLocaleString(undefined, { maximumFractionDigits: 5 })} ${balance.symbol}`
                     : "—"}
                 </p>
                 <div className="mt-4 flex items-center justify-between text-sm">

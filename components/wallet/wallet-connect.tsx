@@ -79,7 +79,7 @@ export function WalletConnect() {
                 <p className="text-xs font-medium uppercase tracking-wider text-white/70">Balance</p>
                 <p className="mt-2 text-3xl font-bold tracking-tight">
                   {balance
-                    ? `${Number(balance.formatted).toLocaleString(undefined, { maximumFractionDigits: 4 })} ${balance.symbol}`
+                    ? `${(Number(balance.value) / 10 ** balance.decimals).toLocaleString(undefined, { maximumFractionDigits: 4 })} ${balance.symbol}`
                     : "—"}
                 </p>
                 <div className="mt-4 flex items-center justify-between text-sm">
