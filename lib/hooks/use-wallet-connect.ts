@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useAccount, useConnect, useDisconnect, useConnectors } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useConnectors, type Connector } from "wagmi";
 import { useWalletConnectionState } from "./wallet-connection-context";
 
 export function useWalletConnect() {
@@ -12,6 +12,21 @@ export function useWalletConnect() {
   const { connecting, setConnecting } = useWalletConnectionState();
   const [selectOpen, setSelectOpen] = useState(false);
 
+  const connectWithConnector = useCallback(
+    async (connector: Connector) => {
+      setSelectOpen(false);
+      setConnecting(true);
+      try {
+        await connectAsync({ connector });
+      } catch {
+        // user rejected or connector error
+      } finally {
+        setConnecting(false);
+      }
+    },
+    [connectAsync, setConnecting],
+  );
+
   const openWallet = useCallback(async () => {
     if (isConnected) {
       setSelectOpen(true);
@@ -19,38 +34,24 @@ export function useWalletConnect() {
     }
 
     const available = connectors.filter((c) => c.id !== "safe");
-    if (available.length === 0) return;
+    const first = available[0];
+    if (!first) return;
 
     if (available.length === 1) {
-      setConnecting(true);
-      try {
-        await connectAsync({ connector: available[0] });
-      } catch {
-        // user rejected or connector error
-      } finally {
-        setConnecting(false);
-      }
+      await connectWithConnector(first);
       return;
     }
 
     setSelectOpen(true);
-  }, [isConnected, connectors, connectAsync, setConnecting]);
+  }, [isConnected, connectors, connectWithConnector]);
 
   const connectWith = useCallback(
     async (connectorId: string) => {
       const connector = connectors.find((c) => c.uid === connectorId || c.id === connectorId);
       if (!connector) return;
-      setSelectOpen(false);
-      setConnecting(true);
-      try {
-        await connectAsync({ connector });
-      } catch {
-        // user rejected
-      } finally {
-        setConnecting(false);
-      }
+      await connectWithConnector(connector);
     },
-    [connectors, connectAsync, setConnecting],
+    [connectors, connectWithConnector],
   );
 
   const handleDisconnect = useCallback(() => {
