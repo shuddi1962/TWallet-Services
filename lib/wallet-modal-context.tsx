@@ -32,13 +32,18 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleSelect = useCallback(
-    async (connector: Connector) => {
+    async (connectorOrType: Connector | "walletconnect") => {
       setVisible(false);
       try {
-        await connectAsync({ connector });
+        if (connectorOrType === "walletconnect") {
+          const wc = connectors.find((c) => c.id === "walletConnect");
+          if (wc) await connectAsync({ connector: wc });
+        } else {
+          await connectAsync({ connector: connectorOrType });
+        }
       } catch {}
     },
-    [connectAsync],
+    [connectAsync, connectors],
   );
 
   return (
