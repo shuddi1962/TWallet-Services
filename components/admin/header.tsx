@@ -2,6 +2,7 @@
 
 import { Menu, Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 function breadcrumbFromPath(pathname: string) {
   const parts = pathname.split("/").filter(Boolean);
@@ -16,39 +17,40 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 h-[72px] bg-white border-b border-surface-200 shadow-xs flex items-center px-6 gap-4">
+    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-white/[0.06] bg-[#070b14]/85 px-4 backdrop-blur-2xl md:px-6">
       <button
         onClick={onMenuToggle}
-        className="lg:hidden p-2 rounded-lg hover:bg-surface-100 text-body"
+        className="rounded-xl border border-white/10 p-2 text-surface-300 transition hover:bg-white/5 lg:hidden"
         aria-label="Toggle sidebar"
-        aria-expanded={false}
       >
-        <Menu className="w-5 h-5" aria-hidden="true" />
+        <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
 
       <nav aria-label="Breadcrumb">
-        <div className="text-sm text-body font-medium">
-          {breadcrumbFromPath(pathname)}
-        </div>
+        <div className="text-sm font-medium text-surface-400">{breadcrumbFromPath(pathname)}</div>
       </nav>
 
       <div className="ml-auto flex items-center gap-3">
-        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-danger/10 text-danger">
+        <span className="rounded-full bg-red-500/15 px-2.5 py-0.5 text-xs font-semibold text-red-300 ring-1 ring-red-500/20">
           Production
         </span>
 
-        <button className="relative p-2 rounded-lg hover:bg-surface-100 text-body" aria-label="Notifications">
-          <Bell className="w-5 h-5" aria-hidden="true" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full" aria-label="Unread notifications" />
-        </button>
+        <Link
+          href="/admin/notifications"
+          className="relative rounded-xl border border-white/10 p-2 text-surface-400 transition hover:bg-white/5 hover:text-white"
+          aria-label="Notifications"
+        >
+          <Bell className="h-5 w-5" aria-hidden="true" />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-error" />
+        </Link>
 
-        <div className="flex items-center gap-2 pl-3 border-l border-surface-200">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold text-sm">
+        <div className="flex items-center gap-2 border-l border-white/10 pl-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/20 text-sm font-semibold text-brand-300 ring-2 ring-brand-500/20">
             A
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-medium text-heading leading-tight">Admin</p>
-            <p className="text-xs text-body">Super Admin</p>
+            <p className="text-sm font-medium leading-tight text-white">Admin</p>
+            <p className="text-xs text-surface-500">Super Admin</p>
           </div>
         </div>
       </div>

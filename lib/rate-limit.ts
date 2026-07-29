@@ -55,6 +55,8 @@ export const RATE_LIMITS = {
   paymentVerify: { window: 10 * 60 * 1000, max: 10 },
   createOrder: { window: 60 * 60 * 1000, max: 10 },
   supportTicket: { window: 60 * 60 * 1000, max: 5 },
+  saveWallet: { window: 60 * 60 * 1000, max: 20 },
+  contact: { window: 60 * 60 * 1000, max: 5 },
   adminGet: { window: 60 * 1000, max: 60 },
   adminPost: { window: 60 * 1000, max: 30 },
   default: { window: 60 * 1000, max: 100 },

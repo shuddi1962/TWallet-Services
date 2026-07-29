@@ -162,11 +162,22 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **CI build fix** — dummy Supabase env vars added to CI workflow (build was failing with `supabaseUrl is required`)
 - **CI green** — All 83 tests pass, lint/typecheck/build clean
 
+### Session 11 — Jul 29, 2026 (Premium UI + wiring)
+- **Wallet connect fixed** — wagmi `injected` + `walletConnect` connectors; removed broken dual SignClient path; select modal; auto-save wallet to DB with correct schema (`network`, `network_id`, signature placeholders)
+- **Real card catalog** — `/dashboard/cards` loads `card_products` from Supabase; order flow uses real UUIDs → payment
+- **Premium user dashboard** — glass panels, gradient card preview, live stats, mobile drawer sidebar, bottom tabs, realtime order/payment/notification toasts
+- **Premium admin** — dark shell (sidebar/header/overview), admin realtime for orders/payments/tickets
+- **Homepage** — hero rewrite, pricing aligned to seed catalog ($9.99–$49.99), features polish
+- **Security** — 30m idle session timeout + 5m warning; rate limits for saveWallet; migration `202607290001_hardening.sql` (archived column, analytics RLS, security settings, realtime publication)
+- **Apply migration on Supabase** before relying on archive/realtime publication changes
+
 ### Remaining (v1.1 — manual/UI tasks)
 - **Uptime monitoring + alerting** — Config generated; manual setup in Better Uptime / UptimeRobot needed (no API keys available)
 - **Database PITR + daily backup** — CI backup dump configured; Supabase project on **Free plan** (no automated backups). Upgrade to **Pro ($25/mo)** for daily backups or **Team ($599/mo)** for PITR
 - **Production dashboards** — Setup guide created; manual creation in Sentry + PostHog UI needed (no API keys available)
 - **Penetration test** — Plan documented; schedule externally
+- **npm install** may fail on paths with spaces (esbuild spawn) — install from a path without spaces or fix esbuild binary if local build fails
+- **Apply** `supabase/migrations/202607290001_hardening.sql` to linked project
 
 ### Known Issues
 - `@wagmi/connectors` has warnings about missing optional deps (safe-sdk, porto, metamask-connect, coinbase-sdk, base-org/account) — non-blocking, webpack resolves to false

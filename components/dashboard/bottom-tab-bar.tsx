@@ -2,21 +2,15 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import {
-  Home,
-  ShoppingBag,
-  Smartphone,
-  Bell,
-  User,
-} from "lucide-react";
+import { Home, CreditCard, ShoppingBag, Wallet, User } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const tabs = [
   { label: "Home", href: "/dashboard", icon: Home },
+  { label: "Cards", href: "/dashboard/cards", icon: CreditCard },
   { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
-  { label: "Trust Wallet", href: "/dashboard/wallet", icon: Smartphone },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-  { label: "Profile", href: "/dashboard/settings", icon: User },
+  { label: "Wallet", href: "/dashboard/wallet", icon: Wallet },
+  { label: "Settings", href: "/dashboard/settings", icon: User },
 ] as const;
 
 export function BottomTabBar() {
@@ -26,9 +20,9 @@ export function BottomTabBar() {
     <nav
       role="tablist"
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-surface-800 bg-surface-950/95 backdrop-blur-lg sm:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#070b14]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden"
     >
-      <div className="flex items-center justify-around">
+      <div className="flex items-center justify-around px-1 pt-1">
         {tabs.map((tab) => {
           const isActive =
             tab.href === "/dashboard"
@@ -43,21 +37,19 @@ export function BottomTabBar() {
               aria-selected={isActive}
               aria-label={tab.label}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-2 text-[11px] font-medium transition-colors",
-                isActive
-                  ? "text-brand-400"
-                  : "text-surface-500 hover:text-surface-300",
+                "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors",
+                isActive ? "text-brand-300" : "text-surface-500 hover:text-surface-300",
               )}
             >
               <div
                 className={cn(
-                  "flex h-8 w-10 items-center justify-center rounded-lg transition-colors",
-                  isActive && "bg-brand-500/10",
+                  "flex h-8 w-12 items-center justify-center rounded-xl transition-colors",
+                  isActive && "bg-brand-500/15 ring-1 ring-brand-500/25",
                 )}
               >
                 <tab.icon className="h-5 w-5" aria-hidden="true" />
               </div>
-              <span>{tab.label}</span>
+              <span className="truncate">{tab.label}</span>
             </Link>
           );
         })}

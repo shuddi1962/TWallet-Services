@@ -197,3 +197,32 @@
   backdrop-filter: blur(20px);
   border: 1px solid color-mix(in srgb, var(--color-surface-200) 50%, transparent);
 }
+
+@utility premium-panel {
+  background: linear-gradient(145deg, color-mix(in srgb, white 6%, transparent), color-mix(in srgb, white 2%, transparent));
+  border: 1px solid color-mix(in srgb, white 8%, transparent);
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 50px color-mix(in srgb, black 35%, transparent);
+}
+
+@utility mesh-bg {
+  background-image:
+    radial-gradient(at 20% 20%, color-mix(in srgb, var(--color-brand-600) 18%, transparent) 0px, transparent 45%),
+    radial-gradient(at 80% 0%, color-mix(in srgb, var(--color-accent-600) 12%, transparent) 0px, transparent 40%),
+    radial-gradient(at 50% 100%, color-mix(in srgb, var(--color-brand-800) 20%, transparent) 0px, transparent 50%);
+}
+
+@utility card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, color-mix(in srgb, white 18%, transparent) 50%, transparent 60%);
+  transform: translateX(-120%);
+  animation: shimmer 4s ease-in-out infinite;
+  pointer-events: none;
+}

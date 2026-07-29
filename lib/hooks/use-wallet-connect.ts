@@ -1,75 +1,73 @@
 "use client";
 
-import { useCallback, useRef } from "react";
-import { useAccount } from "wagmi";
+import { useCallback, useState } from "react";
+import { useAccount, useConnect, useDisconnect, useConnectors } from "wagmi";
 import { useWalletConnectionState } from "./wallet-connection-context";
 
-let signClientPromise: Promise<{
-  connect: (opts: unknown) => Promise<{ uri?: string; approval: () => Promise<object> }>;
-}> | null = null;
-
-function getSignClient() {
-  if (!signClientPromise) {
-    signClientPromise = import(
-      /* webpackMode: "eager" */
-      "@walletconnect/sign-client"
-    ).then((m) => {
-      const SC = (m as Record<string, unknown>).SignClient ?? (m as Record<string, unknown>).default;
-      return (SC as { init: (o: unknown) => Promise<unknown> }).init({
-        projectId: "00e085516112e43f7ba31f5790328b65",
-        metadata: {
-          name: "TWALLET",
-          description: "Non-custodial crypto card platform",
-          url: "https://twalletservices.com",
-          icons: ["https://twalletservices.com/opengraph-image.png"],
-        },
-      }) as Promise<{
-        connect: (opts: unknown) => Promise<{ uri?: string; approval: () => Promise<object> }>;
-      }>;
-    });
-  }
-  return signClientPromise;
-}
-
 export function useWalletConnect() {
-  const { isConnected } = useAccount();
-  const { setUri, setConnecting } = useWalletConnectionState();
-  const busy = useRef(false);
+  const { isConnected, address, chainId } = useAccount();
+  const { connectAsync, isPending, error } = useConnect();
+  const { disconnect } = useDisconnect();
+  const connectors = useConnectors();
+  const { connecting, setConnecting } = useWalletConnectionState();
+  const [selectOpen, setSelectOpen] = useState(false);
 
   const openWallet = useCallback(async () => {
-    if (isConnected || busy.current) return;
-    busy.current = true;
-    setConnecting(true);
-    setUri(null);
-
-    try {
-      const sc = await getSignClient();
-      const result = await sc.connect({
-        requiredNamespaces: {
-          eip155: {
-            chains: ["eip155:1", "eip155:11155111", "eip155:137", "eip155:8453", "eip155:42161", "eip155:10"],
-            methods: ["eth_sendTransaction", "eth_sign", "personal_sign", "eth_signTypedData", "eth_signTypedData_v4"],
-            events: ["chainChanged", "accountsChanged"],
-          },
-        },
-      });
-
-      if (!result.uri) throw new Error("No URI from WalletConnect");
-      setUri(result.uri);
-
-      await result.approval();
-    } catch (e) {
-      console.error("WalletConnect error:", e);
+    if (isConnected) {
+      setSelectOpen(true);
+      return;
     }
 
-    busy.current = false;
-    setUri(null);
-    setConnecting(false);
-  }, [isConnected, setUri, setConnecting]);
+    const available = connectors.filter((c) => c.id !== "safe");
+    if (available.length === 0) return;
+
+    if (available.length === 1) {
+      setConnecting(true);
+      try {
+        await connectAsync({ connector: available[0] });
+      } catch {
+        // user rejected or connector error
+      } finally {
+        setConnecting(false);
+      }
+      return;
+    }
+
+    setSelectOpen(true);
+  }, [isConnected, connectors, connectAsync, setConnecting]);
+
+  const connectWith = useCallback(
+    async (connectorId: string) => {
+      const connector = connectors.find((c) => c.uid === connectorId || c.id === connectorId);
+      if (!connector) return;
+      setSelectOpen(false);
+      setConnecting(true);
+      try {
+        await connectAsync({ connector });
+      } catch {
+        // user rejected
+      } finally {
+        setConnecting(false);
+      }
+    },
+    [connectors, connectAsync, setConnecting],
+  );
+
+  const handleDisconnect = useCallback(() => {
+    disconnect();
+  }, [disconnect]);
 
   return {
     openWallet,
-    connecting: useWalletConnectionState().connecting,
+    connectWith,
+    disconnect: handleDisconnect,
+    connecting: isPending || connecting,
     isConnected,
+    address,
+    chainId,
+    connectors,
+    selectOpen,
+    setSelectOpen,
+    error,
   };
 }

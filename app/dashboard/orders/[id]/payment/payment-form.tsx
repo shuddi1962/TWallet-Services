@@ -261,12 +261,23 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-white">Complete Payment</h1>
-            <p className="mt-1 text-sm text-surface-400">Connect your Trust Wallet to pay for order {order.order_number}</p>
+            <p className="mt-1 text-sm text-surface-400">
+              Connect a wallet to pay for order {order.order_number}
+            </p>
           </div>
         </div>
-        <Card>
+        <Card className="overflow-hidden border-white/10">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-surface-400">Please connect your Trust Wallet to proceed with payment.</p>
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/15 ring-1 ring-brand-500/25">
+              <Smartphone className="h-6 w-6 text-brand-300" />
+            </div>
+            <p className="font-medium text-white">Wallet required</p>
+            <p className="mt-2 max-w-sm text-sm text-surface-400">
+              Use the Connect Wallet button in the header (MetaMask, Trust Wallet, or WalletConnect).
+            </p>
+            <Button className="mt-6 rounded-full" asChild>
+              <Link href="/dashboard/wallet">Open wallet page</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

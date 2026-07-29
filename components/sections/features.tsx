@@ -38,15 +38,15 @@ export function Features() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="group relative overflow-hidden rounded-2xl border border-surface-200 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 hover:border-brand-200"
+              className="group relative overflow-hidden rounded-3xl border border-surface-200/80 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-200 hover:shadow-2xl hover:shadow-brand-500/10"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-brand-50/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-brand-500/5 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
               <div className="relative">
-                <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 shadow-lg shadow-brand-500/20">
+                <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-600 shadow-lg shadow-brand-500/25 transition group-hover:scale-105">
                   <feature.icon className="h-5 w-5 text-white" aria-hidden="true" />
                 </div>
                 <h3 className="text-lg font-semibold text-surface-900">{feature.title}</h3>
-                <p className="mt-2.5 text-sm text-surface-500 leading-relaxed">{feature.description}</p>
+                <p className="mt-2.5 text-sm leading-relaxed text-surface-500">{feature.description}</p>
               </div>
             </motion.div>
           ))}

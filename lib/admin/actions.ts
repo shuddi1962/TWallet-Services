@@ -705,7 +705,10 @@ export async function updateCardProduct(
 
 export async function archiveCardProduct(id: string): Promise<ActionResult> {
   const supabase: any = await sb();
-  const { error }: any = await supabase.from("card_products").update({ archived: true } as any).eq("id", id);
+  const { error }: any = await supabase
+    .from("card_products")
+    .update({ active: false, archived: true } as any)
+    .eq("id", id);
   if (error) return { success: false, error: error.message as string };
   revalidatePath("/admin/cards");
   return { success: true };
@@ -713,7 +716,10 @@ export async function archiveCardProduct(id: string): Promise<ActionResult> {
 
 export async function activateCardProduct(id: string): Promise<ActionResult> {
   const supabase: any = await sb();
-  const { error }: any = await supabase.from("card_products").update({ archived: false } as any).eq("id", id);
+  const { error }: any = await supabase
+    .from("card_products")
+    .update({ active: true, archived: false } as any)
+    .eq("id", id);
   if (error) return { success: false, error: error.message as string };
   revalidatePath("/admin/cards");
   return { success: true };

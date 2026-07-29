@@ -8,6 +8,7 @@ import { Play, Zap, Globe, Headphones, Shield, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
 
 const CARD_IMAGE =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuB4kIr2XwzwDH8GGE6TbF23yoAi0hgE531M8geP32Cjq1mXYPGqLgX5RomAPAvL8_a31uz8iWMQ2z8bQVqlCgpbFDegzDuB4uw-g3stjGIrqdtoMF9CoWU6flYr36umlpNYm_tJRxYT4mHEFM9HDsv2HdwoHwHoBhy3NMXS0tJOZYYIpIEzOCWpa62ZB_RYk63ExlxwSjO61Ve_DI09AExScnco3FJwHpl6yClmGjB2yLuid6y4Q-vTWqABr5GJaUJjzyk";
@@ -121,79 +122,87 @@ function CardReveal() {
 }
 
 export function Hero() {
-  const { openWallet, connecting } = useWalletConnect();
+  const { openWallet, connectWith, connecting, connectors, selectOpen, setSelectOpen } =
+    useWalletConnect();
 
   return (
-    <section className="relative bg-[#05070a] overflow-hidden pt-16 pb-10 lg:pt-24 lg:pb-14">
+    <section className="relative overflow-hidden bg-[#03060d] pt-20 pb-14 lg:pt-28 lg:pb-20">
       <Stars />
       <FloatingOrbs />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.14),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
 
       <Container className="relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-center">
-          {/* Left column - Text */}
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:col-span-5 flex flex-col gap-3"
+            className="flex flex-col gap-4 lg:col-span-5"
           >
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#2563eb]/10 to-[#3b82f6]/5 border border-[#2563eb]/20 w-fit"
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-500/25 bg-brand-500/10 px-3 py-1"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2563eb] animate-pulse" />
-              <span className="text-[#3b82f6] text-[11px] font-semibold tracking-wide">Trusted by Thousands</span>
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-400" />
+              <span className="text-[11px] font-semibold tracking-wide text-brand-300">
+                Non-custodial · On-chain verified
+              </span>
             </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.15 }}
-              className="text-[2rem] leading-[1.08] sm:text-4xl lg:text-[2.8rem] xl:text-[3.2rem] xl:leading-[1.05] font-bold tracking-tight text-white"
+              className="text-[2.15rem] font-bold leading-[1.05] tracking-tight text-white sm:text-4xl lg:text-[2.9rem] xl:text-[3.35rem] xl:leading-[1.02]"
             >
-              Your Crypto Card.<br />
-              Powered by <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2563eb] to-[#3b82f6]">Trust Wallet</span>.
+              Spend crypto
+              <br />
+              like cash.
+              <br />
+              <span className="bg-gradient-to-r from-brand-300 via-sky-300 to-accent-400 bg-clip-text text-transparent">
+                Keep your keys.
+              </span>
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-white/55 text-sm sm:text-base leading-relaxed max-w-md"
+              className="max-w-md text-sm leading-relaxed text-white/55 sm:text-base"
             >
-              Order premium physical and virtual cards using secure cryptocurrency payments with Trust Wallet.
+              Order premium virtual & metal cards. Pay USDC on-chain. We never hold balances or ask for seed phrases.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
-              className="flex flex-col sm:flex-row items-center gap-3"
+              className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center"
             >
               <div className="relative">
-                <div className="absolute inset-0 rounded-xl bg-[#2563eb]/40 blur-xl animate-glow-pulse" />
+                <div className="absolute inset-0 animate-glow-pulse rounded-xl bg-brand-500/40 blur-xl" />
                 <Button
-                  className="relative px-5 h-10 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af] text-white font-semibold text-sm shadow-lg shadow-[#2563eb]/30 border-0 transition-all overflow-hidden"
+                  className="relative h-11 overflow-hidden rounded-xl border-0 bg-gradient-to-r from-brand-500 to-brand-700 px-6 text-sm font-semibold text-white shadow-lg shadow-brand-600/30"
                   onClick={() => openWallet()}
                   disabled={connecting}
                 >
                   <span className="relative z-10 flex items-center gap-2">
-                    <Smartphone className="w-4 h-4" />
-                    {connecting ? "Connecting..." : "Connect Wallet"}
+                    <Smartphone className="h-4 w-4" />
+                    {connecting ? "Connecting…" : "Connect Wallet"}
                   </span>
-                  <span className="absolute inset-0 -z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
                 </Button>
               </div>
               <Button
-                className="flex items-center gap-2 px-4 h-10 rounded-xl border border-white/15 hover:border-white/30 hover:bg-white/5 text-white font-medium text-sm transition-all"
+                className="h-11 rounded-xl border border-white/15 px-5 text-sm font-medium text-white hover:border-white/30 hover:bg-white/5"
                 variant="outline"
                 asChild
               >
-                <Link href="/#cards">
-                  <Play className="w-3.5 h-3.5 fill-white" />
-                  Explore Cards
+                <Link href="/auth/register">
+                  <Play className="h-3.5 w-3.5 fill-white" />
+                  Order a Card
                 </Link>
               </Button>
             </motion.div>
@@ -232,49 +241,53 @@ export function Hero() {
             <CardReveal />
           </motion.div>
 
-          {/* Right column - Wallet Connect widget */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             className="lg:col-span-4"
           >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="bg-[#0c0e14] border border-white/[0.07] rounded-2xl p-6 lg:p-6 shadow-2xl shadow-black/50 w-full max-w-sm backdrop-blur-sm"
-            >
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0500FF]/20 ring-1 ring-[#0500FF]/30">
+            <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-6 shadow-2xl shadow-black/50 backdrop-blur-xl">
+              <div className="mb-6 flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/30 to-accent-500/20 ring-1 ring-brand-400/30">
                   <Smartphone className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white">Trust Wallet</h3>
-                  <p className="text-sm text-white/50">Connect to get started</p>
+                  <h3 className="text-lg font-semibold text-white">Connect & order</h3>
+                  <p className="text-sm text-white/50">MetaMask · Trust · WC</p>
                 </div>
               </div>
 
-              <p className="text-sm text-white/60 mb-6 leading-relaxed">
-                Connect your Trust Wallet to order premium cards and pay with cryptocurrency. Secure, fast, and non-custodial.
+              <p className="mb-6 text-sm leading-relaxed text-white/60">
+                Link any EVM wallet, pick a real catalog card, pay USDC on-chain. Status updates live in your dashboard.
               </p>
 
               <button
                 onClick={() => openWallet()}
                 disabled={connecting}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0500FF] to-[#0066FF] hover:from-[#0066FF] hover:to-[#0052cc] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5 disabled:opacity-60"
+                className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-700 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:brightness-110 disabled:opacity-60"
               >
-                <Smartphone className="w-4 h-4" strokeWidth={2} />
-                {connecting ? "Connecting..." : "Connect Wallet"}
+                <Smartphone className="h-4 w-4" strokeWidth={2} />
+                {connecting ? "Connecting…" : "Connect Wallet"}
               </button>
 
-              <p className="mt-4 text-center text-xs text-white/30">
-                Powered by WalletConnect technology
-              </p>
-            </motion.div>
+              <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                {["No custody", "On-chain", "Global"].map((t) => (
+                  <div key={t} className="rounded-xl border border-white/10 bg-white/[0.03] px-2 py-2 text-[11px] font-medium text-white/55">
+                    {t}
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
         </div>
       </Container>
+      <WalletSelectModal
+        open={selectOpen}
+        onClose={() => setSelectOpen(false)}
+        connectors={connectors}
+        onSelect={(c) => void connectWith(c.uid || c.id)}
+      />
     </section>
   );
 }

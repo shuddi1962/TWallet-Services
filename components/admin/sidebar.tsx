@@ -4,23 +4,36 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Users, ShoppingBag, CreditCard, Coins,
-  LifeBuoy, BarChart3, Settings, ScrollText, LogOut,
-  ChevronLeft, Search, Wallet, Send,
+  LayoutDashboard,
+  Users,
+  ShoppingBag,
+  CreditCard,
+  Coins,
+  LifeBuoy,
+  BarChart3,
+  Settings,
+  ScrollText,
+  LogOut,
+  ChevronLeft,
+  Search,
+  Wallet,
+  Send,
+  Shield,
 } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, route: "/admin", roles: ["super_admin", "operations", "finance", "support", "viewer"] },
-  { label: "Users", icon: Users, route: "/admin/users", roles: ["super_admin", "operations"] },
-  { label: "Orders", icon: ShoppingBag, route: "/admin/orders", roles: ["super_admin", "operations", "finance"] },
-  { label: "Cards", icon: CreditCard, route: "/admin/cards", roles: ["super_admin", "operations"] },
-  { label: "Payments", icon: Coins, route: "/admin/payments", roles: ["super_admin", "finance"] },
-  { label: "Wallets", icon: Wallet, route: "/admin/wallets", roles: ["super_admin", "finance"] },
-  { label: "Sweep", icon: Send, route: "/admin/sweep", roles: ["super_admin", "finance"] },
-  { label: "Analytics", icon: BarChart3, route: "/admin/analytics", roles: ["super_admin", "finance", "viewer"] },
-  { label: "Support", icon: LifeBuoy, route: "/admin/support", roles: ["super_admin", "support", "operations"] },
-  { label: "Settings", icon: Settings, route: "/admin/settings", roles: ["super_admin"] },
-  { label: "Audit Logs", icon: ScrollText, route: "/admin/audit", roles: ["super_admin"] },
+  { label: "Dashboard", icon: LayoutDashboard, route: "/admin" },
+  { label: "Users", icon: Users, route: "/admin/users" },
+  { label: "Orders", icon: ShoppingBag, route: "/admin/orders" },
+  { label: "Cards", icon: CreditCard, route: "/admin/cards" },
+  { label: "Payments", icon: Coins, route: "/admin/payments" },
+  { label: "Wallets", icon: Wallet, route: "/admin/wallets" },
+  { label: "Sweep", icon: Send, route: "/admin/sweep" },
+  { label: "Analytics", icon: BarChart3, route: "/admin/analytics" },
+  { label: "Support", icon: LifeBuoy, route: "/admin/support" },
+  { label: "Settings", icon: Settings, route: "/admin/settings" },
+  { label: "Audit Logs", icon: ScrollText, route: "/admin/audit" },
 ];
 
 interface AdminSidebarProps {
@@ -45,83 +58,101 @@ export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
   };
 
   const filtered = navItems.filter((item) =>
-    item.label.toLowerCase().includes(searchQuery.toLowerCase())
+    item.label.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
     <>
       {mobileOpen && onCloseMobile && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={onCloseMobile}
           aria-hidden="true"
         />
       )}
       <aside
-        className={`fixed left-0 top-0 h-full bg-white border-r border-surface-200 z-50 flex flex-col transition-all duration-300 ${collapsed ? "w-[72px]" : "w-[240px]"} ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={cn(
+          "fixed left-0 top-0 z-50 flex h-full flex-col border-r border-white/[0.06] bg-[#070b14] transition-all duration-300",
+          collapsed ? "w-[76px]" : "w-[260px]",
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        )}
         aria-label="Admin navigation"
       >
-      <div className="flex items-center gap-2 p-4 border-b border-surface-200">
-        {!collapsed && <span className="text-xl font-bold text-primary">TWALLET</span>}
-        <button
-          onClick={toggle}
-          className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors ml-auto"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`} aria-hidden="true" />
-        </button>
-      </div>
-
-      {!collapsed && (
-        <div className="px-3 pt-3">
-          <div className="flex items-center gap-2 px-3 py-2 bg-surface-100 rounded-lg text-body text-sm">
-            <Search className="w-4 h-4" aria-hidden="true" />
-            <input
-              type="text"
-              placeholder="Search navigation..."
-              className="bg-transparent border-none outline-none w-full text-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search navigation"
-            />
-          </div>
+        <div className="flex h-16 items-center gap-2 border-b border-white/[0.06] px-4">
+          {!collapsed && (
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-600 shadow-lg shadow-brand-600/30">
+                <Shield className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <span className="block text-sm font-bold text-white">TWALLET</span>
+                <span className="block text-[10px] uppercase tracking-wider text-surface-500">Admin</span>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={toggle}
+            className="ml-auto rounded-lg p-1.5 text-surface-400 transition hover:bg-white/5 hover:text-white"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+          </button>
         </div>
-      )}
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {filtered.map((item) => {
-          const isActive = pathname === item.route || (item.route !== "/admin" && pathname.startsWith(item.route));
-          return (
-            <Link
-              key={item.route}
-              href={item.route}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-primary/10 text-primary border-l-[3px] border-primary ml-0 pl-[9px]"
-                  : "text-body hover:text-heading hover:bg-surface-100"
-              }`}
-              aria-current={isActive ? "page" : undefined}
-              aria-label={collapsed ? item.label : undefined}
-            >
-              <item.icon className="w-5 h-5 shrink-0" aria-hidden="true" />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
+        {!collapsed && (
+          <div className="px-3 pt-4">
+            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-surface-400">
+              <Search className="h-4 w-4" aria-hidden="true" />
+              <input
+                type="text"
+                placeholder="Search…"
+                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-surface-600"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search navigation"
+              />
+            </div>
+          </div>
+        )}
 
-      <div className="p-3 border-t border-surface-200">
-        <Link
-          href="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-body hover:text-heading hover:bg-surface-100 transition-colors"
-        >
-          <LogOut className="w-5 h-5 shrink-0" aria-hidden="true" />
-          {!collapsed && <span>Back to Site</span>}
-        </Link>
-      </div>
-    </aside>
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+          {filtered.map((item) => {
+            const isActive =
+              pathname === item.route ||
+              (item.route !== "/admin" && pathname.startsWith(item.route));
+            return (
+              <Link
+                key={item.route}
+                href={item.route}
+                onClick={onCloseMobile}
+                className={cn(
+                  "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+                  isActive
+                    ? "bg-brand-500/15 text-brand-300 ring-1 ring-brand-500/20"
+                    : "text-surface-400 hover:bg-white/[0.04] hover:text-white",
+                )}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand-400" />
+                )}
+                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-white/[0.06] p-3">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-surface-500 transition hover:bg-white/[0.04] hover:text-white"
+          >
+            <LogOut className="h-5 w-5 shrink-0" aria-hidden="true" />
+            {!collapsed && <span>Exit Admin</span>}
+          </Link>
+        </div>
+      </aside>
     </>
   );
 }
