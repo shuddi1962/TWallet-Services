@@ -19,7 +19,7 @@ function makeConfig() {
         projectId:
           process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
           "00e085516112e43f7ba31f5790328b65",
-        showQrModal: true,
+        showQrModal: false,
         metadata: {
           name: "TWALLET",
           description: "Non-custodial crypto card platform",

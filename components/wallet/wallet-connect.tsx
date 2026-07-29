@@ -8,6 +8,7 @@ import { Wallet, Loader2, Copy, Check, ExternalLink, LogOut } from "lucide-react
 import { useState } from "react";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
+import { QRModal } from "@/components/wallet/qr-modal";
 
 const CHAIN_NAMES: Record<number, string> = {
   1: "Ethereum",
@@ -31,6 +32,8 @@ export function WalletConnect() {
     selectOpen,
     setSelectOpen,
     busyId,
+    wcUri,
+    setWcUri,
   } = useWalletConnect();
   const [copied, setCopied] = useState(false);
 
@@ -140,6 +143,11 @@ export function WalletConnect() {
         connectors={connectors}
         busyId={busyId}
         onSelect={(c) => void connectWith(c)}
+      />
+      <QRModal
+        open={!!wcUri}
+        uri={wcUri}
+        onClose={() => setWcUri(null)}
       />
     </>
   );

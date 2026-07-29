@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
+import { QRModal } from "@/components/wallet/qr-modal";
 
 function short(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
@@ -22,6 +23,8 @@ export function ConnectButton() {
     selectOpen,
     setSelectOpen,
     busyId,
+    wcUri,
+    setWcUri,
   } = useWalletConnect();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -113,6 +116,13 @@ export function ConnectButton() {
         busyId={busyId}
         onSelect={connectWith}
       />
+      <QRModal
+        open={!!wcUri}
+        uri={wcUri}
+        onClose={() => setWcUri(null)}
+      />
     </>
   );
 }
+
+

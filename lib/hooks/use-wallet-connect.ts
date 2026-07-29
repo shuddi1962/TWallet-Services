@@ -14,6 +14,8 @@ export function useWalletConnect() {
 
   const available = useMemo(() => connectors.filter((c) => c && c.id !== "safe"), [connectors]);
 
+  const [wcUri, setWcUri] = useState<string | null>(null);
+
   const connectWC = useCallback(async () => {
     setBusyId("walletconnect");
     setSelectOpen(false);
@@ -28,9 +30,22 @@ export function useWalletConnect() {
         toast.error("WalletConnect connector not available");
         return;
       }
-      await connectAsync({ connector: wcConnector });
-      toast.success("Wallet connected");
+
+      const provider = await wcConnector.getProvider();
+      const onUri = (uri: string) => {
+        if (typeof uri === "string") setWcUri(uri);
+      };
+      provider.on("display_uri", onUri);
+
+      try {
+        await connectAsync({ connector: wcConnector });
+        toast.success("Wallet connected");
+      } finally {
+        provider.off("display_uri", onUri);
+        setWcUri(null);
+      }
     } catch (e) {
+      setWcUri(null);
       const msg = e instanceof Error ? e.message : "Connection failed";
       if (
         /reject|denied|cancel|closed|user/i.test(msg) ||
@@ -130,6 +145,8 @@ export function useWalletConnect() {
     connectors: available,
     selectOpen,
     setSelectOpen,
+    wcUri,
+    setWcUri,
     error: null,
   };
 }

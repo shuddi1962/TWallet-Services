@@ -12,6 +12,7 @@ import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle
 import Link from "next/link";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
+import { QRModal } from "@/components/wallet/qr-modal";
 
 type Order = {
   id: string;
@@ -391,6 +392,8 @@ function PaymentConnectGate({ orderNumber }: { orderNumber: string }) {
     selectOpen,
     setSelectOpen,
     busyId,
+    wcUri,
+    setWcUri,
   } = useWalletConnect();
 
   return (
@@ -434,6 +437,11 @@ function PaymentConnectGate({ orderNumber }: { orderNumber: string }) {
         connectors={connectors}
         busyId={busyId}
         onSelect={(c) => void connectWith(c)}
+      />
+      <QRModal
+        open={!!wcUri}
+        uri={wcUri}
+        onClose={() => setWcUri(null)}
       />
     </div>
   );

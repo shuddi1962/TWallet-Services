@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
+import { QRModal } from "@/components/wallet/qr-modal";
 
 const CHAIN_NAMES: Record<number, string> = {
   1: "Ethereum",
@@ -32,6 +33,8 @@ export function WalletOverview() {
     selectOpen,
     setSelectOpen,
     busyId,
+    wcUri,
+    setWcUri,
   } = useWalletConnect();
   const [copied, setCopied] = useState(false);
 
@@ -144,6 +147,11 @@ export function WalletOverview() {
         connectors={connectors}
         busyId={busyId}
         onSelect={(c) => void connectWith(c)}
+      />
+      <QRModal
+        open={!!wcUri}
+        uri={wcUri}
+        onClose={() => setWcUri(null)}
       />
     </>
   );
