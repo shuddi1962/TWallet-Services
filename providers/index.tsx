@@ -1,34 +1,15 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider, cookieToInitialState, type Config } from "wagmi";
+import { WagmiProvider, createConfig, http, type Config } from "wagmi";
+import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
+import { injected, walletConnect } from "wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createAppKit } from "@reown/appkit/react";
-import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import {
-  mainnet,
-  sepolia,
-  polygon,
-  base,
-  arbitrum,
-  optimism,
-  type AppKitNetwork,
-} from "@reown/appkit/networks";
 import { WalletLinker } from "@/components/wallet/wallet-linker";
-import { AppKitBridge } from "@/components/wallet/appkit-bridge";
 import { SessionTimeout } from "@/components/session-timeout";
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
-
-const networks: [AppKitNetwork, ...AppKitNetwork[]] = [
-  mainnet,
-  polygon,
-  base,
-  arbitrum,
-  optimism,
-  sepolia,
-];
 
 const metadata = {
   name: "TWALLET",
@@ -37,42 +18,93 @@ const metadata = {
   icons: ["https://twalletservices.com/opengraph-image.png"],
 };
 
-const wagmiAdapter = new WagmiAdapter({
-  networks,
-  projectId,
+/** Stable wagmi config — always available so hooks never run outside provider */
+export const wagmiConfig = createConfig({
+  chains: [mainnet, polygon, base, arbitrum, optimism, sepolia],
+  connectors: [
+    injected({ shimDisconnect: true }),
+    ...(projectId
+      ? [
+          walletConnect({
+            projectId,
+            showQrModal: true,
+            metadata,
+          }),
+        ]
+      : []),
+  ],
+  transports: {
+    [mainnet.id]: http(),
+    [sepolia.id]: http(),
+    [polygon.id]: http(),
+    [base.id]: http(),
+    [arbitrum.id]: http(),
+    [optimism.id]: http(),
+  },
   ssr: true,
-});
+}) as Config;
 
-if (projectId) {
-  createAppKit({
-    adapters: [wagmiAdapter],
-    networks,
-    projectId,
-    metadata,
-    themeMode: "dark",
-    themeVariables: {
-      "--w3m-accent": "#2563eb",
-      "--w3m-border-radius-master": "16px",
-    },
-    features: {
-      analytics: false,
-      email: false,
-      socials: false,
-    },
-    allWallets: "SHOW",
-    enableWalletConnect: true,
-    enableInjected: true,
-    enableCoinbase: true,
-  });
+let appKitReady = false;
+
+async function initAppKit() {
+  if (appKitReady || !projectId || typeof window === "undefined") return;
+  try {
+    const { createAppKit } = await import("@reown/appkit/react");
+    const { WagmiAdapter } = await import("@reown/appkit-adapter-wagmi");
+    const networks = await import("@reown/appkit/networks");
+
+    const appNetworks = [
+      networks.mainnet,
+      networks.polygon,
+      networks.base,
+      networks.arbitrum,
+      networks.optimism,
+      networks.sepolia,
+    ] as [typeof networks.mainnet, ...typeof networks.mainnet[]];
+
+    const adapter = new WagmiAdapter({
+      networks: appNetworks,
+      projectId,
+      ssr: true,
+    });
+
+    createAppKit({
+      adapters: [adapter],
+      networks: appNetworks,
+      projectId,
+      metadata,
+      themeMode: "dark",
+      themeVariables: {
+        "--w3m-accent": "#2563eb",
+        "--w3m-border-radius-master": "16px",
+      },
+      features: {
+        analytics: false,
+        email: false,
+        socials: false,
+      },
+      allWallets: "SHOW",
+      enableWalletConnect: true,
+      enableInjected: true,
+      enableCoinbase: true,
+    });
+
+    appKitReady = true;
+    window.dispatchEvent(new Event("twallet:appkit-ready"));
+  } catch (e) {
+    console.error("[AppKit] init failed — falling back to wagmi connectors", e);
+    window.dispatchEvent(new Event("twallet:appkit-failed"));
+  }
 }
 
-export function Providers({
-  children,
-  cookies,
-}: {
-  children: ReactNode;
-  cookies?: string | null;
-}) {
+function AppKitBootstrap() {
+  useEffect(() => {
+    void initAppKit();
+  }, []);
+  return null;
+}
+
+export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -82,13 +114,11 @@ export function Providers({
       }),
   );
 
-  const initialState = cookieToInitialState(wagmiAdapter.wagmiConfig as Config, cookies ?? undefined);
-
   return (
-    <WagmiProvider config={wagmiAdapter.wagmiConfig as Config} initialState={initialState}>
+    <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
+        <AppKitBootstrap />
         {children}
-        <AppKitBridge />
         <WalletLinker />
         <SessionTimeout />
         <Toaster richColors position="top-right" closeButton />

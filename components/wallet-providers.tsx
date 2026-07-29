@@ -1,13 +1,16 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { Component, ReactNode } from "react";
+import { Component, type ReactNode } from "react";
+import { Providers } from "@/providers";
 
-const ProvidersInner = dynamic(() => import("@/providers").then((m) => m.Providers), {
-  ssr: false,
-});
-
-class WalletErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+/**
+ * Always wrap with WagmiProvider. Never render app children without it
+ * (previous error boundary dropped the provider and broke all wagmi hooks).
+ */
+class WalletErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false };
@@ -18,14 +21,33 @@ class WalletErrorBoundary extends Component<{ children: ReactNode }, { hasError:
   }
 
   componentDidCatch(error: Error) {
-    console.error("[WalletErrorBoundary] Caught:", error);
+    console.error("[WalletErrorBoundary]", error);
   }
 
   render() {
+    // Keep children inside Providers even after a child error —
+    // only replace the failing subtree, not the provider shell.
     if (this.state.hasError) {
-      return this.props.children;
+      return (
+        <Providers>
+          <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 p-8 text-center">
+            <p className="text-lg font-semibold text-white">Something went wrong loading wallets</p>
+            <p className="max-w-md text-sm text-surface-400">
+              Refresh the page. If it continues, clear site data and try again.
+            </p>
+            <button
+              type="button"
+              className="rounded-full bg-brand-600 px-5 py-2 text-sm font-medium text-white"
+              onClick={() => window.location.reload()}
+            >
+              Refresh
+            </button>
+          </div>
+        </Providers>
+      );
     }
-    return <ProvidersInner>{this.props.children}</ProvidersInner>;
+
+    return <Providers>{this.props.children}</Providers>;
   }
 }
 
