@@ -4,7 +4,6 @@ import { Wallet, ChevronDown, LogOut, Copy, Check, Loader2 } from "lucide-react"
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
-import { type Connector } from "wagmi";
 import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
 
 function short(addr: string) {
@@ -14,8 +13,7 @@ function short(addr: string) {
 export function ConnectButton() {
   const {
     openWallet,
-    connectInjected,
-    connectWC,
+    connectWith,
     disconnect,
     connecting,
     isConnected,
@@ -33,14 +31,6 @@ export function ConnectButton() {
     await navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
-  };
-
-  const onSelect = (connectorOrType: Connector | "walletconnect") => {
-    if (connectorOrType === "walletconnect") {
-      void connectWC();
-    } else if (connectorOrType?.id) {
-      void connectInjected(connectorOrType);
-    }
   };
 
   if (isConnected && address) {
@@ -99,7 +89,7 @@ export function ConnectButton() {
           onClose={() => setSelectOpen(false)}
           connectors={connectors}
           busyId={busyId}
-          onSelect={onSelect}
+          onSelect={connectWith}
         />
       </>
     );
@@ -121,7 +111,7 @@ export function ConnectButton() {
         onClose={() => setSelectOpen(false)}
         connectors={connectors}
         busyId={busyId}
-        onSelect={onSelect}
+        onSelect={connectWith}
       />
     </>
   );

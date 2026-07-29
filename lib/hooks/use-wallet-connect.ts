@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useAccount, useConnect, useDisconnect, useConnectors, type Connector } from "wagmi";
 import { toast } from "sonner";
 
@@ -12,7 +12,7 @@ export function useWalletConnect() {
   const [selectOpen, setSelectOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const available = connectors.filter((c) => c && c.id !== "safe");
+  const available = useMemo(() => connectors.filter((c) => c && c.id !== "safe"), [connectors]);
 
   const connectWC = useCallback(async () => {
     setBusyId("walletconnect");
@@ -23,8 +23,6 @@ export function useWalletConnect() {
         try { await disconnectAsync(); } catch { /* ok */ }
       }
 
-      // @walletconnect/ethereum-provider with showQrModal:true
-      // shows its own QR modal (standalone DOM, no SSR issues)
       const { EthereumProvider } = await import("@walletconnect/ethereum-provider");
       const provider = await EthereumProvider.init({
         projectId:
@@ -58,7 +56,7 @@ export function useWalletConnect() {
     } finally {
       setBusyId(null);
     }
-  }, [connectAsync, disconnectAsync, isConnected]);
+  }, [disconnectAsync, isConnected]);
 
   const connectInjected = useCallback(
     async (connector?: Connector) => {
@@ -88,11 +86,23 @@ export function useWalletConnect() {
           console.error("[wallet] injected error", e);
           toast.error(msg.slice(0, 140));
         }
-    } finally {
+      } finally {
         setBusyId(null);
       }
     },
-    [disconnectAsync, isConnected],
+    [available, connectAsync, disconnectAsync, isConnected],
+  );
+
+  // connectWith is a compat wrapper (used by payment-form and wallet-select-modal)
+  const connectWith = useCallback(
+    async (connectorOrType: Connector | "walletconnect") => {
+      if (connectorOrType === "walletconnect") {
+        await connectWC();
+      } else {
+        await connectInjected(connectorOrType);
+      }
+    },
+    [connectWC, connectInjected],
   );
 
   const openWallet = useCallback(async () => {
@@ -106,7 +116,6 @@ export function useWalletConnect() {
       return;
     }
 
-    // No injected connector — go straight to WalletConnect
     await connectWC();
   }, [available, connectWC, isConnected]);
 
@@ -121,6 +130,7 @@ export function useWalletConnect() {
 
   return {
     openWallet,
+    connectWith,
     connectInjected,
     connectWC,
     disconnect: handleDisconnect,
