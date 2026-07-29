@@ -88,11 +88,11 @@ export function useWalletConnect() {
           console.error("[wallet] injected error", e);
           toast.error(msg.slice(0, 140));
         }
-      } finally {
+    } finally {
         setBusyId(null);
       }
     },
-    [available, connectAsync, disconnectAsync, isConnected],
+    [disconnectAsync, isConnected],
   );
 
   const openWallet = useCallback(async () => {

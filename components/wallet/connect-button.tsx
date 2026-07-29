@@ -4,6 +4,7 @@ import { Wallet, ChevronDown, LogOut, Copy, Check, Loader2 } from "lucide-react"
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { type Connector } from "wagmi";
 import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
 
 function short(addr: string) {
@@ -34,7 +35,7 @@ export function ConnectButton() {
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const onSelect = (connectorOrType: any) => {
+  const onSelect = (connectorOrType: Connector | "walletconnect") => {
     if (connectorOrType === "walletconnect") {
       void connectWC();
     } else if (connectorOrType?.id) {
