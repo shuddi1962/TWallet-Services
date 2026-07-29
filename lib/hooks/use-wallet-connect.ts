@@ -1,138 +1,82 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  useAccount,
-  useConnect,
-  useDisconnect,
-  useConnectors,
-  type Connector,
-} from "wagmi";
+import { useCallback, useState } from "react";
+import { useAccount, useConnect, useDisconnect, useConnectors, type Connector } from "wagmi";
 import { toast } from "sonner";
-
-type Providerish = {
-  on: (e: string, fn: (...args: unknown[]) => void) => void;
-  off: (e: string, fn: (...args: unknown[]) => void) => void;
-};
-
-function getProvider(connector: Connector): Promise<Providerish | null> {
-  const c = connector as Record<string, unknown>;
-  if (typeof c.getProvider !== "function") return Promise.resolve(null);
-  try {
-    const p = c.getProvider() as unknown;
-    const resolved = p instanceof Promise ? p : Promise.resolve(p);
-    return resolved.then(
-      (prov: unknown) => {
-        const p2 = prov as Record<string, unknown>;
-        if (p2 && typeof p2.on === "function" && typeof p2.off === "function") {
-          return p2 as unknown as Providerish;
-        }
-        return null;
-      },
-      () => null,
-    );
-  } catch {
-    return Promise.resolve(null);
-  }
-}
 
 export function useWalletConnect() {
   const { isConnected, address, chainId, status } = useAccount();
-  const { connectAsync, isPending, error: connectError } = useConnect();
+  const { connectAsync, isPending } = useConnect();
   const { disconnectAsync } = useDisconnect();
   const connectors = useConnectors();
   const [selectOpen, setSelectOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [qrUri, setQrUri] = useState<string | null>(null);
-  const providerRef = useRef<{
-    prov: Providerish;
-    handler: (...args: unknown[]) => void;
-  } | null>(null);
 
   const available = connectors.filter((c) => c && c.id !== "safe");
 
-  useEffect(() => {
-    return () => {
-      const p = providerRef.current;
-      if (p) {
-        try { p.prov.off("display_uri", p.handler); } catch { /* ok */ }
+  const connectWC = useCallback(async () => {
+    setBusyId("walletconnect");
+    setSelectOpen(false);
+
+    try {
+      if (isConnected) {
+        try { await disconnectAsync(); } catch { /* ok */ }
       }
-    };
-  }, []);
 
-  const connectWith = useCallback(
-    async (connector: Connector | string) => {
-      const target =
-        typeof connector === "string"
-          ? available.find((c) => c.uid === connector || c.id === connector)
-          : connector;
+      // @walletconnect/ethereum-provider with showQrModal:true
+      // shows its own QR modal (standalone DOM, no SSR issues)
+      const { EthereumProvider } = await import("@walletconnect/ethereum-provider");
+      const provider = await EthereumProvider.init({
+        projectId:
+          process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+          "00e085516112e43f7ba31f5790328b65",
+        showQrModal: true,
+        chains: [1, 137, 8453, 42161, 10, 11155111],
+        metadata: {
+          name: "TWALLET",
+          description: "Non-custodial crypto card platform",
+          url: "https://twalletservices.com",
+          icons: ["https://twalletservices.com/opengraph-image.png"],
+        },
+        optionalChains: [1, 137, 8453, 42161, 10, 11155111],
+      });
 
+      const accounts = (await provider.connect()) as string[];
+      if (!accounts?.length) throw new Error("No accounts returned");
+      toast.success("Wallet connected");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Connection failed";
+      if (
+        /reject|denied|cancel|closed|user/i.test(msg) ||
+        (e as { code?: number })?.code === 4001
+      ) {
+        toast.message("Connection cancelled");
+      } else {
+        console.error("[wallet] WC error", e);
+        toast.error(msg.slice(0, 140));
+      }
+    } finally {
+      setBusyId(null);
+    }
+  }, [connectAsync, disconnectAsync, isConnected]);
+
+  const connectInjected = useCallback(
+    async (connector?: Connector) => {
+      const target = connector || available.find((c) => c.id === "injected");
       if (!target) {
-        toast.error("Wallet connector not available");
+        toast.error("No browser wallet found");
         return;
       }
 
-      const isWc =
-        target.id === "walletConnect" ||
-        target.name.toLowerCase().includes("walletconnect");
-
       setBusyId(target.uid || target.id);
       setSelectOpen(false);
-      setQrUri(null);
 
       try {
         if (isConnected) {
           try { await disconnectAsync(); } catch { /* ok */ }
         }
-
-        if (isWc) {
-          // Get the WalletConnect provider BEFORE connectAsync to catch display_uri
-          const provider = await getProvider(target);
-
-          if (!provider) {
-            toast.error("WalletConnect provider unavailable. Try Browser Wallet instead.");
-            return;
-          }
-
-          const uriPromise = new Promise<string>((resolve, reject) => {
-            const handler = (...args: unknown[]) => {
-              const uri = args[0];
-              if (typeof uri === "string" && uri.startsWith("wc:")) {
-                providerRef.current = null;
-                try { provider.off("display_uri", handler); } catch { /* ok */ }
-                resolve(uri);
-              }
-            };
-            providerRef.current = { prov: provider, handler };
-            provider.on("display_uri", handler);
-
-            setTimeout(() => {
-              providerRef.current = null;
-              try { provider.off("display_uri", handler); } catch { /* ok */ }
-              reject(new Error("timeout"));
-            }, 300_000);
-          });
-
-          const connectPromise = connectAsync({ connector: target });
-
-          const result = await Promise.race([
-            uriPromise.then((uri) => ({ type: "uri" as const, uri })),
-            connectPromise.then(() => ({ type: "connected" as const })),
-          ]);
-
-          providerRef.current = null;
-
-          if (result.type === "uri") {
-            setQrUri(result.uri);
-            await connectPromise;
-            setQrUri(null);
-          }
-
-          toast.success("Wallet connected");
-        } else {
-          await connectAsync({ connector: target });
-          toast.success("Wallet connected");
-        }
+        await connectAsync({ connector: target });
+        toast.success("Wallet connected");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Connection failed";
         if (
@@ -140,15 +84,12 @@ export function useWalletConnect() {
           (e as { code?: number })?.code === 4001
         ) {
           toast.message("Connection cancelled");
-        } else if (/timeout/i.test(msg)) {
-          toast.error("WalletConnect timed out. Try again.");
         } else {
-          console.error("[wallet] connect error", e);
+          console.error("[wallet] injected error", e);
           toast.error(msg.slice(0, 140));
         }
       } finally {
         setBusyId(null);
-        setQrUri(null);
       }
     },
     [available, connectAsync, disconnectAsync, isConnected],
@@ -159,17 +100,15 @@ export function useWalletConnect() {
       setSelectOpen(true);
       return;
     }
-    if (available.length > 1) {
+
+    if (available.length >= 1) {
       setSelectOpen(true);
       return;
     }
-    const only = available[0];
-    if (only) {
-      await connectWith(only);
-      return;
-    }
-    toast.error("No wallet connectors loaded. Refresh and try again.");
-  }, [available, connectWith, isConnected]);
+
+    // No injected connector — go straight to WalletConnect
+    await connectWC();
+  }, [available, connectWC, isConnected]);
 
   const handleDisconnect = useCallback(async () => {
     try {
@@ -180,22 +119,11 @@ export function useWalletConnect() {
     }
   }, [disconnectAsync]);
 
-  const cancelQr = useCallback(async () => {
-    const p = providerRef.current;
-    if (p) {
-      try { p.prov.off("display_uri", p.handler); } catch { /* ok */ }
-      providerRef.current = null;
-    }
-    setQrUri(null);
-    setBusyId(null);
-    try { await disconnectAsync(); } catch { /* ok */ }
-  }, [disconnectAsync]);
-
   return {
     openWallet,
-    connectWith,
+    connectInjected,
+    connectWC,
     disconnect: handleDisconnect,
-    cancelQr,
     connecting: isPending || !!busyId || status === "connecting",
     busyId,
     isConnected,
@@ -204,7 +132,6 @@ export function useWalletConnect() {
     connectors: available,
     selectOpen,
     setSelectOpen,
-    qrUri,
-    error: connectError,
+    error: null,
   };
 }

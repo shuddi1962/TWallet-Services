@@ -3,40 +3,14 @@
 import { useEffect } from "react";
 import { type Connector } from "wagmi";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Wallet, Smartphone, Globe, Loader2 } from "lucide-react";
+import { X, Wallet, Smartphone, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   connectors: readonly Connector[];
-  onSelect: (connector: Connector) => void;
+  onSelect: (connector: Connector | "walletconnect") => void;
   busyId?: string | null;
-}
-
-function meta(c: Connector) {
-  const id = `${c.id} ${c.name}`.toLowerCase();
-  if (id.includes("walletconnect")) {
-    return {
-      title: "WalletConnect",
-      subtitle: "Trust, MetaMask Mobile, Rainbow, Binance & 300+ wallets — QR code",
-      icon: Smartphone,
-      badge: "Recommended",
-    };
-  }
-  if (id.includes("injected") || id.includes("meta")) {
-    return {
-      title: c.name === "Injected" ? "Browser Wallet" : c.name,
-      subtitle: "MetaMask, Rabby, Coinbase extension, Brave…",
-      icon: Wallet,
-      badge: null as string | null,
-    };
-  }
-  return {
-    title: c.name || "Wallet",
-    subtitle: "Connect securely",
-    icon: Globe,
-    badge: null as string | null,
-  };
 }
 
 export function WalletSelectModal({ open, onClose, connectors, onSelect, busyId }: Props) {
@@ -52,6 +26,10 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect, busyId 
       document.body.style.overflow = "";
     };
   }, [open, onClose]);
+
+  const injected = connectors.filter(
+    (c) => c && c.id !== "safe" && c.id !== "walletConnect",
+  );
 
   return (
     <AnimatePresence>
@@ -91,45 +69,62 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect, busyId 
             </div>
 
             <div className="space-y-2">
-              {connectors.length === 0 ? (
-                <p className="py-10 text-center text-sm text-surface-400">
-                  Loading wallets… If this stays empty, hard-refresh the page.
-                </p>
-              ) : (
-                connectors.map((c) => {
-                  const m = meta(c);
-                  const Icon = m.icon;
-                  const busy = busyId === c.uid || busyId === c.id;
-                  return (
-                    <button
-                      key={c.uid || c.id}
-                      type="button"
-                      disabled={!!busyId}
-                      onClick={() => onSelect(c)}
-                      className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-left transition hover:border-brand-500/40 hover:bg-brand-500/10 disabled:opacity-60"
-                    >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/25 to-accent-500/15 ring-1 ring-white/10">
-                        {busy ? (
-                          <Loader2 className="h-5 w-5 animate-spin text-brand-300" />
-                        ) : (
-                          <Icon className="h-5 w-5 text-brand-300" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold text-white">{m.title}</p>
-                          {m.badge && (
-                            <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-semibold text-brand-300">
-                              {m.badge}
-                            </span>
-                          )}
-                        </div>
-                        <p className="truncate text-xs text-surface-400">{m.subtitle}</p>
-                      </div>
-                    </button>
-                  );
-                })
-              )}
+              {/* WalletConnect — always shown */}
+              <button
+                type="button"
+                disabled={!!busyId}
+                onClick={() => onSelect("walletconnect")}
+                className="group flex w-full items-center gap-3 rounded-2xl border border-brand-500/30 bg-brand-500/[0.06] px-4 py-3.5 text-left transition hover:border-brand-500/50 hover:bg-brand-500/15 disabled:opacity-60"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/25 to-accent-500/15 ring-1 ring-white/10">
+                  {busyId === "walletconnect" ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-brand-300" />
+                  ) : (
+                    <Smartphone className="h-5 w-5 text-brand-300" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-white">WalletConnect</p>
+                    <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-semibold text-brand-300">
+                      Recommended
+                    </span>
+                  </div>
+                  <p className="truncate text-xs text-surface-400">
+                    Trust, MetaMask Mobile, Rainbow, Binance & 300+ wallets — QR code
+                  </p>
+                </div>
+              </button>
+
+              {/* Injected browser wallets */}
+              {injected.map((c) => {
+                const busy = busyId === c.uid || busyId === c.id;
+                return (
+                  <button
+                    key={c.uid || c.id}
+                    type="button"
+                    disabled={!!busyId}
+                    onClick={() => onSelect(c)}
+                    className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-left transition hover:border-brand-500/40 hover:bg-brand-500/10 disabled:opacity-60"
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/25 to-accent-500/15 ring-1 ring-white/10">
+                      {busy ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-brand-300" />
+                      ) : (
+                        <Wallet className="h-5 w-5 text-brand-300" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-white">
+                        {c.name === "Injected" ? "Browser Wallet" : c.name}
+                      </p>
+                      <p className="truncate text-xs text-surface-400">
+                        MetaMask, Rabby, Coinbase extension, Brave…
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             <p className="mt-5 text-center text-[11px] leading-relaxed text-surface-500">

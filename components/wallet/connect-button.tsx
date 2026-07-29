@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
-import { QRModal } from "@/components/wallet/qr-modal";
 
 function short(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
@@ -14,7 +13,8 @@ function short(addr: string) {
 export function ConnectButton() {
   const {
     openWallet,
-    connectWith,
+    connectInjected,
+    connectWC,
     disconnect,
     connecting,
     isConnected,
@@ -23,8 +23,6 @@ export function ConnectButton() {
     selectOpen,
     setSelectOpen,
     busyId,
-    qrUri,
-    cancelQr,
   } = useWalletConnect();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -34,6 +32,14 @@ export function ConnectButton() {
     await navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  const onSelect = (connectorOrType: any) => {
+    if (connectorOrType === "walletconnect") {
+      void connectWC();
+    } else if (connectorOrType?.id) {
+      void connectInjected(connectorOrType);
+    }
   };
 
   if (isConnected && address) {
@@ -92,9 +98,8 @@ export function ConnectButton() {
           onClose={() => setSelectOpen(false)}
           connectors={connectors}
           busyId={busyId}
-          onSelect={(c) => void connectWith(c)}
+          onSelect={onSelect}
         />
-        <QRModal open={!!qrUri} uri={qrUri} onClose={() => void cancelQr()} />
       </>
     );
   }
@@ -115,9 +120,8 @@ export function ConnectButton() {
         onClose={() => setSelectOpen(false)}
         connectors={connectors}
         busyId={busyId}
-        onSelect={(c) => void connectWith(c)}
+        onSelect={onSelect}
       />
-      <QRModal open={!!qrUri} uri={qrUri} onClose={() => void cancelQr()} />
     </>
   );
 }
