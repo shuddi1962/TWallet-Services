@@ -79,11 +79,8 @@ const nextConfig: NextConfig = {
       "bufferutil": false,
       "utf-8-validate": false,
       "@emotion/is-prop-valid": false,
-      "@metamask/connect-evm": false,
       ...(isServer ? {} : { net: false, tls: false }),
     };
-
-    config.resolve.conditionNames = ["require", "default", "import"];
 
     return config;
   },

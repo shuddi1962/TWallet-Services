@@ -11,8 +11,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2, Smartphone, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
-import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
-import { QRModal } from "@/components/wallet/qr-modal";
 
 type Order = {
   id: string;
@@ -384,17 +382,7 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
 }
 
 function PaymentConnectGate({ orderNumber }: { orderNumber: string }) {
-  const {
-    openWallet,
-    connectWith,
-    connecting,
-    connectors,
-    selectOpen,
-    setSelectOpen,
-    busyId,
-    wcUri,
-    setWcUri,
-  } = useWalletConnect();
+  const { openWallet, connecting } = useWalletConnect();
 
   return (
     <div className="space-y-6">
@@ -431,18 +419,6 @@ function PaymentConnectGate({ orderNumber }: { orderNumber: string }) {
           </Button>
         </CardContent>
       </Card>
-      <WalletSelectModal
-        open={selectOpen}
-        onClose={() => setSelectOpen(false)}
-        connectors={connectors}
-        busyId={busyId}
-        onSelect={(c) => void connectWith(c)}
-      />
-      <QRModal
-        open={!!wcUri}
-        uri={wcUri}
-        onClose={() => setWcUri(null)}
-      />
     </div>
   );
 }

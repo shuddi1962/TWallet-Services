@@ -2,49 +2,27 @@
 
 import { ReactNode, useState } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { mainnet, sepolia, polygon, base, arbitrum, optimism } from "wagmi/chains";
-import { injected } from "wagmi/connectors";
-import { walletConnect } from "@wagmi/connectors";
+import { WagmiProvider, type Config } from "wagmi";
+import { createAppKit } from "@reown/appkit/react";
+import { mainnet, polygon, base, arbitrum, optimism, sepolia } from "@reown/appkit/networks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WalletLinker } from "@/components/wallet/wallet-linker";
 import { SessionTimeout } from "@/components/session-timeout";
+import { config, projectId, wagmiAdapter } from "@/lib/wagmi-config";
 
-function makeConfig() {
-  return createConfig({
-    chains: [mainnet, polygon, base, arbitrum, optimism, sepolia],
-    connectors: [
-      injected({ shimDisconnect: true }),
-      walletConnect({
-        projectId:
-          process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
-          "00e085516112e43f7ba31f5790328b65",
-        showQrModal: false,
-        metadata: {
-          name: "TWALLET",
-          description: "Non-custodial crypto card platform",
-          url: "https://twalletservices.com",
-          icons: ["https://twalletservices.com/opengraph-image.png"],
-        },
-      }),
-    ],
-    transports: {
-      [mainnet.id]: http(),
-      [sepolia.id]: http(),
-      [polygon.id]: http(),
-      [base.id]: http(),
-      [arbitrum.id]: http(),
-      [optimism.id]: http(),
-    },
-    ssr: true,
-  });
-}
-
-let _config: ReturnType<typeof makeConfig> | null = null;
-export function getWagmiConfig() {
-  if (!_config) _config = makeConfig();
-  return _config;
-}
+createAppKit({
+  adapters: [wagmiAdapter],
+  projectId,
+  networks: [mainnet, polygon, base, arbitrum, optimism, sepolia],
+  defaultNetwork: mainnet,
+  metadata: {
+    name: "TWALLET",
+    description: "Non-custodial crypto card platform",
+    url: "https://twalletservices.com",
+    icons: ["https://twalletservices.com/opengraph-image.png"],
+  },
+  features: { analytics: false },
+});
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -53,10 +31,9 @@ export function Providers({ children }: { children: ReactNode }) {
         defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
       }),
   );
-  const [config] = useState(() => getWagmiConfig());
 
   return (
-    <WagmiProvider config={config} reconnectOnMount>
+    <WagmiProvider config={config as Config}>
       <QueryClientProvider client={queryClient}>
         {children}
         <WalletLinker />

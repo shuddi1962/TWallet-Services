@@ -4,8 +4,6 @@ import { Wallet, ChevronDown, LogOut, Copy, Check, Loader2 } from "lucide-react"
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
-import { WalletSelectModal } from "@/components/wallet/wallet-select-modal";
-import { QRModal } from "@/components/wallet/qr-modal";
 
 function short(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
@@ -14,17 +12,10 @@ function short(addr: string) {
 export function ConnectButton() {
   const {
     openWallet,
-    connectWith,
     disconnect,
     connecting,
     isConnected,
     address,
-    connectors,
-    selectOpen,
-    setSelectOpen,
-    busyId,
-    wcUri,
-    setWcUri,
   } = useWalletConnect();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -87,13 +78,6 @@ export function ConnectButton() {
             </>
           )}
         </div>
-        <WalletSelectModal
-          open={selectOpen}
-          onClose={() => setSelectOpen(false)}
-          connectors={connectors}
-          busyId={busyId}
-          onSelect={connectWith}
-        />
       </>
     );
   }
@@ -109,20 +93,6 @@ export function ConnectButton() {
         {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
         <span>{connecting ? "Connecting…" : "Connect Wallet"}</span>
       </Button>
-      <WalletSelectModal
-        open={selectOpen}
-        onClose={() => setSelectOpen(false)}
-        connectors={connectors}
-        busyId={busyId}
-        onSelect={connectWith}
-      />
-      <QRModal
-        open={!!wcUri}
-        uri={wcUri}
-        onClose={() => setWcUri(null)}
-      />
     </>
   );
 }
-
-
