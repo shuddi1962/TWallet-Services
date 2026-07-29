@@ -15,7 +15,7 @@ export function AdminRealtime() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "card_orders" },
-        (payload) => {
+        (payload: { new: Record<string, unknown> }) => {
           const o = payload.new as { order_number?: string };
           toast.info("New order", { description: o.order_number ?? "Incoming order" });
           router.refresh();
@@ -24,7 +24,7 @@ export function AdminRealtime() {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "payment_transactions" },
-        (payload) => {
+        (payload: { new: Record<string, unknown> }) => {
           const p = payload.new as { status?: string; amount?: number };
           if (p.status === "confirmed") {
             toast.success("Payment confirmed", {

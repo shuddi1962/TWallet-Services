@@ -28,7 +28,7 @@ export function DashboardRealtime() {
             table: "card_orders",
             filter: `user_id=eq.${user.id}`,
           },
-          (payload) => {
+          (payload: { new: Record<string, unknown> }) => {
             const row = payload.new as { status?: string; order_number?: string };
             if (row?.status) {
               toast.info(`Order ${row.order_number ?? ""} → ${row.status}`, {
@@ -46,7 +46,7 @@ export function DashboardRealtime() {
             table: "notifications",
             filter: `user_id=eq.${user.id}`,
           },
-          (payload) => {
+          (payload: { new: Record<string, unknown> }) => {
             const n = payload.new as { title?: string; message?: string };
             toast(n.title ?? "Notification", { description: n.message });
             router.refresh();
@@ -60,7 +60,7 @@ export function DashboardRealtime() {
             table: "payment_transactions",
             filter: `user_id=eq.${user.id}`,
           },
-          (payload) => {
+          (payload: { new: Record<string, unknown> }) => {
             const p = payload.new as { status?: string; amount?: number };
             if (p?.status === "confirmed") {
               toast.success("Payment confirmed", {
