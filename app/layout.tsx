@@ -4,6 +4,7 @@ import { WalletProviders } from "@/components/wallet-providers";
 import { PostHogProvider } from "@/components/posthog-provider";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: {
@@ -25,7 +26,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers();
+  const cookies = headersList.get("cookie");
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -49,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <PostHogProvider><WalletProviders>{children}</WalletProviders></PostHogProvider>
+        <PostHogProvider><WalletProviders cookies={cookies}>{children}</WalletProviders></PostHogProvider>
       </body>
     </html>
   );
