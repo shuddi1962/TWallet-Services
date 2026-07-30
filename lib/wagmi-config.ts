@@ -4,7 +4,7 @@ import { mainnet, polygon, base, arbitrum, optimism, sepolia } from "@reown/appk
 
 export const projectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
-  "00e085516112e43f7ba31f5790328b65";
+  "88e524c685bd08403dd2f3123a4fc2f6";
 
 if (!projectId) {
   throw new Error("Project ID is not defined");
