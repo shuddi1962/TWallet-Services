@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api/response";
 import { requireAuth, requireAdmin } from "@/lib/api/require-auth";
+import { parseBody } from "@/lib/api/parse-body";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -37,7 +38,7 @@ function validateBody(schema: any, body: any): NextResponse | null {
 
 // ── Auth ──────────────────────────────────────────────
 route("POST", "auth/register", async (req, _p, _u) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const valErr = validateBody(authRegisterSchema, body);
   if (valErr) return valErr;
   const supabase: any = sb();
@@ -47,7 +48,7 @@ route("POST", "auth/register", async (req, _p, _u) => {
 });
 
 route("POST", "auth/login", async (req) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const valErr = validateBody(authLoginSchema, body);
   if (valErr) return valErr;
   const supabase: any = sb();
@@ -64,7 +65,7 @@ route("POST", "auth/logout", async (_req, _p, user) => {
 });
 
 route("POST", "auth/forgot-password", async (req) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { error }: any = await supabase.auth.resetPasswordForEmail(body.email, { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password` });
   if (error) return apiError([{ code: "AUTH_005", message: error.message }], 400);
@@ -81,7 +82,7 @@ route("GET", "users/me", async (_req, _p, user) => {
 
 route("PATCH", "users/me", async (req, _p, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const valErr = validateBody(updateProfileSchema, body);
   if (valErr) return valErr;
   const supabase: any = sb();
@@ -132,7 +133,7 @@ route("GET", "support/tickets", async (_req, _p, user) => {
 
 route("POST", "support/tickets", async (req, _p, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const valErr = validateBody(createTicketSchema, body);
   if (valErr) return valErr;
   const supabase: any = sb();
@@ -252,7 +253,7 @@ route("GET", "support/tickets/:id", async (_req, params, user) => {
 
 route("PATCH", "support/tickets/:id", async (req, params, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error }: any = await supabase.from("support_tickets").update(body as any).eq("id", params.id).eq("user_id", user.id).select().single();
   if (error) return apiError([{ code: "GEN_001", message: error.message }], 400);
@@ -261,7 +262,7 @@ route("PATCH", "support/tickets/:id", async (req, params, user) => {
 
 route("POST", "support/tickets/:id/reply", async (req, params, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error }: any = await supabase.from("ticket_messages").insert({ ticket_id: params.id, user_id: user.id, message: body.message }).select().single();
   if (error) return apiError([{ code: "GEN_001", message: error.message }], 400);
@@ -281,7 +282,7 @@ route("DELETE", "notifications/:id", async (_req, params, user) => {
 route("PATCH", "admin/users/:id", async (req, params) => {
   const { error } = await requireAdmin(req);
   if (error) return error;
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error: updateError }: any = await supabase.from("profiles").update(body as any).eq("id", params.id).select().single();
   if (updateError) return apiError([{ code: "GEN_001", message: updateError.message }], 400);
@@ -291,7 +292,7 @@ route("PATCH", "admin/users/:id", async (req, params) => {
 route("PATCH", "admin/orders/:id", async (req, params) => {
   const { error } = await requireAdmin(req);
   if (error) return error;
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error: updateError }: any = await supabase.from("card_orders").update(body as any).eq("id", params.id).select().single();
   if (updateError) return apiError([{ code: "GEN_001", message: updateError.message }], 400);
@@ -301,7 +302,7 @@ route("PATCH", "admin/orders/:id", async (req, params) => {
 route("PATCH", "admin/payments/:id", async (req, params) => {
   const { error } = await requireAdmin(req);
   if (error) return error;
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error: updateError }: any = await supabase.from("payment_transactions").update(body as any).eq("id", params.id).select().single();
   if (updateError) return apiError([{ code: "GEN_001", message: updateError.message }], 400);
@@ -311,7 +312,7 @@ route("PATCH", "admin/payments/:id", async (req, params) => {
 route("PATCH", "admin/cards/:id", async (req, params) => {
   const { error } = await requireAdmin(req);
   if (error) return error;
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error: updateError }: any = await supabase.from("card_products").update(body as any).eq("id", params.id).select().single();
   if (updateError) return apiError([{ code: "GEN_001", message: updateError.message }], 400);
@@ -320,35 +321,35 @@ route("PATCH", "admin/cards/:id", async (req, params) => {
 
 // ── Webhooks ─────────────────────────────────────────
 route("POST", "webhooks/walletconnect", async (req) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   await supabase.from("webhook_events").insert({ source: "walletconnect", payload: body });
   return apiSuccess(null, "Webhook received");
 });
 
 route("POST", "webhooks/blockchain", async (req) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   await supabase.from("webhook_events").insert({ source: "blockchain", payload: body });
   return apiSuccess(null, "Webhook received");
 });
 
 route("POST", "webhooks/email", async (req) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   await supabase.from("webhook_events").insert({ source: "email", payload: body });
   return apiSuccess(null, "Webhook received");
 });
 
 route("POST", "webhooks/storage", async (req) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   await supabase.from("webhook_events").insert({ source: "storage", payload: body });
   return apiSuccess(null, "Webhook received");
 });
 
 route("POST", "webhooks/shipping", async (req) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   await supabase.from("webhook_events").insert({ source: "shipping", payload: body });
   return apiSuccess(null, "Webhook received");
@@ -356,7 +357,7 @@ route("POST", "webhooks/shipping", async (req) => {
 
 // ── Auth (additional) ─────────────────────────────────
 route("POST", "auth/refresh", async (req) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error }: any = await supabase.auth.refreshSession({ refresh_token: body.refreshToken });
   if (error) return apiError([{ code: "AUTH_006", message: "Session expired" }], 401);
@@ -364,7 +365,7 @@ route("POST", "auth/refresh", async (req) => {
 });
 
 route("POST", "auth/verify-email", async (req) => {
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { error }: any = await supabase.auth.verifyOtp({ token_hash: body.token, type: "email" });
   if (error) return apiError([{ code: "AUTH_005", message: error.message }], 400);
@@ -386,7 +387,7 @@ route("GET", "users/preferences", async (_req, _p, user) => {
 
 route("PATCH", "users/preferences", async (req, _p, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error }: any = await supabase.from("user_preferences").upsert({ user_id: user.id, ...body }).select().single();
   if (error) return apiError([{ code: "GEN_001", message: error.message }], 400);
@@ -411,7 +412,7 @@ route("DELETE", "users/me", async (_req, _p, user) => {
 // ── Wallets (additional) ─────────────────────────────
 route("POST", "wallets/connect", async (req, _p, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error }: any = await supabase.from("wallets").insert({ user_id: user.id, address: body.address, network: body.network, chain_id: body.chainId }).select().single();
   if (error) return apiError([{ code: "WALLET_001", message: error.message }], 400);
@@ -433,7 +434,7 @@ route("GET", "cards", async () => {
 
 route("POST", "cards/order", async (req, _p, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const valErr = validateBody(createOrderSchema, body);
   if (valErr) return valErr;
   const supabase: any = sb();
@@ -452,7 +453,7 @@ route("GET", "cards/orders", async (_req, _p, user) => {
 // ── Payments (additional) ────────────────────────────
 route("POST", "payments/create", async (req, _p, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const valErr = validateBody(createPaymentSchema, body);
   if (valErr) return valErr;
   const supabase: any = sb();
@@ -463,7 +464,7 @@ route("POST", "payments/create", async (req, _p, user) => {
 
 route("POST", "payments/verify", async (req, _p, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error }: any = await supabase.from("payment_transactions").update({ verified: true, status: "confirmed" } as any).eq("id", body.paymentId).select().single();
   if (error) return apiError([{ code: "PAY_010", message: error.message }], 400);
@@ -502,7 +503,7 @@ route("GET", "transactions/export", async (_req, _p, user) => {
 // ── Notifications (additional) ────────────────────────
 route("PATCH", "notifications/read", async (req, _p, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { error }: any = await supabase.from("notifications").update({ read: true } as any).eq("id", body.id).eq("user_id", user.id);
   if (error) return apiError([{ code: "GEN_001", message: error.message }], 400);
@@ -518,7 +519,7 @@ route("GET", "notifications/preferences", async (_req, _p, user) => {
 
 route("PATCH", "notifications/preferences", async (req, _p, user) => {
   if (!user) return apiError([{ code: "AUTH_006", message: "Not authenticated" }], 401);
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error }: any = await supabase.from("notification_preferences").upsert({ user_id: user.id, ...body }).select().single();
   if (error) return apiError([{ code: "GEN_001", message: error.message }], 400);
@@ -564,7 +565,7 @@ route("GET", "admin/cards", async (req) => {
 route("POST", "admin/cards", async (req) => {
   const { error } = await requireAdmin(req);
   if (error) return error;
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error: insertError }: any = await supabase.from("card_products").insert(body).select().single();
   if (insertError) return apiError([{ code: "GEN_001", message: insertError.message }], 400);
@@ -582,7 +583,7 @@ route("GET", "admin/reports", async (req) => {
 route("PATCH", "admin/settings", async (req) => {
   const { error } = await requireAdmin(req);
   if (error) return error;
-  const body = await req.json();
+  const body = await parseBody(req);
   const supabase: any = sb();
   const { data, error: updateError }: any = await supabase.from("app_settings").upsert(body).select().single();
   if (updateError) return apiError([{ code: "GEN_001", message: updateError.message }], 400);

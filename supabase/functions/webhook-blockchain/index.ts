@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { parseRequestBody } from "../_shared/request-body.ts";
 
 serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -7,7 +8,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const body = await req.json();
+    const body = await parseRequestBody(req);
     const txHash = body.txHash ?? body.transactionHash ?? "";
     const network = body.network ?? body.chainId ?? "";
     const event = body.event ?? "unknown";

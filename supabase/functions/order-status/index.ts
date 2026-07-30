@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { handleCors, corsHeaders } from "../_shared/cors.ts";
+import { parseRequestBody } from "../_shared/request-body.ts";
 import { supabase } from "../_shared/supabase-admin.ts";
 import { createNotification } from "../_shared/notifications.ts";
 
@@ -26,7 +27,7 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    const { order_id, status, note } = await req.json();
+    const { order_id, status, note } = await parseRequestBody(req);
 
     if (!order_id || !status) {
       return new Response(JSON.stringify({ error: "order_id and status required" }), { status: 400 });

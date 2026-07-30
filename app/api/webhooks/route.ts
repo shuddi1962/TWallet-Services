@@ -1,9 +1,10 @@
 import { createAdminClient } from "@/lib";
+import { parseBody } from "@/lib/api/parse-body";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await parseBody(request);
     const { event, data } = body;
     const signature = request.headers.get("x-webhook-signature");
 

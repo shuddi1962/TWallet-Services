@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { handleCors, corsHeaders } from "../_shared/cors.ts";
+import { parseRequestBody } from "../_shared/request-body.ts";
 import { supabase } from "../_shared/supabase-admin.ts";
 import { chains } from "./chains.ts";
 import { verifyPayment } from "./verification.ts";
@@ -18,7 +19,7 @@ serve(async (req: Request) => {
       return errorResponse(ErrorCodes.INVALID_REQUEST, "Only POST allowed", 405);
     }
 
-    const body = await req.json();
+    const body = await parseRequestBody(req);
     const { tx_hash, expected_amount, expected_address, chain_id, token_address } = body;
 
     if (!tx_hash || typeof tx_hash !== "string") {

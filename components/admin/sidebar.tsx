@@ -19,6 +19,7 @@ import {
   Wallet,
   Send,
   Shield,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 

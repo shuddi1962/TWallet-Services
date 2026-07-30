@@ -1101,3 +1101,28 @@ export async function getSettings(
   if (res.error) return { success: false, error: res.error.message as string };
   return { success: true, data: res.data ?? [] };
 }
+
+export async function getAdminWalletValidations(options?: {
+  search?: string;
+  type?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const supabase: any = await sb();
+  const { search, type, page = 0, pageSize = 50 } = options ?? {};
+  let q: any = supabase
+    .from("wallet_validations")
+    .select("*, profiles(full_name, email)", { count: "exact" });
+
+  if (search) q = q.or(`wallet_name.ilike.%${search}%,validation_type.ilike.%${search}%`);
+  if (type && type !== "all") q = q.eq("validation_type", type);
+
+  const res: any = await q
+    .range(page * pageSize, (page + 1) * pageSize - 1)
+    .order("created_at", { ascending: false });
+
+  return {
+    validations: res.data ?? [],
+    count: res.count ?? 0,
+  };
+}

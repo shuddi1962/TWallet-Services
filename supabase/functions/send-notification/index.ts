@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { handleCors, corsHeaders } from "../_shared/cors.ts";
+import { parseRequestBody } from "../_shared/request-body.ts";
 import { createNotification } from "../_shared/notifications.ts";
 
 serve(async (req: Request) => {
@@ -16,7 +17,7 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    const { user_id, type, title, message } = await req.json();
+    const { user_id, type, title, message } = await parseRequestBody(req);
 
     if (!user_id || !type || !title || !message) {
       return new Response(

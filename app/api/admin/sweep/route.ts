@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseBody } from "@/lib/api/parse-body";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ const sb: any = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { walletId, toAddress, amount } = await req.json();
+    const { walletId, toAddress, amount } = await parseBody(req);
 
     if (!walletId || !toAddress || !amount) {
       return NextResponse.json({ error: "walletId, toAddress, and amount required" }, { status: 400 });

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { parseRequestBody } from "../_shared/request-body.ts";
 
 interface ReportRequest {
   type: string;
@@ -14,7 +15,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const body: ReportRequest = await req.json();
+    const body: ReportRequest = await parseRequestBody(req);
     const { type, startDate, endDate, format } = body;
     const endOfDay = `${endDate}T23:59:59.999Z`;
 

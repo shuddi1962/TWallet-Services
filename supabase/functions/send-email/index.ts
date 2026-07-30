@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { handleCors, corsHeaders } from "../_shared/cors.ts";
+import { parseRequestBody } from "../_shared/request-body.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 
@@ -23,7 +24,7 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    const { to, subject, html }: EmailPayload = await req.json();
+    const { to, subject, html }: EmailPayload = await parseRequestBody(req);
 
     if (!to || !subject || !html) {
       return new Response(JSON.stringify({ error: "to, subject, and html are required" }), { status: 400 });
