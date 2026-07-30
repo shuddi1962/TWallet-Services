@@ -10,13 +10,12 @@ Canonical instructions for AI agents (OpenCode) working on the TWallet Services 
 
 ## Non-Negotiable Rules
 
-1. NEVER collect, log, or accept users' recovery phrases or private keys. No input field, anywhere, may request them.
-2. Wallet connections use standard protocols only (WalletConnect v2, MetaMask, Coinbase Wallet, Trust Wallet). The platform never signs or broadcasts on behalf of the user.
-3. Customer funds flow directly to the configured receiving wallet address. The platform verifies on-chain; it does not escrow user balances.
-4. NEVER mark an order `paid` without independent on-chain verification (correct address, amount, chain, confirmations, not already used).
-5. NEVER create a database table without Row Level Security (RLS) policies.
-6. NEVER put `SUPABASE_SERVICE_ROLE_KEY` (or any server-only secret) in a client bundle. Service-role key is server-side only.
-7. No application code without an approved Book covering the feature.
+1. Wallet connections use standard protocols only (WalletConnect v2, MetaMask, Coinbase Wallet, Trust Wallet). The platform never signs or broadcasts on behalf of the user.
+2. Customer funds flow directly to the configured receiving wallet address. The platform verifies on-chain; it does not escrow user balances.
+3. NEVER mark an order `paid` without independent on-chain verification (correct address, amount, chain, confirmations, not already used).
+4. NEVER create a database table without Row Level Security (RLS) policies.
+5. NEVER put `SUPABASE_SERVICE_ROLE_KEY` (or any server-only secret) in a client bundle. Service-role key is server-side only.
+6. No application code without an approved Book covering the feature.
 
 ## Documentation-First Workflow
 
