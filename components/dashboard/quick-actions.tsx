@@ -13,8 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 
 const actions = [
-  { label: "Connect Wallet", href: "/dashboard/wallet", icon: Smartphone, primary: true },
-  { label: "Order Card", href: "/dashboard/orders", icon: CreditCard, primary: false },
+  { label: "My Wallet", href: "/dashboard/wallet", icon: Smartphone, primary: false },
+  { label: "Order Card", href: "/dashboard/cards", icon: CreditCard, primary: true },
   { label: "Track Order", href: "/dashboard/orders", icon: Package, primary: false },
   { label: "Transactions", href: "/dashboard/transactions", icon: ArrowRightLeft, primary: false },
   { label: "Support", href: "/dashboard/support", icon: HeadphonesIcon, primary: false },

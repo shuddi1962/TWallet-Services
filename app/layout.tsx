@@ -8,15 +8,15 @@ import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: {
-    default: "TWALLET — Non-Custodial Crypto Card",
-    template: "%s | TWALLET",
+    default: "Trust — Non-Custodial Crypto Card",
+    template: "%s | Trust",
   },
   description:
     "Order a crypto-funded card. Non-custodial — you keep control of your keys.",
   openGraph: {
-    title: "TWALLET",
+    title: "Trust",
     description: "Your crypto, your card. Non-custodial.",
-    siteName: "TWALLET",
+    siteName: "Trust",
     type: "website",
     locale: "en_US",
   },
@@ -45,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "TWALLET Services",
+              name: "Trust",
               url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://twalletservices.com",
               description: "Non-custodial crypto-funded card platform",
             }),

@@ -84,7 +84,7 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Choose Your Card</h2>
           <p className="mt-3 max-w-xl text-surface-400">
-            Real TWALLET debit designs. Pay with crypto on-chain — virtual cards activate after payment verification.
+            Real Trust debit designs. Pay with crypto on-chain — virtual cards activate after payment verification.
           </p>
         </div>
       </div>
@@ -96,6 +96,7 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
           const finish = finishForSlug(product.slug);
           const network = networkForSlug(product.slug);
           const annual = Number(product.annual_fee_usdc ?? 0);
+          const first4 = "4532";
           const last4 = String(4200 + idx).slice(-4);
 
           return (
@@ -116,7 +117,7 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
                 <TwalletCard
                   finish={finish}
                   holderName="YOUR NAME"
-                  panDisplay={`4532 •••• •••• ${last4}`}
+                  panDisplay={`${first4} •••• •••• ${last4}`}
                   expiry="08/29"
                   cvv="•••"
                   network={network}

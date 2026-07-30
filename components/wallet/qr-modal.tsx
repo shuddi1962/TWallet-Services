@@ -1,40 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Copy, Check, Loader2, ExternalLink } from "lucide-react";
-import QRCode from "qrcode";
+import { X, Copy, Check, ExternalLink, Loader2 } from "lucide-react";
+import { AddressQR } from "@/components/ui/address-qr";
+import { copyToClipboard } from "@/lib/utils/clipboard";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
   uri: string | null;
   onClose: () => void;
+  onCopy?: () => void;
+  onOpen?: () => void;
 }
 
-export function QRModal({ open, uri, onClose }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export function QRModal({ open, uri, onClose, onCopy, onOpen }: Props) {
   const [copied, setCopied] = useState(false);
-  const [qrError, setQrError] = useState(false);
 
   useEffect(() => {
-    if (!open || !uri || !canvasRef.current) return;
-
-    setQrError(false);
-
-    QRCode.toCanvas(canvasRef.current, uri, {
-      width: 360,
-      margin: 2,
-      color: {
-        dark: "#ffffff",
-        light: "#00000000",
-      },
-    }).catch(() => {
-      setQrError(true);
-    });
-  }, [open, uri]);
-
-  useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setCopied(false);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -46,11 +34,42 @@ export function QRModal({ open, uri, onClose }: Props) {
     };
   }, [open, onClose]);
 
-  const copyUri = async () => {
-    if (!uri) return;
-    await navigator.clipboard.writeText(uri);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+  const handleCopy = async () => {
+    if (onCopy) {
+      onCopy();
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      return;
+    }
+    if (!uri) {
+      toast.error("Link not ready yet");
+      return;
+    }
+    const ok = await copyToClipboard(uri);
+    if (ok) {
+      setCopied(true);
+      toast.success("Link copied");
+      setTimeout(() => setCopied(false), 1500);
+    } else {
+      toast.error("Could not copy");
+    }
+  };
+
+  const handleOpen = () => {
+    if (onOpen) {
+      onOpen();
+      return;
+    }
+    if (!uri) {
+      toast.error("Link not ready yet");
+      return;
+    }
+    const encoded = encodeURIComponent(uri);
+    window.open(
+      `https://link.trustwallet.com/wc?uri=${encoded}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   return (
@@ -75,9 +94,9 @@ export function QRModal({ open, uri, onClose }: Props) {
           >
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-white">Scan with phone</h2>
+                <h2 className="text-lg font-semibold text-white">Scan this QR Code with your phone</h2>
                 <p className="mt-1 text-sm text-surface-400">
-                  Open your wallet app and scan the QR code
+                  Open Trust Wallet (or any WalletConnect wallet) and scan
                 </p>
               </div>
               <button
@@ -91,34 +110,22 @@ export function QRModal({ open, uri, onClose }: Props) {
             </div>
 
             <div className="flex items-center justify-center">
-              {!uri ? (
-                <div className="flex h-[360px] w-[360px] items-center justify-center rounded-2xl border border-white/10">
-                  <Loader2 className="h-8 w-8 animate-spin text-brand-400" />
-                </div>
-              ) : qrError ? (
-                <div className="flex h-[360px] w-[360px] flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 px-8 text-center">
-                  <p className="text-sm text-red-400">Failed to render QR code</p>
-                  <button
-                    type="button"
-                    onClick={copyUri}
-                    className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-xs text-surface-200 hover:bg-white/20"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    Copy link instead
-                  </button>
-                </div>
+              {uri ? (
+                <AddressQR value={uri} size={260} label="WalletConnect" />
               ) : (
-                <div className="rounded-2xl bg-white p-4 shadow-lg">
-                  <canvas ref={canvasRef} className="block h-[328px] w-[328px]" />
+                <div className="flex h-[284px] w-[284px] flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02]">
+                  <Loader2 className="h-8 w-8 animate-spin text-brand-400" />
+                  <p className="text-xs text-surface-400">Generating QR…</p>
                 </div>
               )}
             </div>
 
-            <div className="mt-5 flex items-center justify-center gap-3">
+            <div className="mt-5 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={copyUri}
-                className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-surface-300 transition hover:bg-white/5 hover:text-white"
+                onClick={() => void handleCopy()}
+                disabled={!uri}
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-surface-200 transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {copied ? (
                   <>
@@ -128,25 +135,29 @@ export function QRModal({ open, uri, onClose }: Props) {
                 ) : (
                   <>
                     <Copy className="h-4 w-4" />
-                    Copy URI
+                    Copy link
                   </>
                 )}
               </button>
-              {uri && (
-                <a
-                  href={`https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-surface-300 transition hover:bg-white/5 hover:text-white"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Open WalletConnect
-                </a>
-              )}
+              <button
+                type="button"
+                onClick={handleOpen}
+                disabled={!uri}
+                className="flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open
+              </button>
             </div>
 
-            <p className="mt-4 text-center text-[11px] leading-relaxed text-surface-500">
-              You can also paste the URI into any WalletConnect-compatible wallet.
+            {uri && (
+              <p className="mt-4 break-all rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2 font-mono text-[10px] leading-relaxed text-surface-500">
+                {uri.slice(0, 72)}…
+              </p>
+            )}
+
+            <p className="mt-3 text-center text-[11px] leading-relaxed text-surface-500">
+              Copy the link and paste it in your wallet, or tap Open for Trust Wallet.
             </p>
           </motion.div>
         </div>

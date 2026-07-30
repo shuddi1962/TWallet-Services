@@ -50,8 +50,10 @@ const styles: Record<
 };
 
 function formatCardNumber(num: string) {
-  const g = num.match(/.{1,4}/g);
-  return g ? g.join(" ") : num;
+  const digits = num.replace(/\s/g, "");
+  const first4 = digits.slice(0, 4) || "••••";
+  const last4 = digits.slice(-4) || "••••";
+  return `${first4} •••• •••• ${last4}`;
 }
 
 function cardGlow(f: CardFinish) {
@@ -129,7 +131,7 @@ export function RealCard({ card }: { card: CardConfig }) {
         </>
       )}
 
-      <text x="18" y="26" fontFamily="Arial, Helvetica, sans-serif" fontSize="7" fontWeight="700" fill={s.issuerColor} opacity="0.9" letterSpacing="1.5">TWALLET</text>
+      <text x="18" y="26" fontFamily="Arial, Helvetica, sans-serif" fontSize="7" fontWeight="700" fill={s.issuerColor} opacity="0.9" letterSpacing="1.5">TRUST</text>
 
       <g transform="translate(18, 36)" filter="url(#chipShadow)">
         <rect x="0" y="0" width="28" height="22" rx="2.5" fill="url(#chipGold)" stroke="#a0680a" strokeWidth="0.5" />

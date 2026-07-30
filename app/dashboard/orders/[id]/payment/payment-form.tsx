@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2, Smartphone, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { AddressQR } from "@/components/ui/address-qr";
+import { copyToClipboard } from "@/lib/utils/clipboard";
+import { toast } from "sonner";
 
 type Order = {
   id: string;
@@ -87,11 +90,15 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
   const wallet = receivingWallets.find((w) => w.network_id === network?.id);
   const token = tokens.find((t) => t.symbol === order.token.toUpperCase() && t.network_id === network?.id);
 
-  const copyAddress = useCallback(() => {
-    if (wallet?.address) {
-      navigator.clipboard.writeText(wallet.address);
+  const copyAddress = useCallback(async () => {
+    if (!wallet?.address) return;
+    const ok = await copyToClipboard(wallet.address);
+    if (ok) {
       setCopied(true);
+      toast.success("Address copied");
       setTimeout(() => setCopied(false), 2000);
+    } else {
+      toast.error("Could not copy address");
     }
   }, [wallet]);
 
@@ -314,12 +321,22 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
 
             <div>
               <p className="mb-2 text-xs text-surface-500">Receiving Address</p>
+              {wallet?.address && (
+                <div className="mb-3 flex justify-center rounded-xl border border-surface-800 bg-surface-900/50 p-4">
+                  <AddressQR
+                    value={wallet.address}
+                    size={180}
+                    label="Scan to pay with your wallet"
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2 rounded-lg border border-surface-800 bg-surface-900/50 px-4 py-3">
                 <code className="flex-1 break-all font-mono text-xs text-surface-300">
                   {wallet?.address ?? "No address available"}
                 </code>
                 {wallet?.address && (
                   <button
+                    type="button"
                     onClick={copyAddress}
                     className="shrink-0 rounded-md p-1.5 text-surface-500 hover:bg-surface-800 hover:text-white"
                     aria-label="Copy receiving address"

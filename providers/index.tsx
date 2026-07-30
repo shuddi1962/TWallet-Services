@@ -10,19 +10,27 @@ import { WalletLinker } from "@/components/wallet/wallet-linker";
 import { SessionTimeout } from "@/components/session-timeout";
 import { config, projectId, wagmiAdapter } from "@/lib/wagmi-config";
 
-createAppKit({
-  adapters: [wagmiAdapter],
-  projectId,
-  networks: [mainnet, polygon, base, arbitrum, optimism, sepolia],
-  defaultNetwork: mainnet,
-  metadata: {
-    name: "TWALLET",
-    description: "Non-custodial crypto card platform",
-    url: "https://twalletservices.com",
-    icons: ["https://avatars.githubusercontent.com/u/179229932"],
-  },
-  features: { analytics: false },
-});
+if (typeof window !== "undefined") {
+  createAppKit({
+    adapters: [wagmiAdapter],
+    projectId,
+    networks: [mainnet, polygon, base, arbitrum, optimism, sepolia],
+    defaultNetwork: mainnet,
+    metadata: {
+      name: "Trust",
+      description: "Non-custodial crypto card platform",
+      url: "https://twalletservices.com",
+      icons: ["https://twalletservices.com/favicon.ico"],
+    },
+    features: { analytics: false },
+    themeMode: "dark",
+    themeVariables: {
+      "--w3m-color-mix": "0%",
+      "--w3m-font-family": "var(--font-geist-sans), system-ui, sans-serif",
+      "--w3m-accent": "#2563eb",
+    },
+  });
+}
 
 export function Providers({ children, cookies }: { children: ReactNode; cookies: string | null }) {
   const [queryClient] = useState(

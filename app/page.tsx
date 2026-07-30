@@ -16,9 +16,9 @@ import { CTA } from "@/components/sections/cta";
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "TWallet",
-  url: "https://twallet.io",
-  logo: "https://twallet.io/logo.png",
+  name: "Trust",
+  url: "https://twalletservices.com",
+  logo: "https://twalletservices.com/favicon.ico",
   description: "Non-custodial, crypto-funded card platform. Order virtual and physical cards funded with crypto.",
   knowsAbout: ["Crypto Cards", "Crypto Payments", "Non-Custodial Wallet", "Blockchain Payments"],
   offers: {

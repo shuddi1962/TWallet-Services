@@ -65,15 +65,15 @@ export function WalletConnect() {
             </p>
             <Button
               className="mt-6 rounded-full px-8"
-              onClick={() => void openWallet()}
-              disabled={connecting}
+              onClick={() => openWallet()}
+              type="button"
             >
               {connecting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Wallet className="h-4 w-4" />
               )}
-              {connecting ? "Connecting…" : "Connect Wallet"}
+              Connect Wallet
             </Button>
           </div>
         ) : (

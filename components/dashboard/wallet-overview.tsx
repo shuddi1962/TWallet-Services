@@ -63,15 +63,15 @@ export function WalletOverview() {
             </div>
             <p className="font-medium text-white">No wallet connected</p>
             <p className="mt-1 max-w-xs text-sm text-surface-400">
-              WalletConnect QR or browser extension. Required to purchase cards.
+              Use Connect in the top bar to scan a QR or pick a browser wallet.
             </p>
             <Button
+              type="button"
               className="mt-5 rounded-full"
-              onClick={() => void openWallet()}
-              disabled={connecting}
+              onClick={() => openWallet()}
             >
-              {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Connect Wallet
+              {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+              Connect
             </Button>
           </div>
         ) : (

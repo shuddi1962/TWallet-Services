@@ -39,6 +39,10 @@ export function useWalletConnect() {
     setSelectOpen: (() => {}) as (v: boolean) => void,
     wcUri: null as string | null,
     setWcUri: (() => {}) as (v: string | null) => void,
+    qrOpen: false,
+    setQrOpen: (() => {}) as (v: boolean) => void,
     error: null,
+    copyUri: (() => {}) as () => Promise<void>,
+    openUri: (() => {}) as () => void,
   };
 }

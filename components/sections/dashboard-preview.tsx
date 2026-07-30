@@ -81,7 +81,7 @@ export function DashboardPreview() {
                     <div className="rounded-xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 p-[1px] shadow-lg shadow-brand-600/20">
                       <div className="rounded-xl bg-gradient-to-br from-surface-900 to-dark p-4">
                         <div className="flex items-center justify-between mb-4">
-                          <span className="text-xs font-semibold text-white/60">TWALLET</span>
+                          <span className="text-xs font-semibold text-white/60">TRUST</span>
                           <svg className="h-4 w-6" viewBox="0 0 24 16" fill="none"><rect x="0.5" y="0.5" width="23" height="15" rx="2.5" fill="#00579F" /></svg>
                         </div>
                         <p className="font-mono text-sm tracking-[0.2em] text-white/80">•••• •••• •••• 4582</p>

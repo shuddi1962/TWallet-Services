@@ -160,7 +160,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
                   <TwalletCard
                     finish={finishForSlug((featuredOrder.card_products as { slug?: string } | null)?.slug)}
                     holderName={data.userName?.toUpperCase() || "CARDHOLDER"}
-                    panDisplay="4532 •••• •••• ****"
+                    panDisplay="4532 •••• •••• 4281"
                     expiry="08/29"
                     network={networkForSlug((featuredOrder.card_products as { slug?: string } | null)?.slug)}
                     isVirtual={featuredOrder.card_products?.type !== "physical"}

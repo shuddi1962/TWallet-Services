@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "TWALLET Services - Premium Crypto Card Platform";
+export const alt = "Trust - Premium Crypto Card Platform";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -28,7 +28,7 @@ export default function OGImage() {
             marginBottom: "24px",
           }}
         >
-          <span style={{ fontSize: "48px", fontWeight: "bold" }}>TWALLET</span>
+          <span style={{ fontSize: "48px", fontWeight: "bold" }}>Trust</span>
         </div>
         <p
           style={{

@@ -59,16 +59,25 @@ const FINISH: Record<
   },
 };
 
-function TwalletMark({ color = "#fff" }: { color?: string }) {
+function TrustMark({ color = "#fff" }: { color?: string }) {
   return (
     <div className="flex items-center gap-2">
-      <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden>
-        <rect x="2" y="6" width="28" height="20" rx="5" stroke={color} strokeWidth="2" />
-        <path d="M2 13h28" stroke={color} strokeWidth="2" />
-        <rect x="6" y="17" width="8" height="4" rx="1" fill={color} opacity="0.9" />
+      <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden>
+        <path
+          d="M16 3L5 7.5v8.2c0 7.1 4.6 11.8 11 13.3 6.4-1.5 11-6.2 11-13.3V7.5L16 3z"
+          fill={color}
+          opacity="0.95"
+        />
+        <path
+          d="M11.2 16.1l3 3 6.6-6.6"
+          stroke="#0b1220"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
       <span className="text-[13px] font-bold tracking-[0.18em]" style={{ color }}>
-        TWALLET
+        TRUST
       </span>
     </div>
   );
@@ -118,7 +127,7 @@ function Chip({ gradient }: { gradient: string }) {
 export function TwalletCard({
   finish = "sapphire",
   holderName = "CARDHOLDER",
-  panDisplay = "4532 •••• •••• 4281",
+  panDisplay = "•••• •••• •••• 4281",
   expiry = "08/29",
   cvv = "•••",
   network = "visa",
@@ -132,22 +141,28 @@ export function TwalletCard({
   const theme = FINISH[finish] ?? FINISH.sapphire;
 
   return (
-    <div className={cn("w-full max-w-[380px]", className)} style={{ perspective: "1200px" }}>
+    <div className={cn("w-full max-w-[380px]", className)} style={{ perspective: "1400px" }}>
       <button
         type="button"
         disabled={!interactive}
-        onClick={() => interactive && setFlipped((f) => !f)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (interactive) setFlipped((f) => !f);
+        }}
         className={cn(
-          "relative block w-full text-left outline-none",
-          interactive && "cursor-pointer",
+          "relative block w-full touch-manipulation text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+          interactive ? "cursor-pointer" : "cursor-default",
         )}
         style={{ aspectRatio: "1.586 / 1" }}
-        aria-label={flipped ? "Show card front" : "Show card back (CVV)"}
+        aria-pressed={flipped}
+        aria-label={flipped ? "Show card front" : "Show card back"}
       >
         <div
-          className="relative h-full w-full transition-transform duration-500 ease-out"
+          className="relative h-full w-full transition-transform duration-500 ease-[cubic-bezier(0.4,0.2,0.2,1)] will-change-transform"
           style={{
             transformStyle: "preserve-3d",
+            WebkitTransformStyle: "preserve-3d",
             transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
           }}
         >
@@ -158,6 +173,7 @@ export function TwalletCard({
               background: theme.front,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
+              transform: "rotateY(0deg)",
             }}
           >
             <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
@@ -166,7 +182,7 @@ export function TwalletCard({
 
             <div className="relative flex h-full flex-col justify-between p-5 sm:p-6">
               <div className="flex items-start justify-between">
-                <TwalletMark />
+                <TrustMark />
                 <div className="text-right">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70">
                     {isVirtual ? "Virtual Debit" : "Physical Debit"}
@@ -217,6 +233,7 @@ export function TwalletCard({
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
+              WebkitTransform: "rotateY(180deg)",
             }}
           >
             <div className="mt-6 h-11 w-full bg-black/85" />
@@ -225,7 +242,7 @@ export function TwalletCard({
                 <div className="h-9 flex-1 rounded-sm bg-[repeating-linear-gradient(0deg,#e5e5e5_0px,#e5e5e5_2px,#f5f5f5_2px,#f5f5f5_4px)]" />
                 <div className="flex h-9 min-w-[64px] items-center justify-center rounded-sm bg-white px-3">
                   <span className="font-mono text-sm font-bold tracking-widest text-surface-900">
-                    {cvv}
+                    {cvv || "•••"}
                   </span>
                 </div>
               </div>
@@ -233,7 +250,7 @@ export function TwalletCard({
             </div>
             <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
               <div>
-                <TwalletMark color="rgba(255,255,255,0.85)" />
+                <TrustMark color="rgba(255,255,255,0.85)" />
                 <p className="mt-2 max-w-[220px] text-[10px] leading-relaxed text-white/45">
                   Crypto-funded debit. Non-custodial wallet payments. Authorized use only.
                 </p>
@@ -244,7 +261,9 @@ export function TwalletCard({
         </div>
       </button>
       {interactive && (
-        <p className="mt-2 text-center text-[11px] text-surface-500">Tap card to flip · view CVV</p>
+        <p className="mt-2 text-center text-[11px] text-surface-500">
+          {flipped ? "Tap to show front" : "Tap card to flip"}
+        </p>
       )}
     </div>
   );

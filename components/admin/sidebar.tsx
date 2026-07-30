@@ -85,7 +85,7 @@ export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
                 <Shield className="h-4 w-4 text-white" />
               </div>
               <div>
-                <span className="block text-sm font-bold text-white">TWALLET</span>
+                <span className="block text-sm font-bold text-white">Trust</span>
                 <span className="block text-[10px] uppercase tracking-wider text-surface-500">Admin</span>
               </div>
             </div>

@@ -37,12 +37,17 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     >
       <div className="flex h-16 items-center gap-3 border-b border-white/[0.06] px-5">
         <Link href="/" className="group flex items-center gap-3" onClick={onNavigate}>
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 via-brand-600 to-accent-600 shadow-lg shadow-brand-600/40 transition group-hover:scale-105">
-            <CreditCard className="h-5 w-5 text-white" />
+          <div className="relative">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 via-brand-600 to-brand-800 text-white shadow-lg shadow-brand-600/40 transition group-hover:scale-105">
+              <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden>
+                <path d="M16 3L5 7.5v8.2c0 7.1 4.6 11.8 11 13.3 6.4-1.5 11-6.2 11-13.3V7.5L16 3z" fill="currentColor" />
+                <path d="M11.2 16.1l3 3 6.6-6.6" stroke="#0b1220" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#070b14] bg-emerald-400" />
           </div>
           <div>
-            <span className="block text-base font-bold tracking-tight text-white">TWALLET</span>
+            <span className="block text-base font-bold tracking-tight text-white">Trust</span>
             <span className="block text-[10px] font-medium uppercase tracking-[0.18em] text-surface-500">
               Card Platform
             </span>

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CreditCard, Twitter, Github, Send, Linkedin, CheckCircle2, Smartphone } from "lucide-react";
+import { Twitter, Github, Send, Linkedin, CheckCircle2, Smartphone } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TrustLogo } from "@/components/brand/trust-logo";
 
 const footerLinks = {
   Company: [
@@ -64,13 +65,8 @@ export function Footer() {
         <div className="py-12 lg:py-16">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
             <div className="sm:col-span-2 lg:col-span-2">
-              <Link href="/" className="flex items-center gap-3 group">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-500/30 transition-transform group-hover:scale-110">
-                  <CreditCard className="h-5 w-5 text-white" aria-hidden="true" />
-                </div>
-                  <span className="text-xl font-bold tracking-tight text-surface-900">
-                    TWALLET
-                  </span>
+              <Link href="/" className="group inline-flex">
+                <TrustLogo size="md" variant="dark" />
               </Link>
               <p className="mt-4 max-w-xs text-sm text-surface-500 leading-relaxed">
                 Order premium crypto cards with secure blockchain payments. Optimized for Trust Wallet.
@@ -153,7 +149,7 @@ export function Footer() {
           <div className="mt-10 border-t border-surface-200 pt-6">
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <p className="text-xs text-surface-500">
-                &copy; {new Date().getFullYear()} TWALLET. All rights reserved.
+                &copy; {new Date().getFullYear()} Trust. All rights reserved.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 {securityBadges.map((badge) => (

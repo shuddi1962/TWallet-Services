@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { FadeIn } from "@/components/ui/motion-section";
 import { TwalletCard } from "@/components/cards/twallet-card";
@@ -20,9 +19,17 @@ function finishGlow(f: CardFinish) {
   return map[f];
 }
 
+function maskPan(full: string) {
+  const digits = full.replace(/\s/g, "");
+  const first4 = digits.slice(0, 4) || "••••";
+  const last4 = digits.slice(-4) || "••••";
+  return `${first4} •••• •••• ${last4}`;
+}
+
 export function CardShowcase() {
   const [[currentIndex, direction], setSlide] = useState([0, 0]);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
 
   const goTo = useCallback((index: number, dir: number) => {
     const len = cardOrder.length;
@@ -43,14 +50,14 @@ export function CardShowcase() {
   const currentVisual = cardFinishes[currentFinish];
 
   return (
-    <section id="cards" className="relative py-12 lg:py-16 overflow-hidden bg-surface-50">
+    <section id="cards" className="relative overflow-hidden bg-surface-50 py-12 lg:py-16">
       <Container>
         <FadeIn>
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs">
-              <span className="text-brand-700 font-medium">Card Collection</span>
+              <span className="font-medium text-brand-700">Card Collection</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-surface-900">
+            <h2 className="text-xl font-bold tracking-tight text-surface-900 sm:text-2xl">
               Choose your style
             </h2>
             <p className="mt-1 text-sm text-surface-500">
@@ -61,18 +68,20 @@ export function CardShowcase() {
 
         <div className="mt-8 flex flex-col items-center gap-4">
           <div
-            className="relative w-full flex items-center justify-center"
+            className="relative flex w-full items-center justify-center px-2"
             onMouseEnter={() => setIsAutoPlaying(false)}
             onMouseLeave={() => setIsAutoPlaying(true)}
+            onTouchStart={(e) => setTouchStart(e.touches[0]?.clientX ?? null)}
+            onTouchEnd={(e) => {
+              if (touchStart == null) return;
+              const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStart;
+              if (Math.abs(dx) > 40) {
+                if (dx < 0) next();
+                else prev();
+              }
+              setTouchStart(null);
+            }}
           >
-            <button
-              onClick={prev}
-              className="absolute left-1 sm:left-6 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white border border-surface-200 text-surface-400 shadow-sm hover:bg-surface-50 hover:text-surface-600 transition-all"
-              aria-label="Previous card"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-
             <div
               className="relative flex w-full max-w-[380px] items-center justify-center"
               style={{ perspective: "1000px" }}
@@ -98,35 +107,35 @@ export function CardShowcase() {
                   <TwalletCard
                     finish={currentFinish}
                     holderName={currentCard.holderName}
-                    panDisplay={currentCard.cardNumber.replace(/(.{4})/g, "$1 ").trim()}
+                    panDisplay={maskPan(currentCard.cardNumber)}
                     expiry={currentCard.expiryDate}
-                    cvv={currentCard.cvc}
-                    network={currentFinish === "obsidian" || currentFinish === "cyber" ? "mastercard" : "visa"}
+                    cvv="•••"
+                    network={
+                      currentFinish === "obsidian" || currentFinish === "cyber"
+                        ? "mastercard"
+                        : "visa"
+                    }
                     isVirtual={currentCard.isVirtual}
+                    interactive
                     className="max-w-none"
                   />
                 </motion.div>
               </AnimatePresence>
             </div>
-
-            <button
-              onClick={next}
-              className="absolute right-1 sm:right-6 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white border border-surface-200 text-surface-400 shadow-sm hover:bg-surface-50 hover:text-surface-600 transition-all"
-              aria-label="Next card"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
           </div>
 
           <div className="text-center">
-            <h3 className="text-base sm:text-lg font-bold text-surface-900">{currentVisual.label}</h3>
-            <p className="text-xs text-surface-500 mt-0.5">{currentVisual.tagline}</p>
+            <h3 className="text-base font-bold text-surface-900 sm:text-lg">
+              {currentVisual.label}
+            </h3>
+            <p className="mt-0.5 text-xs text-surface-500">{currentVisual.tagline}</p>
           </div>
 
           <div className="flex items-center gap-2">
             {cardOrder.map((finish, i) => (
               <button
                 key={finish}
+                type="button"
                 onClick={() => {
                   const dir = i > currentIndex ? 1 : -1;
                   goTo(i, dir);
@@ -141,7 +150,7 @@ export function CardShowcase() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] text-surface-400">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] text-surface-400">
             <span className="flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-success" />
               {currentCard.isVirtual ? "Virtual" : "Physical"}

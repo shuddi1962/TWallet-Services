@@ -27,9 +27,14 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect, busyId 
     };
   }, [open, onClose]);
 
-  const injected = connectors.filter(
-    (c) => c && c.id !== "safe" && c.id !== "walletConnect",
-  );
+  const injected = connectors.filter((c) => {
+    if (!c) return false;
+    const id = (c.id || "").toLowerCase();
+    const name = (c.name || "").toLowerCase();
+    if (id === "safe") return false;
+    if (id.includes("walletconnect") || name.includes("walletconnect")) return false;
+    return true;
+  });
 
   return (
     <AnimatePresence>
@@ -55,7 +60,7 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect, busyId 
               <div>
                 <h2 className="text-lg font-semibold text-white">Connect Your Wallet</h2>
                 <p className="mt-1 text-sm text-surface-400">
-                  Pick a wallet. You pay on-chain — funds go to the platform receiving address.
+                  Scan a QR with your phone or use a browser extension.
                 </p>
               </div>
               <button
@@ -69,7 +74,6 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect, busyId 
             </div>
 
             <div className="space-y-2">
-              {/* WalletConnect — always shown */}
               <button
                 type="button"
                 disabled={!!busyId}
@@ -87,16 +91,15 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect, busyId 
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-white">WalletConnect</p>
                     <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-semibold text-brand-300">
-                      Recommended
+                      QR Code
                     </span>
                   </div>
                   <p className="truncate text-xs text-surface-400">
-                    Trust, MetaMask Mobile, Rainbow, Binance & 300+ wallets — QR code
+                    Trust Wallet, MetaMask Mobile, Rainbow & 300+ wallets
                   </p>
                 </div>
               </button>
 
-              {/* Injected browser wallets */}
               {injected.map((c) => {
                 const busy = busyId === c.uid || busyId === c.id;
                 return (
@@ -119,7 +122,7 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect, busyId 
                         {c.name === "Injected" ? "Browser Wallet" : c.name}
                       </p>
                       <p className="truncate text-xs text-surface-400">
-                        MetaMask, Rabby, Coinbase extension, Brave…
+                        MetaMask, Rabby, Coinbase extension…
                       </p>
                     </div>
                   </button>
@@ -128,7 +131,7 @@ export function WalletSelectModal({ open, onClose, connectors, onSelect, busyId 
             </div>
 
             <p className="mt-5 text-center text-[11px] leading-relaxed text-surface-500">
-              We never ask for seed phrases or private keys. Powered by WalletConnect.
+              We never ask for seed phrases or private keys.
             </p>
           </motion.div>
         </div>

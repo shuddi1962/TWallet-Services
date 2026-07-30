@@ -7,8 +7,6 @@ import Image from "next/image";
 import { Play, Zap, Globe, Headphones, Shield, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
-import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
-
 const CARD_IMAGE =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuB4kIr2XwzwDH8GGE6TbF23yoAi0hgE531M8geP32Cjq1mXYPGqLgX5RomAPAvL8_a31uz8iWMQ2z8bQVqlCgpbFDegzDuB4uw-g3stjGIrqdtoMF9CoWU6flYr36umlpNYm_tJRxYT4mHEFM9HDsv2HdwoHwHoBhy3NMXS0tJOZYYIpIEzOCWpa62ZB_RYk63ExlxwSjO61Ve_DI09AExScnco3FJwHpl6yClmGjB2yLuid6y4Q-vTWqABr5GJaUJjzyk";
 
@@ -121,8 +119,6 @@ function CardReveal() {
 }
 
 export function Hero() {
-  const { openWallet, connecting } = useWalletConnect();
-
   return (
     <section className="relative overflow-hidden bg-[#03060d] pt-20 pb-14 lg:pt-28 lg:pb-20">
       <Stars />
@@ -184,13 +180,14 @@ export function Hero() {
                 <div className="absolute inset-0 animate-glow-pulse rounded-xl bg-brand-500/40 blur-xl" />
                 <Button
                   className="relative h-11 overflow-hidden rounded-xl border-0 bg-gradient-to-r from-brand-500 to-brand-700 px-6 text-sm font-semibold text-white shadow-lg shadow-brand-600/30"
-                  onClick={() => openWallet()}
-                  disabled={connecting}
+                  asChild
                 >
-                  <span className="relative z-10 flex items-center gap-2">
-                    <Smartphone className="h-4 w-4" />
-                    {connecting ? "Connecting…" : "Connect Wallet"}
-                  </span>
+                  <Link href="/auth/register">
+                    <span className="relative z-10 flex items-center gap-2">
+                      <Play className="h-3.5 w-3.5 fill-white" />
+                      Get started
+                    </span>
+                  </Link>
                 </Button>
               </div>
               <Button
@@ -198,10 +195,7 @@ export function Hero() {
                 variant="outline"
                 asChild
               >
-                <Link href="/auth/register">
-                  <Play className="h-3.5 w-3.5 fill-white" />
-                  Order a Card
-                </Link>
+                <Link href="/#how-it-works">How it works</Link>
               </Button>
             </motion.div>
 
@@ -229,12 +223,11 @@ export function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* Center column - Card image (hidden on mobile) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.15 }}
-            className="lg:col-span-3 hidden lg:block"
+            className="order-first mx-auto w-full max-w-[300px] sm:max-w-[340px] lg:order-none lg:col-span-3 lg:max-w-none"
           >
             <CardReveal />
           </motion.div>
@@ -251,23 +244,21 @@ export function Hero() {
                   <Smartphone className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white">Connect & order</h3>
-                  <p className="text-sm text-white/50">300+ wallets · QR code</p>
+                  <h3 className="text-lg font-semibold text-white">Order with crypto</h3>
+                  <p className="text-sm text-white/50">Pay USDC on-chain · keep your keys</p>
                 </div>
               </div>
 
               <p className="mb-6 text-sm leading-relaxed text-white/60">
-                Official WalletConnect modal. Pay USDC on-chain to the platform receiving wallet — you keep your keys.
+                Create an account, connect once from the header, then order a virtual or metal card.
               </p>
 
-              <button
-                onClick={() => void openWallet()}
-                disabled={connecting}
-                className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-700 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:brightness-110 disabled:opacity-60"
+              <Link
+                href="/auth/register"
+                className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-700 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:brightness-110"
               >
-                <Smartphone className="h-4 w-4" strokeWidth={2} />
-                {connecting ? "Connecting…" : "Connect Wallet"}
-              </button>
+                Create free account
+              </Link>
 
               <div className="mt-5 grid grid-cols-3 gap-2 text-center">
                 {["No custody", "On-chain", "Global"].map((t) => (
