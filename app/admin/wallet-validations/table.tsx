@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Shield, Wallet, Eye, EyeOff, ExternalLink } from "lucide-react";
+import { Search, Shield, Wallet, Eye, EyeOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 type ValidationRecord = Record<string, unknown>;
