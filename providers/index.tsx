@@ -19,7 +19,7 @@ createAppKit({
     name: "TWALLET",
     description: "Non-custodial crypto card platform",
     url: "https://twalletservices.com",
-    icons: ["https://twalletservices.com/opengraph-image.png"],
+    icons: ["https://twalletservices.com/opengraph-image"],
   },
   features: { analytics: false },
 });
