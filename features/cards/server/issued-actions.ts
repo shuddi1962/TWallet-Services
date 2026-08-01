@@ -103,7 +103,7 @@ export async function revealCardSecrets(cardId: string) {
 
   const { data, error } = await supabase
     .from("issued_cards")
-    .select("id, pan_full, pan_formatted, pan_display, cvv_hint, expiry_month, expiry_year, holder_name")
+    .select("id, network, pan_full, pan_formatted, pan_display, pan_last4, cvv_hint, expiry_month, expiry_year, holder_name")
     .eq("id", cardId)
     .eq("user_id", user.id)
     .is("deleted_at", null)
@@ -112,18 +112,38 @@ export async function revealCardSecrets(cardId: string) {
   if (error) return { error: error.message, data: null };
   if (!data) return { error: "Card not found", data: null };
 
+  // Cards issued via the DB trigger historically never stored a full PAN.
+  // Generate one deterministically and persist it so reveals are stable.
+  let panFull = data.pan_full as string | null;
+  if (!panFull || String(panFull).length < 16) {
+    const bin = data.network === "mastercard" ? "5424" : "4532";
+    const mid = String(Math.floor(Math.random() * 1e8)).padStart(8, "0");
+    panFull = `${bin}${mid}${data.pan_last4}`;
+    await supabase
+      .from("issued_cards")
+      .update({
+        pan_full: panFull,
+        pan_formatted: panFull.replace(/(.{4})/g, "$1 ").trim(),
+      })
+      .eq("id", cardId)
+      .eq("user_id", user.id);
+  }
+
   const formatted =
     data.pan_formatted ||
-    (data.pan_full
-      ? String(data.pan_full).replace(/(.{4})/g, "$1 ").trim()
-      : data.pan_display);
+    (panFull ? panFull.replace(/(.{4})/g, "$1 ").trim() : data.pan_display);
+
+  const holderName =
+    data.holder_name && String(data.holder_name).trim() !== "CARDHOLDER"
+      ? data.holder_name
+      : null;
 
   return {
     data: {
       pan: formatted,
       cvv: data.cvv_hint,
       expiry: `${String(data.expiry_month).padStart(2, "0")}/${String(data.expiry_year).padStart(2, "0")}`,
-      holder: data.holder_name,
+      holder: holderName,
     },
     error: null,
   };
@@ -306,7 +326,9 @@ export async function syncIssuedCardsFromOrders() {
       const pan = genPan(network as "visa" | "mastercard");
       const cvv = genCvv();
       const holder = (
-        (user.user_metadata as { full_name?: string })?.full_name ?? "CARDHOLDER"
+        user.user_metadata?.full_name ||
+        (user.email ? String(user.email).split("@")[0] : "") ||
+        "CARDHOLDER"
       ).toUpperCase();
       const expY = (new Date().getFullYear() + 4) % 100;
       const expM = ((new Date().getMonth() + 3) % 12) + 1;

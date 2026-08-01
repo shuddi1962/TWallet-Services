@@ -15,6 +15,8 @@ import {
   Shield,
   Eye,
   EyeOff,
+  Copy,
+  Check,
 } from "lucide-react";
 import { TwalletCard, finishForSlug, networkForSlug } from "@/components/cards/twallet-card";
 import type { CardFinish } from "@/lib/cards";
@@ -52,6 +54,38 @@ export type IssuedCardRow = {
   pin_hint: string;
   card_products?: { slug?: string; name?: string; type?: string } | null;
 };
+
+function CopyValue({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-[0.14em] text-surface-500">{label}</p>
+        <p className={cn("truncate text-sm font-semibold text-white", mono && "font-mono tracking-wider")}>
+          {value}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => void copy()}
+        aria-label={`Copy ${label}`}
+        title={`Copy ${label}`}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-surface-400 transition hover:border-brand-500/40 hover:text-brand-300"
+      >
+        {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
 
 function ToggleRow({
   icon: Icon,
@@ -120,7 +154,7 @@ export function MyCards({
   const [fundAmount, setFundAmount] = useState("50");
   const [pin, setPin] = useState("");
   const [pending, startTransition] = useTransition();
-  const [revealed, setRevealed] = useState<{ pan: string; cvv: string } | null>(null);
+  const [revealed, setRevealed] = useState<{ pan: string; cvv: string; holder: string | null } | null>(null);
   const [revealing, setRevealing] = useState(false);
 
   const selected = useMemo(
@@ -156,6 +190,7 @@ export function MyCards({
   const balanceLabel = `$${Number(selected.balance_usdc).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const panShown = revealed?.pan ?? selected.pan_display;
   const cvvShown = revealed?.cvv ?? "•••";
+  const holderShown = revealed?.holder ?? selected.holder_name;
 
   const toggleReveal = async () => {
     if (revealed) {
@@ -169,7 +204,7 @@ export function MyCards({
       toast.error(res.error ?? "Could not reveal card details");
       return;
     }
-    setRevealed({ pan: res.data.pan, cvv: res.data.cvv });
+    setRevealed({ pan: res.data.pan, cvv: res.data.cvv, holder: res.data.holder });
     toast.success("Card details visible — hide when done");
   };
 
@@ -225,7 +260,7 @@ export function MyCards({
         <div className="space-y-4 xl:col-span-2">
           <TwalletCard
             finish={finish}
-            holderName={selected.holder_name}
+            holderName={holderShown}
             panDisplay={panShown}
             expiry={expiry}
             cvv={cvvShown}
@@ -250,16 +285,25 @@ export function MyCards({
             {revealed ? "Hide full number & CVV" : "Show full number & CVV"}
           </Button>
           {revealed && (
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 font-mono text-sm text-amber-100">
-              <p>
-                <span className="text-surface-400">Number:</span> {revealed.pan}
-              </p>
-              <p className="mt-1">
-                <span className="text-surface-400">CVV:</span> {revealed.cvv}
-              </p>
-              <p className="mt-1">
-                <span className="text-surface-400">Expiry:</span> {expiry}
-              </p>
+            <div className="space-y-2 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300/90">
+                  Card details
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void toggleReveal()}
+                  className="text-[11px] font-medium text-surface-400 transition hover:text-white"
+                >
+                  Hide
+                </button>
+              </div>
+              <CopyValue label="Card number" value={revealed.pan} />
+              <div className="grid grid-cols-2 gap-2">
+                <CopyValue label="CVV" value={revealed.cvv} />
+                <CopyValue label="Expiry" value={expiry} />
+              </div>
+              {revealed.holder && <CopyValue label="Cardholder" value={revealed.holder} mono={false} />}
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
