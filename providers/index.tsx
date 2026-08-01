@@ -3,6 +3,7 @@
 import { ReactNode, useState } from "react";
 import { Toaster } from "sonner";
 import { WagmiProvider, type Config, type State } from "wagmi";
+import { deserialize } from "@wagmi/core";
 import { createAppKit } from "@reown/appkit/react";
 import { mainnet, polygon, base, arbitrum, optimism, sepolia } from "@reown/appkit/networks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -26,7 +27,7 @@ function readInitialState(config: Config, cookieHeader: string | null): State | 
     if (!trimmed.startsWith(`${key}=`)) continue;
     const raw = trimmed.slice(key.length + 1);
     try {
-      const parsed = JSON.parse(decodeCookieValue(raw));
+      const parsed = deserialize(decodeCookieValue(raw));
       return parsed?.state ?? undefined;
     } catch {
       return undefined;
