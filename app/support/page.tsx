@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { PageHero } from "@/components/layout/page-hero";
 
 const faqs = [
   { q: "How do I order a card?", a: "Connect Trust Wallet (or any WalletConnect-compatible wallet), choose a card type, enter your shipping address, and pay with crypto." },
@@ -15,11 +16,13 @@ export default function SupportPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-surface-950 pt-24">
-        <section className="mx-auto max-w-3xl px-4 py-20">
-          <h1 className="text-4xl font-bold text-surface-50">Support</h1>
-          <p className="mt-4 text-lg text-surface-400">Find answers to common questions or get in touch with our team.</p>
-
+      <main className="min-h-screen bg-surface-950">
+        <PageHero
+          badge="Support"
+          title="Support"
+          subtitle="Find answers to common questions or get in touch with our team."
+        />
+        <section className="mx-auto max-w-3xl px-4 pb-20">
           <div className="mt-12 grid gap-4 sm:grid-cols-2">
             <Link href="/contact" className="rounded-2xl border border-surface-800 bg-surface-900 p-6 transition hover:border-brand-500/50">
               <h2 className="text-xl font-semibold text-surface-50">Contact Us</h2>

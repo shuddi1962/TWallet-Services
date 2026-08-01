@@ -2,185 +2,252 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Bell, Wallet, CreditCard, ArrowUpRight, ArrowDownRight, CircleCheck, Package, TrendingUp, LayoutDashboard, Smartphone } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Wallet, CreditCard, ShoppingBag, TrendingUp, Plus, Activity, LayoutDashboard } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { TwalletCard } from "@/components/cards/twallet-card";
+import { cn } from "@/lib/utils/cn";
 
-const transactions = [
-  { name: "Amazon.com", amount: "$84.50", type: "payment", date: "Today, 2:34 PM" },
-  { name: "Spotify Premium", amount: "$9.99", type: "payment", date: "Yesterday" },
-  { name: "Top-up", amount: "+$500.00", type: "deposit", date: "Jul 20, 2026" },
-  { name: "Uber Ride", amount: "$23.40", type: "payment", date: "Jul 19, 2026" },
+const recentOrders = [
+  { id: "1", order_number: "TW-MSAFWLMJ-48YP", name: "Midnight Black", amount: 5.0, status: "delivered", time: "Today" },
+  { id: "2", order_number: "TW-MS5PZIRN-KB15", name: "Titanium", amount: 10.0, status: "delivered", time: "Yesterday" },
+  { id: "3", order_number: "TW-K7D2XQZN-91AH", name: "Sapphire", amount: 9.99, status: "paid", time: "Jul 28" },
+  { id: "4", order_number: "TW-RM4PVDLZ-62CK", name: "Gold", amount: 49.99, status: "processing", time: "Jul 26" },
 ];
 
-const timeline = [
-  { title: "Order Placed", time: "Jul 18, 2026", done: true },
-  { title: "Payment Verified", time: "Jul 18, 2026", done: true },
-  { title: "Card Issued", time: "Jul 19, 2026", done: true },
-  { title: "Shipped", time: "Expected Jul 25", done: false },
-  { title: "Delivered", time: "—", done: false },
-];
+const STATUS_STYLE: Record<string, string> = {
+  pending: "bg-amber-50 text-amber-700 ring-amber-200",
+  paid: "bg-sky-50 text-sky-700 ring-sky-200",
+  processing: "bg-violet-50 text-violet-700 ring-violet-200",
+  shipped: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+  delivered: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  cancelled: "bg-red-50 text-red-700 ring-red-200",
+  refunded: "bg-slate-100 text-slate-600 ring-slate-200",
+};
+
+function PremiumStat({
+  label,
+  value,
+  icon: Icon,
+  change,
+}: {
+  label: string;
+  value: string;
+  icon: typeof CreditCard;
+  change?: string;
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-black/5 opacity-20 blur-2xl" />
+      <div className="relative flex items-start justify-between">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-100 ring-1 ring-neutral-200">
+          <Icon className="h-5 w-5 text-black" />
+        </div>
+        {change && <span className="text-xs font-semibold text-emerald-600">{change}</span>}
+      </div>
+      <p className="relative mt-4 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+      <p className="relative mt-1 text-sm text-slate-500">{label}</p>
+    </div>
+  );
+}
 
 export function DashboardPreview() {
+  const featuredOrder = recentOrders[0] ?? recentOrders[1] ?? { id: "0", order_number: "TW-XXXX-0000", name: "Card", amount: 0, status: "pending", time: "" };
+
   return (
-    <section id="dashboard" className="relative py-20 lg:py-28 overflow-hidden bg-white">
-      <div className="absolute inset-0 bg-gradient-to-b from-brand-50/50 via-white to-brand-50/30 pointer-events-none" />
+    <section id="dashboard" className="relative overflow-hidden bg-white py-20 lg:py-28">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand-50/50 via-white to-brand-50/30" />
       <Container className="relative">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mx-auto max-w-2xl text-center mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mx-auto mb-12 max-w-2xl text-center"
+        >
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs">
             <LayoutDashboard className="h-3.5 w-3.5 text-brand-600" />
-            <span className="text-brand-700 font-medium">Dashboard Preview</span>
+            <span className="font-medium text-brand-700">Dashboard Preview</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-surface-900">Your control center</h2>
-          <p className="mt-3 text-surface-500 text-sm sm:text-base">Manage your cards, track orders, and monitor spending — all in one place.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            Your control center
+          </h2>
+          <p className="mt-3 text-sm text-slate-500 sm:text-base">
+            Manage your cards, track orders, and monitor spending — all in one place.
+          </p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative rounded-2xl border border-surface-200 bg-white shadow-xl shadow-brand-500/5 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-brand-500/5"
+        >
           <div className="p-5 sm:p-6 lg:p-8">
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
               <div>
-                <p className="text-sm text-surface-500">Welcome back</p>
-                <h3 className="text-xl font-bold text-surface-900">Alex Johnson</h3>
+                <p className="text-sm text-slate-500">Welcome back</p>
+                <h3 className="text-xl font-bold text-slate-900">Alex Johnson</h3>
               </div>
               <div className="flex items-center gap-3">
-                <button className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-surface-100 text-surface-500 hover:text-surface-700 hover:bg-surface-200 transition-all">
-                  <Bell className="h-4 w-4" />
-                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-error" />
-                </button>
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-xs font-bold text-white">AJ</div>
+                <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-100 text-slate-500">
+                  <Activity className="h-4 w-4" />
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black text-xs font-bold text-white">AJ</div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
-              {[
-                { label: "Balance", value: "$12,840", icon: Wallet, change: "+$840" },
-                { label: "Orders", value: "3", icon: Package, change: "+1" },
-                { label: "Cards", value: "2", icon: CreditCard, change: "" },
-                { label: "Spent", value: "$1,240", icon: TrendingUp, change: "+$230" },
-              ].map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-surface-200 bg-surface-50 p-3 sm:p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-surface-500">{stat.label}</span>
-                    <stat.icon className="h-3.5 w-3.5 text-surface-400" />
-                  </div>
-                  <p className="text-lg font-bold text-surface-900">{stat.value}</p>
-                  {stat.change && <p className="text-xs text-success mt-0.5">{stat.change}</p>}
-                </div>
-              ))}
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <PremiumStat label="Active Cards" value="2" icon={CreditCard} change="+1" />
+              <PremiumStat label="Total Orders" value="14" icon={ShoppingBag} change="+2" />
+              <PremiumStat label="Wallets" value="3" icon={Wallet} />
+              <PremiumStat label="Total Spent" value="$1,240" icon={TrendingUp} change="+$230" />
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-3">
-              <div className="lg:col-span-2 grid gap-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-xl border border-surface-200 bg-surface-50 p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-sm font-semibold text-surface-900">Your Card</h4>
-                      <Badge className="bg-success/10 text-success border-success/20 text-xs">Active</Badge>
+            <div className="grid gap-6 xl:grid-cols-5">
+              <div className="space-y-6 xl:col-span-3">
+                <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-neutral-900/10 blur-3xl" />
+                  <div className="relative mb-5 flex items-center justify-between">
+                    <div>
+                      <h4 className="text-lg font-semibold text-slate-900">My Card</h4>
+                      <p className="text-sm text-slate-500">Your latest order status</p>
                     </div>
-                    <div className="rounded-xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 p-[1px] shadow-lg shadow-brand-600/20">
-                      <div className="rounded-xl bg-gradient-to-br from-surface-900 to-dark p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-xs font-semibold text-white/60">TRUST</span>
-                          <svg className="h-4 w-6" viewBox="0 0 24 16" fill="none"><rect x="0.5" y="0.5" width="23" height="15" rx="2.5" fill="#00579F" /></svg>
-                        </div>
-                        <p className="font-mono text-sm tracking-[0.2em] text-white/80">•••• •••• •••• 4582</p>
-                        <div className="mt-3 flex items-center justify-between">
-                          <p className="text-[10px] text-white/40">Exp. 06/28</p>
-                          <p className="text-[10px] text-white/40">Y. NAME</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-xs text-surface-500">
-                      <CircleCheck className="h-3.5 w-3.5 text-success" />
-                      <span>Connected to Trust Wallet</span>
-                    </div>
+                    <Button size="sm" className="rounded-full" asChild>
+                      <Link href="/dashboard/cards">
+                        <Plus className="h-4 w-4" />
+                        New card
+                      </Link>
+                    </Button>
                   </div>
 
-                  <div className="rounded-xl border border-surface-200 bg-surface-50 p-4">
-                    <h4 className="text-sm font-semibold text-surface-900 mb-4">Order Tracking</h4>
-                    <div className="space-y-0">
-                      {timeline.map((step, i) => (
-                        <div key={step.title} className="flex items-start gap-3 pb-4 relative">
-                          {i < timeline.length - 1 && (
-                            <div className={`absolute left-[7px] top-4 h-full w-px ${step.done ? "bg-brand-500/30" : "bg-surface-200"}`} />
+                  <div className="relative grid gap-5 md:grid-cols-2">
+                    <TwalletCard
+                      finish="obsidian"
+                      holderName="ALEX JOHNSON"
+                      panDisplay="4532 •••• •••• 4281"
+                      expiry="08/29"
+                      network="visa"
+                      isVirtual={false}
+                      balanceLabel="$5.00"
+                      className="max-w-none"
+                    />
+
+                    <div className="flex flex-col justify-center space-y-3">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs text-slate-500">Order number</p>
+                        <p className="mt-1 font-mono text-sm text-slate-900">{featuredOrder.order_number}</p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs text-slate-500">Status</p>
+                        <span
+                          className={cn(
+                            "mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ring-1",
+                            STATUS_STYLE[featuredOrder.status] ?? STATUS_STYLE.pending,
                           )}
-                          <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full mt-1 ${step.done ? "bg-brand-500" : "bg-surface-300"}`}>
-                            {step.done && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
-                          </div>
-                          <div className="min-w-0">
-                            <p className={`text-sm ${step.done ? "text-surface-900" : "text-surface-500"}`}>{step.title}</p>
-                            <p className="text-xs text-surface-400">{step.time}</p>
-                          </div>
-                        </div>
-                      ))}
+                        >
+                          {featuredOrder.status}
+                        </span>
+                      </div>
+                      <Button variant="outline" className="rounded-xl" asChild>
+                        <Link href="/dashboard/cards">Manage card</Link>
+                      </Button>
+                      <Button variant="ghost" className="rounded-xl" asChild>
+                        <Link href="/dashboard/orders">View order details</Link>
+                      </Button>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-surface-200 bg-surface-50 p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-semibold text-surface-900">Recent Transactions</h4>
-                    <Link href="/dashboard/transactions" className="text-xs text-brand-600 hover:text-brand-500 transition-colors">View all</Link>
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-black" />
+                      <h4 className="text-lg font-semibold text-slate-900">Recent Orders</h4>
+                    </div>
+                    <Link href="/dashboard/orders" className="text-sm text-black hover:text-neutral-700">
+                      View all
+                    </Link>
                   </div>
-                  <div className="space-y-3">
-                    {transactions.map((tx) => (
-                      <div key={`${tx.name}-${tx.date}`} className="flex items-center justify-between py-2">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${tx.type === "deposit" ? "bg-success/10" : "bg-surface-100"}`}>
-                            {tx.type === "deposit" ? <ArrowDownRight className="h-4 w-4 text-success" /> : <ArrowUpRight className="h-4 w-4 text-surface-500" />}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-surface-900">{tx.name}</p>
-                            <p className="text-xs text-surface-500">{tx.date}</p>
-                          </div>
+                  <div className="space-y-2">
+                    {recentOrders.map((order) => (
+                      <div
+                        key={order.id}
+                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-slate-900">
+                            {order.name} — ${Number(order.amount).toFixed(2)}
+                          </p>
+                          <p className="mt-0.5 font-mono text-xs text-slate-500">{order.order_number}</p>
                         </div>
-                        <span className={`text-sm font-semibold ${tx.type === "deposit" ? "text-success" : "text-surface-900"}`}>{tx.amount}</span>
+                        <span
+                          className={cn(
+                            "ml-3 shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize ring-1",
+                            STATUS_STYLE[order.status] ?? STATUS_STYLE.pending,
+                          )}
+                        >
+                          {order.status}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-surface-200 bg-surface-50 p-5 flex flex-col">
-                <h4 className="text-sm font-semibold text-surface-900 mb-4">Trust Wallet</h4>
-                <div className="rounded-xl bg-white border border-surface-200 p-4 mb-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
-                      <Smartphone className="h-5 w-5 text-brand-600" />
+              <div className="space-y-6 xl:col-span-2">
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <h4 className="mb-4 text-lg font-semibold text-slate-900">Trust Wallet</h4>
+                  <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100">
+                        <Wallet className="h-5 w-5 text-black" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">Trust Wallet</p>
+                        <p className="font-mono text-xs text-slate-500">0x7a9...f3e2</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-surface-900">Trust Wallet</p>
-                      <p className="text-xs text-surface-500 font-mono">0x7a9...f3e2</p>
+                    <div className="flex items-center gap-2 text-xs text-emerald-600">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      Connected to Ethereum
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-success">
-                    <CircleCheck className="h-3.5 w-3.5" />
-                    <span>Connected to Ethereum</span>
+                  <div className="space-y-3">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="mb-1 text-xs text-slate-500">Available Balance</p>
+                      <p className="text-lg font-bold text-slate-900">2.45 ETH</p>
+                      <p className="text-xs text-slate-500">$8,240.00</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="mb-1 flex items-center justify-between">
+                        <p className="text-xs text-slate-500">Gas Price</p>
+                        <span className="text-xs text-slate-500">12 Gwei</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                        <div className="h-full w-3/5 rounded-full bg-black" />
+                      </div>
+                    </div>
+                  </div>
+                  <Button fullWidth className="mt-4 rounded-full" asChild>
+                    <Link href="/dashboard/cards">
+                      Order Another Card
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </div>
+
+                <div className="flex items-start gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-black">
+                    <ArrowUpRight className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">Real-time tracking</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Payments verified on-chain in minutes with live status updates.
+                    </p>
                   </div>
                 </div>
-                <div className="space-y-3 flex-1">
-                  <div className="rounded-xl bg-white border border-surface-200 p-3">
-                    <p className="text-xs text-surface-500 mb-1">Available Balance</p>
-                    <p className="text-lg font-bold text-surface-900">2.45 ETH</p>
-                    <p className="text-xs text-surface-500">$8,240.00</p>
-                  </div>
-                  <div className="rounded-xl bg-white border border-surface-200 p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-xs text-surface-500">Gas Price</p>
-                      <span className="text-xs text-surface-500">12 Gwei</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-surface-100 overflow-hidden">
-                      <div className="h-full w-3/5 rounded-full bg-gradient-to-r from-brand-500 to-brand-400" />
-                    </div>
-                  </div>
-                </div>
-                <Button fullWidth size="sm" className="mt-4 bg-gradient-to-r from-brand-500 to-brand-700 text-white border-0 shadow-lg shadow-brand-500/20" asChild>
-                  <Link href="/dashboard/cards">
-                    Order Another Card
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </Button>
               </div>
             </div>
           </div>

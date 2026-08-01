@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { PageHero } from "@/components/layout/page-hero";
 
 const faqItems = [
   {
@@ -53,13 +54,13 @@ export default function FAQPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-surface-950 pt-24">
-        <section className="mx-auto max-w-3xl px-4 py-20">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-surface-50">Frequently Asked Questions</h1>
-            <p className="mt-4 text-lg text-surface-400">Everything you need to know about TWallet.</p>
-          </div>
-
+      <main className="min-h-screen bg-surface-950">
+        <PageHero
+          badge="FAQ"
+          title="Frequently Asked Questions"
+          subtitle="Everything you need to know about TWallet."
+        />
+        <section className="mx-auto max-w-3xl px-4 pb-20">
           <div className="mt-12 space-y-4">
             {faqItems.map((item) => (
               <details key={item.q} className="group rounded-2xl border border-surface-800 bg-surface-900 transition hover:border-surface-700">

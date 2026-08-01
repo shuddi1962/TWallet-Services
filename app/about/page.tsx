@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { PageHero } from "@/components/layout/page-hero";
 import { Shield, Globe, Users, Zap } from "lucide-react";
 
 const values = [
@@ -13,13 +14,13 @@ export default function AboutPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-surface-950 pt-24">
-        <section className="mx-auto max-w-4xl px-4 py-20">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-surface-50">About TWallet</h1>
-            <p className="mt-4 text-lg text-surface-400">Bridging crypto and everyday spending.</p>
-          </div>
-
+      <main className="min-h-screen bg-surface-950">
+        <PageHero
+          badge="About"
+          title="About TWallet"
+          subtitle="Bridging crypto and everyday spending."
+        />
+        <section className="mx-auto max-w-4xl px-4 pb-20">
           <div className="mt-16 space-y-8">
             <div className="rounded-2xl border border-surface-800 bg-surface-900/50 p-8">
               <h2 className="text-2xl font-bold text-surface-50">Our Mission</h2>

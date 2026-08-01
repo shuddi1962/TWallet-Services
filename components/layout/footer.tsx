@@ -1,43 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Twitter, Github, Send, Linkedin, CheckCircle2, Smartphone } from "lucide-react";
+import { useActionState } from "react";
+import { Twitter, Github, Send, Linkedin, CheckCircle2, Smartphone, ShieldCheck } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TrustLogo } from "@/components/brand/trust-logo";
+import { subscribeNewsletter } from "@/features/newsletter/server/actions";
 
 const footerLinks = {
   Company: [
     { href: "/about", label: "About Us" },
-    { href: "/contact", label: "Contact" },
-    { href: "/support", label: "Support" },
-    { href: "/faq", label: "FAQ" },
-  ],
-  Resources: [
     { href: "/how-it-works", label: "How It Works" },
     { href: "/cards", label: "Cards" },
     { href: "/pricing", label: "Pricing" },
+  ],
+  Support: [
+    { href: "/support", label: "Support" },
     { href: "/faq", label: "FAQ" },
+    { href: "/contact", label: "Contact" },
+    { href: "/auth/login", label: "Dashboard" },
   ],
   Legal: [
     { href: "/terms", label: "Terms of Service" },
     { href: "/privacy", label: "Privacy Policy" },
-  ],
-  Links: [
-    { href: "/about", label: "About" },
-    { href: "/contact", label: "Contact" },
-    { href: "/auth/login", label: "Dashboard" },
-    { href: "/faq", label: "FAQ" },
+    { href: "/cookies", label: "Cookie Policy" },
+    { href: "/refunds", label: "Refund Policy" },
+    { href: "/disclaimer", label: "Disclaimer" },
   ],
 };
 
 const socialLinks = [
-  { href: "https://twitter.com", icon: Twitter, label: "Twitter" },
+  { href: "https://x.com", icon: Twitter, label: "Twitter / X" },
   { href: "https://discord.com", icon: Send, label: "Discord" },
   { href: "https://t.me", icon: Send, label: "Telegram" },
-  { href: "https://github.com", icon: Github, label: "GitHub" },
+  { href: "https://github.com/shuddi1962/TWallet-Services", icon: Github, label: "GitHub" },
   { href: "https://linkedin.com", icon: Linkedin, label: "LinkedIn" },
 ];
 
@@ -49,18 +47,10 @@ const securityBadges = [
 ];
 
 export function Footer() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setSubmitted(true);
-    }
-  };
+  const [state, formAction, pending] = useActionState(subscribeNewsletter, undefined);
 
   return (
-    <footer className="bg-surface-50 border-t border-surface-200 overflow-hidden">
+    <footer className="border-t border-surface-200 bg-surface-50">
       <Container>
         <div className="py-12 lg:py-16">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
@@ -68,7 +58,7 @@ export function Footer() {
               <Link href="/" className="group inline-flex">
                 <TrustLogo size="md" variant="dark" />
               </Link>
-              <p className="mt-4 max-w-xs text-sm text-surface-500 leading-relaxed">
+              <p className="mt-4 max-w-xs text-sm leading-relaxed text-surface-500">
                 Order premium crypto cards with secure blockchain payments. Optimized for Trust Wallet.
               </p>
 
@@ -77,8 +67,9 @@ export function Footer() {
                 <span>Optimized for Trust Wallet</span>
               </div>
 
-              <div className="mt-2 text-xs text-surface-400">
-                Powered by WalletConnect
+              <div className="mt-2 flex items-center gap-2 text-xs text-surface-400">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Powered by WalletConnect</span>
               </div>
 
               <div className="mt-6 flex gap-3">
@@ -97,32 +88,41 @@ export function Footer() {
               </div>
 
               <div className="mt-8">
-                <h3 id="newsletter-heading" className="text-sm font-semibold text-surface-900 mb-4">Stay updated</h3>
-                {submitted ? (
-                  <div className="flex items-center gap-2 rounded-lg bg-success/10 px-4 py-3 text-sm text-success border border-success/20 max-w-xs">
+                <h3 id="newsletter-heading" className="mb-4 text-sm font-semibold text-surface-900">
+                  Stay updated
+                </h3>
+                {state?.success ? (
+                  <div className="flex max-w-xs items-center gap-2 rounded-lg border border-success/20 bg-success/10 px-4 py-3 text-sm text-success">
                     <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <span>Thanks for subscribing!</span>
+                    <span>{state.success}</span>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="flex max-w-xs gap-2">
-                    <Input
-                      id="newsletter-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      aria-labelledby="newsletter-heading"
-                      className="flex-1 h-10 bg-white border-surface-200 text-surface-900 placeholder:text-surface-400 text-sm focus:border-brand-500"
-                    />
-                    <Button
-                      type="submit"
-                      size="sm"
-                      className="bg-brand-500 text-white hover:bg-brand-600 shrink-0"
-                    >
-                      Subscribe
-                    </Button>
-                  </form>
+                  <>
+                    {state?.error && (
+                      <div className="mb-2 max-w-xs rounded-lg border border-error/20 bg-error/10 px-3 py-2 text-xs text-error" role="alert">
+                        {state.error}
+                      </div>
+                    )}
+                    <form action={formAction} className="flex max-w-xs gap-2">
+                      <Input
+                        id="newsletter-email"
+                        type="email"
+                        name="email"
+                        placeholder="Enter your email"
+                        required
+                        aria-labelledby="newsletter-heading"
+                        className="h-10 flex-1 border-surface-200 bg-white text-sm text-surface-900 placeholder:text-surface-400 focus:border-brand-500"
+                      />
+                      <Button
+                        type="submit"
+                        size="sm"
+                        loading={pending}
+                        className="shrink-0 bg-brand-500 text-white hover:bg-brand-600"
+                      >
+                        Subscribe
+                      </Button>
+                    </form>
+                  </>
                 )}
               </div>
             </div>
@@ -149,18 +149,17 @@ export function Footer() {
           <div className="mt-10 border-t border-surface-200 pt-6">
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <p className="text-xs text-surface-500">
-                &copy; {new Date().getFullYear()} Trust. All rights reserved.
+                &copy; {new Date().getFullYear()} TWallet. All rights reserved.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 {securityBadges.map((badge) => (
                   <div
                     key={badge.label}
                     className="flex items-center gap-1.5 rounded-full bg-surface-200 px-3 py-1"
+                    title={badge.description}
                   >
                     <div className="h-1.5 w-1.5 rounded-full bg-success" />
-                    <span className="text-xs text-surface-600">
-                      {badge.label}
-                    </span>
+                    <span className="text-xs text-surface-600">{badge.label}</span>
                   </div>
                 ))}
               </div>

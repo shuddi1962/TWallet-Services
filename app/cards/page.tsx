@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { PageHero } from "@/components/layout/page-hero";
 
 const cards = [
   { name: "Midnight Black", color: "from-gray-900 to-black", accent: "text-gray-300", badge: "Most Popular" },
@@ -14,13 +15,13 @@ export default function CardsPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-surface-950 pt-24">
-        <section className="mx-auto max-w-6xl px-4 py-20">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-surface-50">Choose Your Card</h1>
-            <p className="mt-4 text-lg text-surface-400">Select from our range of premium card designs.</p>
-          </div>
-
+      <main className="min-h-screen bg-surface-950">
+        <PageHero
+          badge="Cards"
+          title="Choose Your Card"
+          subtitle="Select from our range of premium card designs."
+        />
+        <section className="mx-auto max-w-6xl px-4 pb-20">
           <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {cards.map((card) => (
               <div

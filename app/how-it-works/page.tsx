@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { PageHero } from "@/components/layout/page-hero";
 
 const steps = [
   { number: "01", title: "Create Account", description: "Sign up with your email and create a secure password to get started." },
@@ -15,13 +16,13 @@ export default function HowItWorksPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-surface-950 pt-24">
-        <section className="mx-auto max-w-4xl px-4 py-20">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-surface-50">How It Works</h1>
-            <p className="mt-4 text-lg text-surface-400">Get your crypto-funded card in 7 simple steps.</p>
-          </div>
-          <div className="mt-16 space-y-12">
+      <main className="min-h-screen bg-surface-950">
+        <PageHero
+          badge="How It Works"
+          title="How It Works"
+          subtitle="Get your crypto-funded card in 7 simple steps."
+        />
+        <section className="mx-auto max-w-4xl px-4 pb-20">          <div className="mt-16 space-y-12">
             {steps.map((step, i) => (
               <div key={step.number} className="relative flex gap-6">
                 {i < steps.length - 1 && (

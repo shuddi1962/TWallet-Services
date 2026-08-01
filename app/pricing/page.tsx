@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { PageHero } from "@/components/layout/page-hero";
 import { Check } from "lucide-react";
 
 const plans = [
@@ -37,13 +38,13 @@ export default function PricingPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-surface-950 pt-24">
-        <section className="mx-auto max-w-6xl px-4 py-20">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-surface-50">Simple Pricing</h1>
-            <p className="mt-4 text-lg text-surface-400">Choose the plan that fits your needs. No hidden fees.</p>
-          </div>
-          <div className="mt-16 grid gap-8 lg:grid-cols-3">
+      <main className="min-h-screen bg-surface-950">
+        <PageHero
+          badge="Pricing"
+          title="Simple Pricing"
+          subtitle="Choose the plan that fits your needs. No hidden fees."
+        />
+        <section className="mx-auto max-w-6xl px-4 pb-20">          <div className="mt-16 grid gap-8 lg:grid-cols-3">
             {plans.map((plan) => (
               <div
                 key={plan.name}

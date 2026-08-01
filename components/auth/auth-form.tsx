@@ -83,7 +83,7 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
                   autoComplete="email"
                   required
                   placeholder="you@example.com"
-                  className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500"
+                  className="border-surface-300 bg-white text-surface-900 placeholder:text-surface-400"
                 />
               </div>
 
@@ -96,7 +96,7 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
                   autoComplete="current-password"
                   required
                   placeholder="••••••••"
-                  className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500"
+                  className="border-surface-300 bg-white text-surface-900 placeholder:text-surface-400"
                 />
               </div>
 
@@ -130,17 +130,17 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
 
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-surface-200">Full name</Label>
-                <Input id="name" name="name" type="text" required placeholder="John Doe" className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500" />
+                <Input id="name" name="name" type="text" required placeholder="John Doe" className="border-surface-300 bg-white text-surface-900 placeholder:text-surface-400" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-surface-200">Email</Label>
-                <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500" />
+                <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" className="border-surface-300 bg-white text-surface-900 placeholder:text-surface-400" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-surface-200">Password</Label>
-                <Input id="password" name="password" type="password" autoComplete="new-password" required placeholder="••••••••" aria-describedby="password-hint" className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500" />
+                <Input id="password" name="password" type="password" autoComplete="new-password" required placeholder="••••••••" aria-describedby="password-hint" className="border-surface-300 bg-white text-surface-900 placeholder:text-surface-400" />
                 <p id="password-hint" className="text-xs text-surface-400">
                   Min 8 chars, 1 uppercase, 1 lowercase, 1 number
                 </p>
