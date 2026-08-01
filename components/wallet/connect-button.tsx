@@ -14,7 +14,7 @@ function short(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
-export function ConnectButton() {
+export function ConnectButton({ hideWhenSignedIn = false }: { hideWhenSignedIn?: boolean }) {
   const { disconnect, isConnected, address } = useWalletConnect();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -48,6 +48,10 @@ export function ConnectButton() {
     }
     openConnectDialog();
   };
+
+  if (hideWhenSignedIn && signedIn) {
+    return null;
+  }
 
   const copy = async () => {
     if (!address) return;
