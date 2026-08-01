@@ -44,8 +44,8 @@ interface Order {
   order_number: string;
   status: string;
   amount_usdc: number;
-  network: string;
-  token: string;
+  network: string | null;
+  token: string | null;
   tx_hash: string | null;
   created_at: string;
   paid_at: string | null;

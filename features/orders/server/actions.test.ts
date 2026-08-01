@@ -102,14 +102,70 @@ describe("createOrder", () => {
 
 describe("getOrders", () => {
   it("returns error if not authenticated", async () => {
+    const supabase = await (createServerSupabaseClient as any)();
+    supabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
     const result = await getOrders();
     expect(result).toEqual({ error: "Not authenticated", data: null });
+  });
+
+  it("returns orders on success", async () => {
+    const rows = [{ id: "order-1", order_number: "TW-ABC", status: "pending" }];
+    const supabase = await (createServerSupabaseClient as any)();
+    supabase.from = vi.fn((name: string) => {
+      const table = getTable(name);
+      if (name === "card_orders") {
+        const chain: any = {
+          select: vi.fn(() => chain),
+          order: vi.fn(() => ({ error: null, data: rows })),
+        };
+        return chain;
+      }
+      return table;
+    });
+    const result = await getOrders();
+    expect(result).toEqual({ data: rows, error: null });
+  });
+
+  it("returns error when query fails", async () => {
+    const supabase = await (createServerSupabaseClient as any)();
+    supabase.from = vi.fn((name: string) => {
+      if (name === "card_orders") {
+        const chain: any = {
+          select: vi.fn(() => chain),
+          order: vi.fn(() => ({ error: new Error("boom"), data: null })),
+        };
+        return chain;
+      }
+      return getTable(name);
+    });
+    const result = await getOrders();
+    expect(result).toEqual({ error: "boom", data: null });
   });
 });
 
 describe("getOrder", () => {
   it("returns error if not authenticated", async () => {
+    const supabase = await (createServerSupabaseClient as any)();
+    supabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
     const result = await getOrder("order-1");
     expect(result).toEqual({ error: "Not authenticated", data: null });
+  });
+
+  it("returns order on success", async () => {
+    const row = { id: "order-1", order_number: "TW-ABC", status: "paid" };
+    const supabase = await (createServerSupabaseClient as any)();
+    supabase.from = vi.fn((name: string) => {
+      if (name === "card_orders") {
+        const chain: any = {
+          select: vi.fn(() => chain),
+          eq: vi.fn(() => chain),
+          single: vi.fn(() => ({ error: null, data: row })),
+        };
+        return chain;
+      }
+      return getTable(name);
+    });
+    const result = await getOrder("order-1");
+    expect(result).toEqual({ data: row, error: null });
   });
 });
