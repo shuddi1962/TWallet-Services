@@ -83,7 +83,7 @@ export function AdminSweepPanel({ wallets, recentSweeps }: { wallets: ReceivingW
               id="wallet"
               value={selectedWallet}
               onChange={(e) => setSelectedWallet(e.target.value)}
-              className="flex h-10 w-full rounded-lg border border-surface-800 bg-surface-950 px-3 py-2 text-sm text-white placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               <option value="">Select a wallet...</option>
               {activeWallets.map((w) => (
@@ -129,7 +129,7 @@ export function AdminSweepPanel({ wallets, recentSweeps }: { wallets: ReceivingW
             )}
           </Button>
 
-          <p className="text-xs text-surface-500">
+          <p className="text-xs text-slate-400">
             This creates a sweep request. You must sign and broadcast the transaction using your wallet.
           </p>
         </CardContent>
@@ -142,33 +142,33 @@ export function AdminSweepPanel({ wallets, recentSweeps }: { wallets: ReceivingW
         </CardHeader>
         <CardContent className="space-y-3">
           {recentSweeps.length === 0 ? (
-            <p className="text-sm text-surface-500">No sweep transactions yet.</p>
+            <p className="text-sm text-slate-400">No sweep transactions yet.</p>
           ) : (
             recentSweeps.slice(0, 10).map((s) => (
-              <div key={s.id} className="rounded-lg border border-surface-800 bg-surface-900/50 p-3">
+              <div key={s.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-surface-200">{s.amount} {s.token_symbol}</span>
+                  <span className="text-xs font-medium text-slate-700">{s.amount} {s.token_symbol}</span>
                   {statusBadge(s.status)}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-surface-500">
+                <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Wallet className="h-3 w-3" />
                   <span className="font-mono">{s.from_address.slice(0, 6)}...{s.from_address.slice(-4)}</span>
                   <span>→</span>
                   <span className="font-mono">{s.to_address.slice(0, 6)}...{s.to_address.slice(-4)}</span>
                 </div>
-                <div className="mt-1 flex items-center justify-between text-xs text-surface-500">
+                <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
                   <span>{formatDistanceToNow(new Date(s.created_at), { addSuffix: true })}</span>
                   {s.tx_hash && (
                     <button
                       onClick={() => window.open(`https://etherscan.io/tx/${s.tx_hash}`, "_blank")}
-                      className="flex items-center gap-1 text-brand-400 hover:text-brand-300"
+                      className="flex items-center gap-1 text-brand-600 hover:text-brand-700"
                     >
                       <ExternalLink className="h-3 w-3" /> View
                     </button>
                   )}
                 </div>
                 {s.error_message && (
-                  <p className="mt-1 text-xs text-red-400">{s.error_message}</p>
+                  <p className="mt-1 text-xs text-red-600">{s.error_message}</p>
                 )}
               </div>
             ))

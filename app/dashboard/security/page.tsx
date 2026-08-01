@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useActionState } from "react";
 import { toast } from "sonner";
 import {
   Shield, Lock, Wallet as WalletIcon, Monitor, AlertTriangle, Clock,
-  LogOut, Check, X, Eye, Trash2,
+  Check, Eye, Loader2,
 } from "lucide-react";
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
@@ -14,191 +14,237 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
+import { getSecurityInfo } from "@/features/dashboard/server/actions";
+import { updatePassword } from "@/features/auth/server/actions";
+
+interface WalletRow {
+  id: string;
+  address: string;
+  network: string;
+  network_id: number;
+  is_default: boolean;
+  connected_at: string;
+  last_used_at: string | null;
+}
+
+function short(addr: string) {
+  return `${addr.slice(0, 8)}…${addr.slice(-6)}`;
+}
 
 export default function SecurityPage() {
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [wallets, setWallets] = useState<WalletRow[]>([]);
+  const [email, setEmail] = useState("");
+  const [lastLogin, setLastLogin] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleChangePassword = () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+  const [pwdState, pwdAction, pwdPending] = useActionState(updatePassword, undefined);
+
+  useEffect(() => {
+    void (async () => {
+      const res = await getSecurityInfo();
+      if (res.error === null && res.data) {
+        setWallets(res.data.wallets as WalletRow[]);
+        setEmail(res.data.email);
+        setLastLogin(res.data.lastLogin ? new Date(res.data.lastLogin) : null);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const handleChangePassword = (formData: FormData) => {
     if (newPassword !== confirmPassword) {
       toast.error("New passwords do not match");
       return;
     }
-    if (newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
-    }
-    toast.success("Password changed successfully");
-    setChangePasswordOpen(false);
-    setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+    pwdAction(formData);
   };
 
-  const handleRevokeSession = () => toast.success("Session revoked");
-  const handleLogoutAll = () => toast.success("Logged out of all devices");
-
-  // Password strength
   const strength = newPassword.length < 8 ? 0 : newPassword.length < 10 ? 1 : newPassword.match(/[A-Z]/) && newPassword.match(/[0-9]/) && newPassword.match(/[^a-zA-Z0-9]/) ? 3 : 2;
   const strengthLabel = ["Too short", "Weak", "Fair", "Strong"][strength];
-  const strengthColor = ["text-surface-500", "text-red-400", "text-yellow-400", "text-green-400"][strength];
+  const strengthColor = ["text-slate-400", "text-red-500", "text-amber-500", "text-emerald-600"][strength];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Security</h1>
-        <p className="mt-1 text-sm text-surface-400">Manage your account security</p>
+        <h1 className="text-2xl font-bold text-slate-900">Security</h1>
+        <p className="mt-1 text-sm text-slate-500">Manage your account security</p>
       </div>
 
-      {/* 1. Password Status */}
+      {pwdState?.error && (
+        <div className="rounded-xl border border-error/20 bg-error/10 p-4 text-sm text-error" role="alert">{pwdState.error}</div>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white"><Lock className="h-5 w-5" aria-hidden="true" />Password Status</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Lock className="h-5 w-5" aria-hidden="true" />Password Status</CardTitle>
           <CardDescription>Keep your account secure with a strong password</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-surface-400">Last changed: 2 months ago</p>
-              <p className={`text-sm font-medium ${strengthColor}`}>Strength: {strength > 0 ? strengthLabel : "—"}</p>
+              <p className="text-sm text-slate-500">Account: {email}</p>
+              <p className={`text-sm font-medium ${newPassword ? strengthColor : "text-slate-400"}`}>Password strength: {newPassword ? strengthLabel : "—"}</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setChangePasswordOpen((v) => !v)}>
               {changePasswordOpen ? "Cancel" : "Change Password"}
             </Button>
           </div>
           {changePasswordOpen && (
-            <div className="space-y-4 rounded-lg border border-white/10 bg-surface-800/30 p-4">
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-              </div>
+            <form
+              action={handleChangePassword}
+              className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+            >
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters" />
+                <Input
+                  id="newPassword"
+                  name="password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  required
+                />
                 {newPassword && <p className={`text-xs ${strengthColor}`}>Strength: {strengthLabel}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
               </div>
-              <Button onClick={handleChangePassword}><Check className="h-4 w-4" aria-hidden="true" />Update Password</Button>
+              <Button type="submit" loading={pwdPending}>
+                <Check className="h-4 w-4" aria-hidden="true" />
+                Update Password
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><WalletIcon className="h-5 w-5" aria-hidden="true" />Connected Wallets</CardTitle>
+          <CardDescription>Wallets linked to your account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
+          ) : wallets.length === 0 ? (
+            <div className="flex items-center gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100"><WalletIcon className="h-5 w-5 text-slate-500" aria-hidden="true" /></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-900">No wallets connected</p>
+                <p className="text-sm text-slate-500">Connect a wallet from the Wallet page</p>
+              </div>
+              <Button size="sm" asChild>
+                <a href="/dashboard/wallet">Connect</a>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {wallets.map((w) => (
+                <div key={w.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 ring-1 ring-brand-200">
+                      <WalletIcon className="h-5 w-5 text-brand-600" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-mono text-sm font-medium text-slate-900">{short(w.address)}</p>
+                      <p className="text-xs text-slate-500">{w.network} · connected {formatDistanceToNow(new Date(w.connected_at), { addSuffix: true })}</p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {w.is_default && <Badge variant="secondary">Default</Badge>}
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="/dashboard/wallet">Manage</a>
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* 2. Connected Wallets */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white"><WalletIcon className="h-5 w-5" aria-hidden="true" />Connected Wallets</CardTitle>
-          <CardDescription>Wallets linked to your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4 rounded-lg border border-surface-800 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-800"><WalletIcon className="h-5 w-5 text-surface-400" aria-hidden="true" /></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">No wallets connected</p>
-              <p className="text-sm text-surface-400">Connect a wallet from the dashboard overview</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 3. Recent Login Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white"><Clock className="h-5 w-5" aria-hidden="true" />Recent Login Activity</CardTitle>
-          <CardDescription>Track sign-in events on your account</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" aria-hidden="true" />Account Activity</CardTitle>
+          <CardDescription>Your account timeline</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Monitor className="h-4 w-4 text-surface-400" aria-hidden="true" />
-                <div><p className="text-sm text-white">Chrome on macOS</p><p className="text-xs text-surface-500">San Francisco, CA · 192.168.1.1</p></div>
+                <Monitor className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Last sign-in</p>
+                  <p className="text-xs text-slate-500">{lastLogin ? formatDistanceToNow(lastLogin, { addSuffix: true }) : "—"}</p>
+                </div>
               </div>
-              <span className="text-xs text-surface-500">2 hours ago</span>
+              <Badge variant="success">Current</Badge>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Monitor className="h-4 w-4 text-surface-400" aria-hidden="true" />
-                <div><p className="text-sm text-white">Safari on iOS</p><p className="text-xs text-surface-500">New York, NY · 10.0.0.2</p></div>
+                <Shield className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Email verification</p>
+                  <p className="text-xs text-slate-500">Your email is verified and active</p>
+                </div>
               </div>
-              <span className="text-xs text-surface-500">3 days ago</span>
+              <Badge variant="success">Verified</Badge>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* 4. Trusted Devices */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white"><Shield className="h-5 w-5" aria-hidden="true" />Trusted Devices</CardTitle>
-          <CardDescription>Devices that bypass 2FA on future logins</CardDescription>
+          <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5" aria-hidden="true" />Security Tips</CardTitle>
+          <CardDescription>Keep your account safe</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div><p className="text-sm text-white">MacBook Pro</p><p className="text-xs text-surface-500">Added Jul 20, 2026</p></div>
-              <Button variant="ghost" size="sm" onClick={() => toast.success("Device removed")}><Trash2 className="h-4 w-4" aria-hidden="true" />Remove</Button>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div><p className="text-sm text-white">iPhone 15 Pro</p><p className="text-xs text-surface-500">Added Jul 18, 2026</p></div>
-              <Button variant="ghost" size="sm" onClick={() => toast.success("Device removed")}><Trash2 className="h-4 w-4" aria-hidden="true" />Remove</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 5. Security Alerts */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white"><AlertTriangle className="h-5 w-5" aria-hidden="true" />Security Alerts</CardTitle>
-          <CardDescription>Recent security events on your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4">
-            <AlertTriangle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500" aria-hidden="true" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-white">New device sign-in</p>
-              <p className="text-xs text-surface-400">A new device signed into your account from San Francisco, CA · 2 hours ago</p>
+              <p className="text-sm font-medium text-slate-900">Never share your wallet secrets</p>
+              <p className="mt-1 text-xs text-slate-600">
+                TWallet is a non-custodial platform. We will never ask for your seed phrase, private key,
+                or keystore password. Anyone who does is a scammer — do not share them.
+              </p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => toast.success("Alert dismissed")}>Dismiss</Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* 6. Active Sessions */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white"><Eye className="h-5 w-5" aria-hidden="true" />Active Sessions</CardTitle>
-          <CardDescription>Devices currently signed into your account</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Eye className="h-5 w-5" aria-hidden="true" />Sessions</CardTitle>
+          <CardDescription>Devices signed into your account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Monitor className="h-4 w-4 text-surface-400" aria-hidden="true" />
-                <div><p className="text-sm text-white">Chrome on macOS <Badge variant="success" className="ml-2">Current</Badge></p><p className="text-xs text-surface-500">San Francisco, CA · 2 hours ago</p></div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Monitor className="h-4 w-4 text-slate-400" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-medium text-slate-900">This device <Badge variant="success" className="ml-2">Current</Badge></p>
+                <p className="text-xs text-slate-500">{lastLogin ? formatDistanceToNow(lastLogin, { addSuffix: true }) : "—"}</p>
               </div>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Monitor className="h-4 w-4 text-surface-400" aria-hidden="true" />
-                <div><p className="text-sm text-white">Safari on iOS</p><p className="text-xs text-surface-500">New York, NY · 3 days ago</p></div>
-              </div>
-              <Button variant="ghost" size="sm" onClick={handleRevokeSession}><X className="h-4 w-4" aria-hidden="true" />Revoke</Button>
             </div>
           </div>
           <Separator />
-          <Button variant="outline" onClick={handleLogoutAll}><LogOut className="h-4 w-4" aria-hidden="true" />Logout of All Devices</Button>
+          <p className="text-xs text-slate-500">
+            Need to sign out everywhere? Use the <strong>Log out</strong> option in the sidebar, then sign in again on each device you want to keep.
+          </p>
         </CardContent>
       </Card>
     </div>

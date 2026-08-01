@@ -19,11 +19,14 @@ export default function RegisterPage() {
         <p className="mt-1 text-surface-400">Get your TWALLET card today</p>
       </div>
 
-      <Card>
+      <Card className="border-white/10 bg-surface-900/70">
         <CardContent className="p-6">
           <form
             action={formAction}
-            onSubmit={() => trackSignup()}
+            onSubmit={() => {
+              trackSignup();
+              window.sessionStorage.setItem("tw-pending-connect", "1");
+            }}
             className="space-y-4"
           >
             {state?.error && (
@@ -33,18 +36,18 @@ export default function RegisterPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
-              <Input id="name" name="name" type="text" required placeholder="John Doe" />
+              <Label htmlFor="name" className="text-surface-200">Full name</Label>
+              <Input id="name" name="name" type="text" required placeholder="John Doe" className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" />
+              <Label htmlFor="email" className="text-surface-200">Email</Label>
+              <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" autoComplete="new-password" required placeholder="••••••••" aria-describedby="password-hint" />
+              <Label htmlFor="password" className="text-surface-200">Password</Label>
+              <Input id="password" name="password" type="password" autoComplete="new-password" required placeholder="••••••••" aria-describedby="password-hint" className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500" />
               <p id="password-hint" className="text-xs text-surface-400">
                 Min 8 chars, 1 uppercase, 1 lowercase, 1 number
               </p>

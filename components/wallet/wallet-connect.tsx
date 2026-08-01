@@ -32,11 +32,11 @@ export function WalletConnect() {
   };
 
   return (
-    <Card className="overflow-hidden border-white/10 bg-gradient-to-br from-surface-900 via-surface-900 to-brand-950/40">
+    <Card className="overflow-hidden border-slate-200 bg-gradient-to-br from-white via-white to-brand-50/40">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-white">
+            <CardTitle className="text-slate-900">
               {isConnected ? "Wallet Connected" : "Connect Wallet"}
             </CardTitle>
             <CardDescription className="mt-1">
@@ -56,11 +56,11 @@ export function WalletConnect() {
       <CardContent>
         {!isConnected ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/20 to-accent-500/20 ring-1 ring-brand-500/30">
-              <Wallet className="h-7 w-7 text-brand-300" />
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/20 to-accent-500/20 ring-1 ring-brand-200">
+              <Wallet className="h-7 w-7 text-brand-600" />
             </div>
-            <h3 className="text-base font-semibold text-white">No wallet connected</h3>
-            <p className="mt-2 max-w-sm text-sm text-surface-400">
+            <h3 className="text-base font-semibold text-slate-900">No wallet connected</h3>
+            <p className="mt-2 max-w-sm text-sm text-slate-500">
               Connect to order cards and send USDC. You keep your keys — we never custody funds.
             </p>
             <Button
@@ -113,7 +113,7 @@ export function WalletConnect() {
                 variant="ghost"
                 size="sm"
                 onClick={() => void disconnect()}
-                className="text-red-400 hover:bg-red-500/10"
+                className="text-red-600 hover:bg-red-50"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Disconnect

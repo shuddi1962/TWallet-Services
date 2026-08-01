@@ -9,15 +9,14 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#05080f] text-surface-100">
+    <div className="min-h-screen bg-[#fafafa] text-slate-900">
       <AdminSidebar
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
       />
       <div className="transition-all duration-300 lg:pl-[260px]">
         <AdminHeader onMenuToggle={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
-        <main className="relative p-4 md:p-6" aria-label="Admin Dashboard">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.07),transparent_45%)]" />
+        <main className="relative min-h-screen p-4 md:p-6" aria-label="Admin Dashboard">
           <div className="relative mx-auto max-w-7xl">{children}</div>
         </main>
       </div>

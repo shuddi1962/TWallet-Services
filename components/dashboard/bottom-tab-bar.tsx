@@ -20,7 +20,7 @@ export function BottomTabBar() {
     <nav
       role="tablist"
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#070b14]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden"
     >
       <div className="flex items-center justify-around px-1 pt-1">
         {tabs.map((tab) => {
@@ -38,13 +38,13 @@ export function BottomTabBar() {
               aria-label={tab.label}
               className={cn(
                 "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors",
-                isActive ? "text-brand-300" : "text-surface-500 hover:text-surface-300",
+                isActive ? "text-black" : "text-slate-400 hover:text-slate-600",
               )}
             >
               <div
                 className={cn(
                   "flex h-8 w-12 items-center justify-center rounded-xl transition-colors",
-                  isActive && "bg-brand-500/15 ring-1 ring-brand-500/25",
+                  isActive && "bg-black text-white shadow-sm",
                 )}
               >
                 <tab.icon className="h-5 w-5" aria-hidden="true" />

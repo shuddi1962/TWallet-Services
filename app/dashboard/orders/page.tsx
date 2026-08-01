@@ -114,7 +114,7 @@ export default function OrdersPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div><h1 className="text-2xl font-bold text-white">Orders</h1><p className="mt-1 text-sm text-surface-400">Track your card orders from payment to delivery.</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Orders</h1><p className="mt-1 text-sm text-slate-500">Track your card orders from payment to delivery.</p></div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
         </div>
@@ -125,7 +125,7 @@ export default function OrdersPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div><h1 className="text-2xl font-bold text-white">Orders</h1><p className="mt-1 text-sm text-surface-400">Track your card orders from payment to delivery.</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Orders</h1><p className="mt-1 text-sm text-slate-500">Track your card orders from payment to delivery.</p></div>
         <Alert variant="error"><p>Failed to load orders. Please try again.</p></Alert>
       </div>
     );
@@ -134,23 +134,23 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">My Orders</h1>
-        <p className="mt-1 text-sm text-surface-400">Track your card orders from payment to delivery.</p>
+        <h1 className="text-2xl font-bold text-slate-900">My Orders</h1>
+        <p className="mt-1 text-sm text-slate-500">Track your card orders from payment to delivery.</p>
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-500" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           ref={searchRef}
           type="text"
           placeholder="Search by order number or tx hash..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-surface-700 bg-surface-900 py-2 pl-10 pr-10 text-sm text-surface-100 placeholder-surface-500 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+          className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-10 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
           aria-label="Search orders"
         />
         {search && (
-          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-300">
+          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
             <X className="h-4 w-4" />
           </button>
         )}
@@ -166,15 +166,15 @@ export default function OrdersPage() {
               className={cn(
                 "flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors",
                 statusTab === tab.value
-                  ? "border-brand-500 text-brand-400"
-                  : "border-transparent text-surface-500 hover:border-surface-600 hover:text-surface-300",
+                  ? "border-brand-600 text-brand-600"
+                  : "border-transparent text-slate-400 hover:border-slate-300 hover:text-slate-600",
               )}
               role="tab"
               aria-selected={statusTab === tab.value}
             >
               {tab.label}
               {count !== undefined && count > 0 && (
-                <span className="rounded-full bg-surface-800 px-2 py-0.5 text-xs text-surface-400">{count}</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{count}</span>
               )}
             </button>
           );
@@ -197,19 +197,19 @@ export default function OrdersPage() {
                 <button
                   key={order.id}
                   onClick={() => setSelectedOrder(order)}
-                  className="group relative flex flex-col rounded-xl border border-surface-800 bg-surface-900/50 p-5 text-left transition-all hover:border-surface-700 hover:bg-surface-900"
+                  className="group relative flex flex-col rounded-xl border border-slate-200 bg-white p-5 text-left transition-all hover:border-slate-300 hover:bg-slate-50"
                   aria-label={`Order ${order.order_number}, status: ${order.status}`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-mono text-sm font-semibold text-white">{order.order_number}</p>
+                      <p className="font-mono text-sm font-semibold text-slate-900">{order.order_number}</p>
                       {order.card_products && (
                         <Badge variant={order.card_products.type === "virtual" ? "info" : "default"} className="mt-1">
                           {order.card_products.name}
                         </Badge>
                       )}
                     </div>
-                    <ChevronRight className="mt-1 h-4 w-4 text-surface-600 transition-colors group-hover:text-surface-400" />
+                    <ChevronRight className="mt-1 h-4 w-4 text-slate-400 transition-colors group-hover:text-slate-600" />
                   </div>
 
                   <div className="mt-4 flex items-center gap-2">
@@ -219,9 +219,9 @@ export default function OrdersPage() {
                     </span>
                   </div>
 
-                  <div className="mt-auto pt-4 text-xs text-surface-500">
+                  <div className="mt-auto pt-4 text-xs text-slate-400">
                     <p>{new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
-                    <p className="mt-0.5 font-mono text-sm text-surface-200">{order.amount_usdc} {order.token}</p>
+                    <p className="mt-0.5 font-mono text-sm text-slate-700">{order.amount_usdc} {order.token}</p>
                   </div>
                 </button>
               );
@@ -237,7 +237,7 @@ export default function OrdersPage() {
                   onClick={() => setPage(i)}
                   className={cn(
                     "h-8 w-8 rounded-md text-sm transition-colors",
-                    page === i ? "bg-brand-600 text-white" : "text-surface-400 hover:bg-surface-800",
+                    page === i ? "bg-black text-white" : "text-slate-400 hover:bg-slate-100",
                   )}
                   aria-current={page === i ? "page" : undefined}
                 >
@@ -257,43 +257,43 @@ export default function OrdersPage() {
           aria-modal="true"
           aria-label={`Order details: ${selectedOrder.order_number}`}
         >
-          <div className="absolute inset-0 bg-surface-950/50 backdrop-blur-sm" onClick={() => setSelectedOrder(null)} />
-          <div className="relative z-10 flex h-full w-full max-w-lg flex-col overflow-y-auto border-l border-surface-800 bg-surface-950 shadow-xl animate-in slide-in-from-right">
-            <div className="flex items-center justify-between border-b border-surface-800 px-6 py-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedOrder(null)} />
+          <div className="relative z-10 flex h-full w-full max-w-lg flex-col overflow-y-auto border-l border-slate-200 bg-white shadow-xl animate-in slide-in-from-right">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <div>
-                <p className="font-mono text-sm font-semibold text-white">{selectedOrder.order_number}</p>
+                <p className="font-mono text-sm font-semibold text-slate-900">{selectedOrder.order_number}</p>
                 <span className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium mt-1", STATUS_STYLES[selectedOrder.status] || "")}>
                   {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
                 </span>
               </div>
-              <button onClick={() => setSelectedOrder(null)} className="rounded-md p-2 text-surface-500 hover:bg-surface-800 hover:text-white">
+              <button onClick={() => setSelectedOrder(null)} className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="flex-1 space-y-6 px-6 py-6">
               <section aria-label="Order Information">
-                <h3 className="mb-3 text-sm font-medium text-surface-500 uppercase tracking-wider">Order Information</h3>
+                <h3 className="mb-3 text-sm font-medium text-slate-400 uppercase tracking-wider">Order Information</h3>
                 <dl className="space-y-3 text-sm">
-                  <div className="flex justify-between"><dt className="text-surface-400">Product</dt><dd className="text-white">{selectedOrder.card_products?.name || "—"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-surface-400">Amount</dt><dd className="font-mono text-white">{selectedOrder.amount_usdc} {selectedOrder.token}</dd></div>
-                  <div className="flex justify-between"><dt className="text-surface-400">Network</dt><dd className="text-white">{selectedOrder.network}</dd></div>
-                  <div className="flex justify-between"><dt className="text-surface-400">Date</dt><dd className="text-white">{new Date(selectedOrder.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</dd></div>
+                  <div className="flex justify-between"><dt className="text-slate-500">Product</dt><dd className="text-slate-900">{selectedOrder.card_products?.name || "—"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-slate-500">Amount</dt><dd className="font-mono text-slate-900">{selectedOrder.amount_usdc} {selectedOrder.token}</dd></div>
+                  <div className="flex justify-between"><dt className="text-slate-500">Network</dt><dd className="text-slate-900">{selectedOrder.network}</dd></div>
+                  <div className="flex justify-between"><dt className="text-slate-500">Date</dt><dd className="text-slate-900">{new Date(selectedOrder.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</dd></div>
                 </dl>
               </section>
 
               {selectedOrder.tx_hash && (
                 <section aria-label="Payment Information">
-                  <h3 className="mb-3 text-sm font-medium text-surface-500 uppercase tracking-wider">Payment</h3>
-                  <div className="rounded-lg bg-surface-900/50 p-4">
-                    <p className="text-xs text-surface-500">Transaction Hash</p>
-                    <p className="mt-1 break-all font-mono text-sm text-surface-200">{selectedOrder.tx_hash}</p>
+                  <h3 className="mb-3 text-sm font-medium text-slate-400 uppercase tracking-wider">Payment</h3>
+                  <div className="rounded-lg bg-slate-50 p-4">
+                    <p className="text-xs text-slate-400">Transaction Hash</p>
+                    <p className="mt-1 break-all font-mono text-sm text-slate-700">{selectedOrder.tx_hash}</p>
                   </div>
                 </section>
               )}
 
               <section aria-label="Tracking Timeline">
-                <h3 className="mb-3 text-sm font-medium text-surface-500 uppercase tracking-wider">Timeline</h3>
+                <h3 className="mb-3 text-sm font-medium text-slate-400 uppercase tracking-wider">Timeline</h3>
                 <div className="space-y-0">
                   {["pending", "paid", "processing", "shipped", "delivered"].map((step, i) => {
                     const statuses = ["pending", "paid", "processing", "shipped", "delivered"];
@@ -305,19 +305,19 @@ export default function OrdersPage() {
                         <div className="flex flex-col items-center">
                           <div className={cn(
                             "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                            isCompleted ? "bg-brand-600" : isCurrent ? "border-2 border-brand-500" : "border-2 border-surface-700",
+                            isCompleted ? "bg-black" : isCurrent ? "border-2 border-black" : "border-2 border-slate-200",
                           )}>
                             {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
-                            {isCurrent && <div className="h-2 w-2 rounded-full bg-brand-500 animate-pulse" />}
+                            {isCurrent && <div className="h-2 w-2 rounded-full bg-black animate-pulse" />}
                           </div>
                           {i < statuses.length - 1 && (
-                            <div className={cn("h-8 w-px", isCompleted ? "bg-brand-600" : "bg-surface-700")} />
+                            <div className={cn("h-8 w-px", isCompleted ? "bg-black" : "bg-slate-200")} />
                           )}
                         </div>
                         <div className="pb-6">
                           <p className={cn(
                             "text-sm font-medium capitalize",
-                            isCompleted ? "text-white" : isCurrent ? "text-brand-400" : "text-surface-500",
+                            isCompleted ? "text-slate-900" : isCurrent ? "text-brand-600" : "text-slate-400",
                           )}>
                             {step}
                           </p>
@@ -329,7 +329,7 @@ export default function OrdersPage() {
               </section>
             </div>
 
-            <div className="border-t border-surface-800 px-6 py-4">
+            <div className="border-t border-slate-200 px-6 py-4">
               <div className="flex gap-3">
                 <Button fullWidth onClick={() => setSelectedOrder(null)}>Close</Button>
               </div>

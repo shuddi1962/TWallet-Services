@@ -37,7 +37,7 @@ interface Notification {
   id: string;
   type: string;
   title: string;
-  message: string;
+  message: string | null;
   read: boolean;
   created_at: string;
 }
@@ -114,10 +114,10 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div><h1 className="text-2xl font-bold text-white">Notifications</h1><p className="mt-1 text-sm text-surface-400">Stay updated on your orders and account activity.</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Notifications</h1><p className="mt-1 text-sm text-slate-500">Stay updated on your orders and account activity.</p></div>
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-start gap-4 rounded-xl border border-surface-800 p-4">
+            <div key={i} className="flex items-start gap-4 rounded-xl border border-slate-200 p-4">
               <Skeleton className="h-10 w-10 rounded-full" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-48" />
@@ -133,7 +133,7 @@ export default function NotificationsPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div><h1 className="text-2xl font-bold text-white">Notifications</h1><p className="mt-1 text-sm text-surface-400">Stay updated on your orders and account activity.</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Notifications</h1><p className="mt-1 text-sm text-slate-500">Stay updated on your orders and account activity.</p></div>
         <Alert variant="error"><p>Failed to load notifications. Please try again.</p></Alert>
       </div>
     );
@@ -143,11 +143,11 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Notifications</h1>
-          <p className="mt-1 text-sm text-surface-400">Stay updated on your orders and account activity.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Notifications</h1>
+          <p className="mt-1 text-sm text-slate-500">Stay updated on your orders and account activity.</p>
         </div>
         {unreadCount > 0 && (
-          <span className="rounded-full bg-brand-600/20 px-3 py-1 text-sm font-medium text-brand-400">
+          <span className="rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
             {unreadCount} unread
           </span>
         )}
@@ -160,7 +160,7 @@ export default function NotificationsPage() {
           onClick={() => setFilter("all")}
           className={cn(
             "rounded-lg px-4 py-2 text-sm transition-colors",
-            filter === "all" ? "bg-brand-600 text-white" : "text-surface-400 hover:bg-surface-800",
+            filter === "all" ? "bg-black text-white" : "text-slate-500 hover:bg-slate-100",
           )}
         >
           All
@@ -171,7 +171,7 @@ export default function NotificationsPage() {
           onClick={() => setFilter("unread")}
           className={cn(
             "rounded-lg px-4 py-2 text-sm transition-colors",
-            filter === "unread" ? "bg-brand-600 text-white" : "text-surface-400 hover:bg-surface-800",
+            filter === "unread" ? "bg-black text-white" : "text-slate-500 hover:bg-slate-100",
           )}
         >
           Unread
@@ -191,7 +191,7 @@ export default function NotificationsPage() {
             if (!items) return null;
             return (
               <section key={group} aria-label={group}>
-                <h3 className="mb-3 text-sm font-medium text-surface-500">{group}</h3>
+                <h3 className="mb-3 text-sm font-medium text-slate-400">{group}</h3>
                 <div className="space-y-2">
                   {items.map((n) => {
                     const config = (TYPE_CONFIG[n.type] || TYPE_CONFIG.system)!;
@@ -205,13 +205,13 @@ export default function NotificationsPage() {
                         className={cn(
                           "group flex items-start gap-4 rounded-xl border p-4 transition-all",
                           n.read
-                            ? "border-surface-800 bg-surface-950"
-                            : "border-brand-500/20 bg-brand-500/5",
+                            ? "border-slate-200 bg-white"
+                            : "border-brand-200 bg-brand-50",
                         )}
                       >
                         <div className={cn(
                           "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-                          n.read ? "bg-surface-800 text-surface-400" : "bg-brand-600/20 text-brand-400",
+                          n.read ? "bg-slate-100 text-slate-500" : "bg-brand-50 text-brand-600",
                         )}>
                           <Icon className="h-5 w-5" />
                         </div>
@@ -219,14 +219,14 @@ export default function NotificationsPage() {
                           <div className="flex items-center gap-2">
                             <p className={cn(
                               "text-sm",
-                              n.read ? "text-surface-300" : "font-medium text-white",
+                              n.read ? "text-slate-600" : "font-medium text-slate-900",
                             )}>
                               {n.title}
                             </p>
-                            {!n.read && <span className="h-2 w-2 shrink-0 rounded-full bg-brand-500" />}
+                            {!n.read && <span className="h-2 w-2 shrink-0 rounded-full bg-black" />}
                           </div>
-                          <p className="mt-1 text-xs text-surface-500">{n.message}</p>
-                          <p className="mt-1 text-xs text-surface-600">
+                          <p className="mt-1 text-xs text-slate-400">{n.message}</p>
+                          <p className="mt-1 text-xs text-slate-400">
                             {new Date(n.created_at).toLocaleTimeString("en-US", {
                               hour: "2-digit",
                               minute: "2-digit",
@@ -238,7 +238,7 @@ export default function NotificationsPage() {
                             <button
                               onClick={() => handleMarkRead(n.id)}
                               disabled={isMarking}
-                              className="rounded-md p-2 text-surface-500 hover:bg-surface-800 hover:text-brand-400 disabled:opacity-50"
+                              className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-brand-600 disabled:opacity-50"
                               aria-label="Mark as read"
                             >
                               {isMarking ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
@@ -247,7 +247,7 @@ export default function NotificationsPage() {
                           <button
                             onClick={() => handleDelete(n.id)}
                             disabled={isDeleting}
-                            className="rounded-md p-2 text-surface-500 hover:bg-surface-800 hover:text-error disabled:opacity-50"
+                            className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-error disabled:opacity-50"
                             aria-label="Delete notification"
                           >
                             {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}

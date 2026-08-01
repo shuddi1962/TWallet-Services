@@ -9,18 +9,18 @@ import { FilterBar, type FilterOption } from "@/components/admin/filter-bar";
 import type { AdminTicket, AdminInfo } from "@/lib/admin/types";
 
 const statusColors: Record<string, string> = {
-  open: "bg-yellow-500/10 text-yellow-400",
-  pending: "bg-blue-500/10 text-blue-400",
-  resolved: "bg-green-500/10 text-green-400",
-  closed: "bg-surface-700 text-surface-400",
-  escalated: "bg-red-500/20 text-red-300",
+  open: "bg-yellow-50 text-yellow-700",
+  pending: "bg-blue-50 text-blue-700",
+  resolved: "bg-green-50 text-green-700",
+  closed: "bg-slate-100 text-slate-500",
+  escalated: "bg-red-50 text-red-600",
 };
 
 const priorityColors: Record<string, string> = {
-  low: "bg-surface-700 text-surface-400",
-  medium: "bg-yellow-500/10 text-yellow-400",
-  high: "bg-red-500/10 text-red-400",
-  urgent: "bg-red-500/20 text-red-300",
+  low: "bg-slate-100 text-slate-500",
+  medium: "bg-yellow-50 text-yellow-700",
+  high: "bg-red-50 text-red-600",
+  urgent: "bg-red-50 text-red-600",
 };
 
 interface SupportTableProps {
@@ -95,7 +95,7 @@ export function AdminSupportTable({ tickets, admins }: SupportTableProps) {
       sortable: true,
       className: "w-[110px]",
       render: (ticket) => (
-        <span className="font-mono text-xs text-brand-400">{ticket.ticket_number}</span>
+        <span className="font-mono text-xs text-brand-600">{ticket.ticket_number}</span>
       ),
     },
     {
@@ -103,7 +103,7 @@ export function AdminSupportTable({ tickets, admins }: SupportTableProps) {
       label: "Subject",
       sortable: true,
       render: (ticket) => (
-        <span className="font-medium text-surface-200 line-clamp-1">{ticket.subject}</span>
+        <span className="font-medium text-slate-700 line-clamp-1">{ticket.subject}</span>
       ),
     },
     {
@@ -111,8 +111,8 @@ export function AdminSupportTable({ tickets, admins }: SupportTableProps) {
       label: "Customer",
       render: (ticket) => (
         <div>
-          <p className="font-medium text-surface-200 text-sm">{ticket.profiles?.full_name ?? "—"}</p>
-          <p className="text-xs text-surface-400">{ticket.profiles?.email}</p>
+          <p className="font-medium text-slate-700 text-sm">{ticket.profiles?.full_name ?? "—"}</p>
+          <p className="text-xs text-slate-500">{ticket.profiles?.email}</p>
         </div>
       ),
     },
@@ -138,9 +138,9 @@ export function AdminSupportTable({ tickets, admins }: SupportTableProps) {
       label: "Assigned To",
       className: "w-[140px]",
       render: (ticket) => (
-        <span className="text-sm text-surface-400">
+        <span className="text-sm text-slate-500">
           {ticket.assigned_admin?.profiles?.full_name ?? (
-            <span className="text-surface-500 italic">Unassigned</span>
+            <span className="text-slate-400 italic">Unassigned</span>
           )}
         </span>
       ),
@@ -151,7 +151,7 @@ export function AdminSupportTable({ tickets, admins }: SupportTableProps) {
       sortable: true,
       className: "w-[130px]",
       render: (ticket) => (
-        <span className="text-sm text-surface-400">
+        <span className="text-sm text-slate-500">
           {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
         </span>
       ),
@@ -162,7 +162,7 @@ export function AdminSupportTable({ tickets, admins }: SupportTableProps) {
       className: "w-[70px]",
       render: () => (
         <button
-          className="p-1.5 rounded-lg hover:bg-surface-800 text-surface-400 hover:text-surface-200 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors"
           aria-label="View ticket"
         >
           <Eye className="w-4 h-4" />

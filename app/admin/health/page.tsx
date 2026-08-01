@@ -223,9 +223,9 @@ export default function AdminHealthPage() {
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="animate-pulse space-y-3">
-                  <div className="h-4 w-24 rounded bg-surface-700" />
-                  <div className="h-3 w-32 rounded bg-surface-700" />
-                  <div className="h-3 w-20 rounded bg-surface-700" />
+                  <div className="h-4 w-24 rounded bg-slate-200" />
+                  <div className="h-3 w-32 rounded bg-slate-200" />
+                  <div className="h-3 w-20 rounded bg-slate-200" />
                 </div>
               </CardContent>
             </Card>
@@ -240,9 +240,9 @@ export default function AdminHealthPage() {
             <Card key={svc.service}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-800">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
                     {SERVICE_ICONS[svc.service] ?? (
-                      <Activity className="h-5 w-5 text-surface-400" aria-hidden="true" />
+                      <Activity className="h-5 w-5 text-slate-500" aria-hidden="true" />
                     )}
                   </div>
                   <CardTitle className="text-sm font-medium text-heading">

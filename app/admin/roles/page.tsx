@@ -140,7 +140,7 @@ export default async function AdminRolesPage() {
                 </p>
 
                 {/* Permissions matrix */}
-                <div className="border-t border-white/5 pt-3 mt-auto">
+                <div className="border-t border-slate-200 pt-3 mt-auto">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-body mb-2">
                     Permissions
                   </p>
@@ -155,8 +155,8 @@ export default async function AdminRolesPage() {
                           <span
                             className={`inline-flex items-center justify-center w-4 h-4 rounded-sm text-[10px] font-bold leading-none ${
                               has
-                                ? "text-white"
-                                : "text-body bg-surface-800/50"
+                                ? "text-primary"
+                                : "text-body bg-slate-100"
                             } ${getPermClass(roleDef.permissions, perm.key)}`}
                             aria-hidden="true"
                           >

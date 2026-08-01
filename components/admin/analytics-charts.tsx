@@ -35,11 +35,11 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                     <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="date" tickFormatter={formatDate} stroke="#64748b" fontSize={12} />
                 <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v: number) => `$${v}`} />
                 <Tooltip
-                  contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8 }}
+                  contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8 }}
                   labelFormatter={(label: any) => formatDate(String(label))}
                   formatter={(value: any) => [`$${Number(value).toFixed(2)}`, "Revenue"] as any}
                 />
@@ -56,11 +56,11 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.orderData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="date" tickFormatter={formatDate} stroke="#64748b" fontSize={12} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip
-                  contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8 }}
+                  contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8 }}
                   labelFormatter={(label: any) => formatDate(String(label))}
                 />
                 <Bar dataKey="orders" fill="#2563EB" radius={[4, 4, 0, 0]} />
@@ -82,11 +82,11 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                     <stop offset="95%" stopColor="#16A34A" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="date" tickFormatter={formatDate} stroke="#64748b" fontSize={12} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip
-                  contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8 }}
+                  contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8 }}
                   labelFormatter={(label: any) => formatDate(String(label))}
                 />
                 <Area type="monotone" dataKey="signups" stroke="#16A34A" fill="url(#sigGrad)" strokeWidth={2} />
@@ -107,7 +107,7 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                     <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8 }} />
+                <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8 }} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>

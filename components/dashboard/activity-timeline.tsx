@@ -31,8 +31,8 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Clock className="h-8 w-8 text-surface-400 mb-2" aria-hidden="true" />
-            <p className="text-sm text-surface-400">No recent activity</p>
+            <Clock className="h-8 w-8 text-slate-400 mb-2" aria-hidden="true" />
+            <p className="text-sm text-slate-500">No recent activity</p>
           </div>
         </CardContent>
       </Card>
@@ -51,15 +51,15 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
             return (
               <div key={activity.id} className="relative flex gap-4 pb-6 last:pb-0">
                 {index < activities.length - 1 && (
-                  <div className="absolute left-[15px] top-8 h-full w-px bg-white/10" aria-hidden="true" />
+                  <div className="absolute left-[15px] top-8 h-full w-px bg-slate-200" aria-hidden="true" />
                 )}
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
-                  <Icon className="h-4 w-4 text-brand-400" aria-hidden="true" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 ring-1 ring-neutral-200">
+                  <Icon className="h-4 w-4 text-black" aria-hidden="true" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-white">{activity.title}</p>
-                  <p className="mt-0.5 text-xs text-surface-400">{activity.description}</p>
-                  <p className="mt-1 text-xs text-surface-500">{activity.timestamp}</p>
+                  <p className="text-sm font-medium text-slate-900">{activity.title}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{activity.description}</p>
+                  <p className="mt-1 text-xs text-slate-400">{activity.timestamp}</p>
                 </div>
               </div>
             );

@@ -200,7 +200,7 @@ export default function AdminReportsPage() {
                 loading={generating === rt.id}
                 className="w-full"
                 size="sm"
-                variant="primary"
+                variant="dark"
               >
                 <FileText className="h-4 w-4" aria-hidden="true" />
                 Generate

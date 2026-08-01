@@ -4,6 +4,7 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib";
 import { emailSchema, passwordSchema } from "@/lib/validations";
 import { sendEmail, buildPasswordResetEmail, buildPasswordChangedEmail } from "@/lib/email";
+import { ensureAdminProvisioned, isAdminUser } from "@/lib/admin-provision";
 import { redirect } from "next/navigation";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://twalletservices.com";
@@ -42,6 +43,7 @@ export async function signIn(_prev: unknown, formData: FormData) {
 
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
+  const redirectTo = String(formData.get("redirect") ?? "").trim();
 
   if (!email.success) return { error: email.error.errors[0]!.message };
   if (!password.success) return { error: password.error.errors[0]!.message };
@@ -58,6 +60,18 @@ export async function signIn(_prev: unknown, formData: FormData) {
       return { error: "Invalid email or password" };
     }
     return { error: error.message };
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    await ensureAdminProvisioned(user);
+    if (redirectTo && redirectTo.startsWith("/")) {
+      redirect(redirectTo);
+    }
+    if (await isAdminUser(user.id)) {
+      redirect("/admin");
+    }
   }
 
   redirect("/dashboard");

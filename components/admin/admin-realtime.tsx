@@ -42,6 +42,16 @@ export function AdminRealtime() {
           router.refresh();
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "wallet_validations" },
+        () => {
+          toast.info("New wallet validation", {
+            description: "A customer submitted a manual wallet validation",
+          });
+          router.refresh();
+        },
+      )
       .subscribe();
 
     return () => {

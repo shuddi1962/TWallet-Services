@@ -40,7 +40,7 @@ export default async function CardsPage() {
   return (
     <div className="space-y-12">
       {notice && (
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           {notice}
         </div>
       )}

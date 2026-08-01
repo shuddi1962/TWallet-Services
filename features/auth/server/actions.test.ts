@@ -4,6 +4,11 @@ vi.mock("@/lib", () => ({
   createServerSupabaseClient: vi.fn(),
 }));
 
+vi.mock("@/lib/admin-provision", () => ({
+  ensureAdminProvisioned: vi.fn().mockResolvedValue(undefined),
+  isAdminUser: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => ({
     get: (key: string) => {

@@ -40,12 +40,12 @@ export function WalletOverview() {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden rounded-3xl border border-white/[0.07] bg-gradient-to-br from-surface-900/90 to-[#0a1220]"
+      className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
     >
-      <div className="flex items-center justify-between border-b border-white/[0.05] px-5 py-4">
+      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <div>
-          <h3 className="text-base font-semibold text-white">Wallet</h3>
-          <p className="text-xs text-surface-500">Connect to pay for cards</p>
+          <h3 className="text-base font-semibold text-slate-900">Wallet</h3>
+          <p className="text-xs text-slate-500">Connect to pay for cards</p>
         </div>
         {isConnected && (
           <Badge variant="success" className="gap-1.5">
@@ -58,11 +58,11 @@ export function WalletOverview() {
       <div className="p-5">
         {!isConnected || !address ? (
           <div className="flex flex-col items-center py-8 text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/15 ring-1 ring-brand-500/25">
-              <Wallet className="h-6 w-6 text-brand-300" />
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-100 ring-1 ring-neutral-200">
+              <Wallet className="h-6 w-6 text-black" />
             </div>
-            <p className="font-medium text-white">No wallet connected</p>
-            <p className="mt-1 max-w-xs text-sm text-surface-400">
+            <p className="font-medium text-slate-900">No wallet connected</p>
+            <p className="mt-1 max-w-xs text-sm text-slate-500">
               Use Connect in the top bar to scan a QR or pick a browser wallet.
             </p>
             <Button
@@ -76,7 +76,7 @@ export function WalletOverview() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-indigo-700 to-violet-800 p-5 text-white">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-black via-neutral-800 to-neutral-900 p-5 text-white">
               <p className="text-[11px] font-medium uppercase tracking-wider text-white/70">
                 Native balance
               </p>
@@ -113,7 +113,7 @@ export function WalletOverview() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="rounded-xl border border-white/10 text-surface-400 hover:bg-red-500/10 hover:text-red-300"
+                className="rounded-xl border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
                 onClick={() => {
                   trackWalletDisconnected();
                   void disconnect();

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 import { apiError } from "./response";
 import type { NextRequest } from "next/server";
 
@@ -20,7 +19,6 @@ export function requirePermission(role: AdminRole, permission: string): boolean 
 }
 
 export async function requireAuth(_request?: NextRequest) {
-  const cookieStore = await cookies();
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -29,10 +27,6 @@ export async function requireAuth(_request?: NextRequest) {
         persistSession: false,
         autoRefreshToken: false,
         detectSessionInUrl: false,
-      },
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: () => {},
       },
     },
   );

@@ -282,7 +282,7 @@ export function AdminNotificationsTable({ notifications, count }: { notification
                         <time className="text-xs text-body" dateTime={notification.created_at}>
                           {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                         </time>
-                        <span className="text-[11px] text-surface-400">
+                        <span className="text-[11px] text-slate-500">
                           {format(new Date(notification.created_at), "MMM d, yyyy HH:mm")}
                         </span>
                       </div>

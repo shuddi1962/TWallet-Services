@@ -43,14 +43,14 @@ const NOTIFICATION_ICONS: Record<string, typeof Bell> = {
 };
 
 const NOTIFICATION_COLORS: Record<string, string> = {
-  new_order: "text-brand-400 bg-brand-500/10 ring-brand-500/20",
+  new_order: "text-black bg-neutral-100 ring-neutral-200",
   payment_confirmed: "text-success bg-success/10 ring-success/20",
   payment_failed: "text-error bg-error/10 ring-error/20",
   shipping_update: "text-info bg-info/10 ring-info/20",
-  support_reply: "text-accent-400 bg-accent-500/10 ring-accent-500/20",
-  card_update: "text-brand-400 bg-brand-500/10 ring-brand-500/20",
+  support_reply: "text-accent-600 bg-accent-50 ring-accent-200",
+  card_update: "text-black bg-neutral-100 ring-neutral-200",
   system: "text-warning bg-warning/10 ring-warning/20",
-  promotion: "text-accent-400 bg-accent-500/10 ring-accent-500/20",
+  promotion: "text-accent-600 bg-accent-50 ring-accent-200",
 };
 
 export function NotificationPanel({ notifications }: NotificationPanelProps) {
@@ -74,15 +74,15 @@ export function NotificationPanel({ notifications }: NotificationPanelProps) {
       <CardContent>
         {recent.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <CheckCheck className="mb-2 h-8 w-8 text-surface-500" aria-hidden="true" />
-            <p className="text-sm font-medium text-surface-400">All caught up!</p>
-            <p className="mt-1 text-xs text-surface-500">No new notifications.</p>
+            <CheckCheck className="mb-2 h-8 w-8 text-slate-400" aria-hidden="true" />
+            <p className="text-sm font-medium text-slate-600">All caught up!</p>
+            <p className="mt-1 text-xs text-slate-400">No new notifications.</p>
           </div>
         ) : (
           <div className="space-y-1">
             {recent.map((notification, index) => {
               const Icon = NOTIFICATION_ICONS[notification.type] ?? Bell;
-              const colorClass = NOTIFICATION_COLORS[notification.type] ?? "text-surface-400 bg-surface-800 ring-white/10";
+              const colorClass = NOTIFICATION_COLORS[notification.type] ?? "text-slate-500 bg-slate-100 ring-slate-200";
 
               return (
                 <motion.div
@@ -90,12 +90,12 @@ export function NotificationPanel({ notifications }: NotificationPanelProps) {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.25, delay: index * 0.05 }}
-                  className="group relative flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-surface-800/50"
+                  className="group relative flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-slate-50"
                 >
                   {/* Unread dot */}
                   {!notification.read && (
                     <span
-                      className="absolute left-1 top-3 h-1.5 w-1.5 rounded-full bg-brand-400"
+                      className="absolute left-1 top-3 h-1.5 w-1.5 rounded-full bg-black"
                       aria-label="Unread notification"
                     />
                   )}
@@ -115,17 +115,17 @@ export function NotificationPanel({ notifications }: NotificationPanelProps) {
                     <p
                       className={cn(
                         "text-sm leading-snug",
-                        notification.read ? "text-surface-400" : "font-medium text-surface-50",
+                        notification.read ? "text-slate-500" : "font-medium text-slate-900",
                       )}
                     >
                       {notification.title}
                     </p>
                     {notification.message && (
-                      <p className="mt-0.5 text-xs text-surface-500 line-clamp-1">
+                      <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
                         {notification.message}
                       </p>
                     )}
-                    <p className="mt-0.5 text-[11px] text-surface-500">
+                    <p className="mt-0.5 text-[11px] text-slate-400">
                       {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                     </p>
                   </div>

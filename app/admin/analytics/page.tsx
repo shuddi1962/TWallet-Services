@@ -9,20 +9,20 @@ export default async function AdminAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="mt-1 text-sm text-surface-400">Platform metrics and insights</p>
+        <h1 className="text-2xl font-bold text-slate-900">Analytics</h1>
+        <p className="mt-1 text-sm text-slate-500">Platform metrics and insights</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10">
-                <TrendingUp className="h-5 w-5 text-brand-400" aria-hidden="true" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
+                <TrendingUp className="h-5 w-5 text-brand-600" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm text-surface-400">Total Revenue</p>
-                <p className="text-xl font-bold text-white">${stats.revenue.toFixed(2)}</p>
+                <p className="text-sm text-slate-500">Total Revenue</p>
+                <p className="text-xl font-bold text-slate-900">${stats.revenue.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -30,12 +30,12 @@ export default async function AdminAnalyticsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                <Users className="h-5 w-5 text-blue-400" aria-hidden="true" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+                <Users className="h-5 w-5 text-blue-600" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm text-surface-400">Total Users</p>
-                <p className="text-xl font-bold text-white">{stats.totalUsers}</p>
+                <p className="text-sm text-slate-500">Total Users</p>
+                <p className="text-xl font-bold text-slate-900">{stats.totalUsers}</p>
               </div>
             </div>
           </CardContent>
@@ -43,12 +43,12 @@ export default async function AdminAnalyticsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
-                <BarChart3 className="h-5 w-5 text-green-400" aria-hidden="true" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
+                <BarChart3 className="h-5 w-5 text-green-600" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm text-surface-400">Completed Orders</p>
-                <p className="text-xl font-bold text-white">{stats.completedOrders}</p>
+                <p className="text-sm text-slate-500">Completed Orders</p>
+                <p className="text-xl font-bold text-slate-900">{stats.completedOrders}</p>
               </div>
             </div>
           </CardContent>
@@ -56,12 +56,12 @@ export default async function AdminAnalyticsPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
-                <DollarSign className="h-5 w-5 text-purple-400" aria-hidden="true" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
+                <DollarSign className="h-5 w-5 text-purple-600" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm text-surface-400">Today Transactions</p>
-                <p className="text-xl font-bold text-white">{stats.todayTransactions}</p>
+                <p className="text-sm text-slate-500">Today Transactions</p>
+                <p className="text-xl font-bold text-slate-900">{stats.todayTransactions}</p>
               </div>
             </div>
           </CardContent>

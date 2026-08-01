@@ -37,7 +37,7 @@ const itemVariants = {
 export function QuickActions() {
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold text-surface-50">Quick Actions</h2>
+      <h2 className="mb-4 text-lg font-semibold text-slate-900">Quick Actions</h2>
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -47,10 +47,10 @@ export function QuickActions() {
         {actions.map((action) => (
           <motion.div key={action.label} variants={itemVariants}>
             <Button
-              variant={action.primary ? "primary" : "ghost"}
+              variant={action.primary ? "dark" : "ghost"}
               fullWidth
               asChild
-              className={!action.primary ? "border border-surface-800 bg-surface-900 text-surface-50 hover:bg-surface-800" : undefined}
+              className={!action.primary ? "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50" : undefined}
             >
               <Link href={action.href}>
                 <action.icon className="h-4 w-4" aria-hidden="true" />

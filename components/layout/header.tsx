@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@/components/wallet/connect-button";
+import { AuthNav } from "@/components/layout/auth-nav";
 import { TrustLogo } from "@/components/brand/trust-logo";
 import { cn } from "@/lib/utils/cn";
 
@@ -50,7 +50,7 @@ export function Header() {
           <TrustLogo size="md" className="hidden sm:inline-flex" />
         </Link>
 
-        <nav className="hidden items-center gap-5 lg:gap-7 md:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-5 lg:flex lg:gap-7" aria-label="Primary">
           {navLinks.map((link) => (
             <Link
               key={link.label}
@@ -66,16 +66,11 @@ export function Header() {
           <div className="hidden sm:block">
             <ConnectButton />
           </div>
-          <Button
-            className="hidden h-9 items-center rounded-lg border-0 bg-brand-500 px-4 text-sm font-semibold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-600 sm:flex"
-            asChild
-          >
-            <Link href="/auth/login">Dashboard</Link>
-          </Button>
+          <AuthNav />
 
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/70 transition-colors hover:border-white/20 hover:text-white md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/70 transition-colors hover:border-white/20 hover:text-white lg:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-expanded={mobileOpen}
             aria-controls="mobile-menu"
@@ -95,7 +90,7 @@ export function Header() {
             id="mobile-menu"
             role="navigation"
             aria-label="Mobile navigation"
-            className="border-t border-white/10 bg-[#05070a]/98 backdrop-blur-xl md:hidden"
+            className="border-t border-white/10 bg-[#05070a]/98 backdrop-blur-xl lg:hidden"
           >
             <div className="flex max-h-[calc(100dvh-3.5rem)] flex-col gap-1 overflow-y-auto px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               {navLinks.map((link) => (
@@ -112,11 +107,7 @@ export function Header() {
                 <div className="px-1 sm:hidden">
                   <ConnectButton />
                 </div>
-                <Button className="h-11 w-full rounded-xl border-0 bg-brand-500 text-white hover:bg-brand-600" asChild>
-                  <Link href="/auth/login" onClick={() => setMobileOpen(false)}>
-                    Dashboard
-                  </Link>
-                </Button>
+                <AuthNav mobile />
               </div>
             </div>
           </motion.div>

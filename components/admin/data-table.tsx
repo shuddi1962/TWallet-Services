@@ -35,14 +35,14 @@ export function DataTable<T>({
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-xl border border-surface-800">
+      <div className="overflow-x-auto rounded-xl border border-slate-200">
         <Table>
           <TableHeader>
-            <TableRow className="bg-surface-900">
+            <TableRow className="bg-slate-50">
               {columns.map((col) => (
                 <TableHead
                   key={col.key}
-                  className={`px-4 py-3 text-left font-medium text-surface-400 ${col.sortable ? "cursor-pointer select-none" : ""} ${col.className ?? ""}`}
+                  className={`px-4 py-3 text-left font-medium text-slate-500 ${col.sortable ? "cursor-pointer select-none" : ""} ${col.className ?? ""}`}
                   onClick={() => {
                     if (col.sortable && onSort) {
                       const dir = sortField === col.key && sortDir === "asc" ? "desc" : "asc";
@@ -62,20 +62,20 @@ export function DataTable<T>({
                 <TableRow key={i}>
                   {columns.map((col) => (
                     <TableCell key={col.key} className="px-4 py-3">
-                      <div className="h-4 w-full animate-pulse rounded bg-surface-800" />
+                      <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="px-4 py-12 text-center text-surface-500">
+                <TableCell colSpan={columns.length} className="px-4 py-12 text-center text-slate-400">
                   {emptyMessage}
                 </TableCell>
               </TableRow>
             ) : (
               data.map((row) => (
-                <TableRow key={keyExtractor(row)} className="bg-surface-950 transition hover:bg-surface-900/50">
+                <TableRow key={keyExtractor(row)} className="bg-white transition hover:bg-slate-50">
                   {columns.map((col) => (
                     <TableCell key={col.key} className={`px-4 py-3 ${col.className ?? ""}`}>
                       {col.render(row)}
@@ -90,23 +90,23 @@ export function DataTable<T>({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 px-1">
-          <p className="text-sm text-surface-400">
+          <p className="text-sm text-slate-500">
             Showing {(page * pageSize) + 1}–{Math.min((page + 1) * pageSize, total)} of {total}
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => onPageChange(page - 1)}
               disabled={page === 0}
-              className="rounded-lg border border-surface-700 bg-surface-900 p-2 text-surface-400 hover:text-surface-200 disabled:opacity-40"
+              className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 hover:text-slate-800 disabled:opacity-40"
               aria-label="Previous page"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm text-surface-400">{page + 1} / {totalPages}</span>
+            <span className="text-sm text-slate-500">{page + 1} / {totalPages}</span>
             <button
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages - 1}
-              className="rounded-lg border border-surface-700 bg-surface-900 p-2 text-surface-400 hover:text-surface-200 disabled:opacity-40"
+              className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 hover:text-slate-800 disabled:opacity-40"
               aria-label="Next page"
             >
               <ChevronRight className="h-4 w-4" />

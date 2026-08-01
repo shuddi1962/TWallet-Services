@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -40,9 +39,9 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isAdminPage && user) {
-    const { data: admin }: any = await supabase
+    const { data: admin } = await supabase
       .from("admins")
-      .select("profile_id, user_roles!inner(role)")
+      .select("profile_id")
       .eq("profile_id", user.id)
       .maybeSingle();
 

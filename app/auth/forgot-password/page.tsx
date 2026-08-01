@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
 
-      <Card>
+      <Card className="border-white/10 bg-surface-900/70">
         <CardContent className="p-6">
           <form action={formAction} className="space-y-4">
             {state?.error && (
@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-surface-200">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -46,6 +46,7 @@ export default function ForgotPasswordPage() {
                 autoComplete="email"
                 required
                 placeholder="you@example.com"
+                className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500"
               />
             </div>
 

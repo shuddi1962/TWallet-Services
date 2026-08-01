@@ -33,13 +33,13 @@ const itemVariants = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-amber-500/15 text-amber-300 ring-amber-500/20",
-  paid: "bg-sky-500/15 text-sky-300 ring-sky-500/20",
-  processing: "bg-violet-500/15 text-violet-300 ring-violet-500/20",
-  shipped: "bg-indigo-500/15 text-indigo-300 ring-indigo-500/20",
-  delivered: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/20",
-  cancelled: "bg-red-500/15 text-red-300 ring-red-500/20",
-  refunded: "bg-surface-700 text-surface-300 ring-white/10",
+  pending: "bg-amber-50 text-amber-700 ring-amber-200",
+  paid: "bg-sky-50 text-sky-700 ring-sky-200",
+  processing: "bg-violet-50 text-violet-700 ring-violet-200",
+  shipped: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+  delivered: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  cancelled: "bg-red-50 text-red-700 ring-red-200",
+  refunded: "bg-slate-100 text-slate-600 ring-slate-200",
 };
 
 function PremiumStat({
@@ -56,18 +56,18 @@ function PremiumStat({
   href?: string;
 }) {
   const inner = (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-5 transition hover:border-white/15 hover:shadow-xl hover:shadow-brand-500/5">
-      <div className={cn("absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-30 blur-2xl", accent)} />
+    <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md">
+      <div className={cn("absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-20 blur-2xl", accent)} />
       <div className="relative flex items-start justify-between">
-        <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl ring-1", accent.includes("brand") ? "bg-brand-500/15 text-brand-300 ring-brand-500/25" : "bg-white/5 text-white ring-white/10")}>
-          <Icon className="h-5 w-5" />
+        <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-100 ring-1 ring-neutral-200")}>
+          <Icon className="h-5 w-5 text-black" />
         </div>
         {href && (
-          <ArrowUpRight className="h-4 w-4 text-surface-600 transition group-hover:text-brand-300" />
+          <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-black" />
         )}
       </div>
-      <p className="relative mt-4 text-2xl font-bold tracking-tight text-white">{value}</p>
-      <p className="relative mt-1 text-sm text-surface-400">{label}</p>
+      <p className="relative mt-4 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+      <p className="relative mt-1 text-sm text-slate-500">{label}</p>
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;
@@ -112,40 +112,40 @@ export function DashboardContent({ data }: { data: DashboardData }) {
             label="Active Cards"
             value={data.stats.activeCards}
             icon={CreditCard}
-            accent="bg-brand-500"
+            accent="bg-black"
             href="/dashboard/cards"
           />
           <PremiumStat
             label="Total Orders"
             value={data.stats.totalOrders}
             icon={ShoppingBag}
-            accent="bg-violet-500"
+            accent="bg-black"
             href="/dashboard/orders"
           />
           <PremiumStat
             label="Wallets"
             value={data.stats.walletCount}
             icon={Wallet}
-            accent="bg-sky-500"
+            accent="bg-black"
             href="/dashboard/wallet"
           />
           <PremiumStat
             label="Total Spent"
             value={`$${Number(data.stats.totalSpent).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
             icon={TrendingUp}
-            accent="bg-emerald-500"
+            accent="bg-black"
             href="/dashboard/transactions"
           />
         </motion.div>
 
         <motion.div variants={itemVariants} className="grid gap-6 xl:grid-cols-5">
           <div className="space-y-6 xl:col-span-3">
-            <div className="relative overflow-hidden rounded-3xl border border-white/[0.07] bg-gradient-to-br from-surface-900/90 to-[#0a1020] p-6">
-              <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-brand-500/20 blur-3xl" />
+            <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-neutral-900/10 blur-3xl" />
               <div className="relative mb-5 flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">My Card</h2>
-                  <p className="text-sm text-surface-400">Your latest order status</p>
+                  <h2 className="text-lg font-semibold text-slate-900">My Card</h2>
+                  <p className="text-sm text-slate-500">Your latest order status</p>
                 </div>
                 <Button size="sm" className="rounded-full" asChild>
                   <Link href="/dashboard/cards">
@@ -169,12 +169,12 @@ export function DashboardContent({ data }: { data: DashboardData }) {
                   />
 
                   <div className="flex flex-col justify-center space-y-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-xs text-surface-500">Order number</p>
-                      <p className="mt-1 font-mono text-sm text-white">{featuredOrder.order_number}</p>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs text-slate-500">Order number</p>
+                      <p className="mt-1 font-mono text-sm text-slate-900">{featuredOrder.order_number}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-xs text-surface-500">Status</p>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs text-slate-500">Status</p>
                       <span
                         className={cn(
                           "mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ring-1",
@@ -193,10 +193,10 @@ export function DashboardContent({ data }: { data: DashboardData }) {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 py-14 text-center">
-                  <CreditCard className="h-10 w-10 text-surface-600" />
-                  <p className="mt-3 font-medium text-white">No cards yet</p>
-                  <p className="mt-1 max-w-xs text-sm text-surface-400">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 py-14 text-center">
+                  <CreditCard className="h-10 w-10 text-slate-400" />
+                  <p className="mt-3 font-medium text-slate-900">No cards yet</p>
+                  <p className="mt-1 max-w-xs text-sm text-slate-500">
                     Order a virtual or physical crypto card in under a minute.
                   </p>
                   <Button className="mt-5 rounded-full" asChild>
@@ -206,32 +206,32 @@ export function DashboardContent({ data }: { data: DashboardData }) {
               )}
             </div>
 
-            <div className="rounded-3xl border border-white/[0.07] bg-surface-900/50 p-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-brand-400" />
-                  <h2 className="text-lg font-semibold text-white">Recent Orders</h2>
+                  <Activity className="h-4 w-4 text-black" />
+                  <h2 className="text-lg font-semibold text-slate-900">Recent Orders</h2>
                 </div>
-                <Link href="/dashboard/orders" className="text-sm text-brand-400 hover:text-brand-300">
+                <Link href="/dashboard/orders" className="text-sm text-black hover:text-neutral-700">
                   View all
                 </Link>
               </div>
               {data.recentOrders.length === 0 ? (
-                <p className="py-10 text-center text-sm text-surface-500">No orders yet</p>
+                <p className="py-10 text-center text-sm text-slate-400">No orders yet</p>
               ) : (
                 <div className="space-y-2">
                   {data.recentOrders.map((order: any) => (
                     <Link
                       key={order.id}
                       href={`/dashboard/orders/${order.id}`}
-                      className="flex items-center justify-between rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3.5 transition hover:border-brand-500/30 hover:bg-brand-500/5"
+                      className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 transition hover:border-neutral-300 hover:bg-neutral-100"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-white">
+                        <p className="truncate text-sm font-medium text-slate-900">
                           {order.card_products?.name ?? "Card"} — $
                           {Number(order.amount_usdc).toFixed(2)}
                         </p>
-                        <p className="mt-0.5 font-mono text-xs text-surface-500">{order.order_number}</p>
+                        <p className="mt-0.5 font-mono text-xs text-slate-500">{order.order_number}</p>
                       </div>
                       <span
                         className={cn(

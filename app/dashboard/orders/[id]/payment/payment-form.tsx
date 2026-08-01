@@ -198,7 +198,7 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
     switch (verificationStatus) {
       case "sending":
         return (
-          <div className="flex items-center gap-2 rounded-lg bg-blue-500/10 p-3 text-sm text-blue-400" role="alert">
+          <div className="flex items-center gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-600" role="alert">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             Sending transaction...
           </div>
@@ -206,21 +206,21 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
       case "submitted":
       case "verifying":
         return (
-          <div className="flex items-center gap-2 rounded-lg bg-yellow-500/10 p-3 text-sm text-yellow-400" role="alert">
+          <div className="flex items-center gap-2 rounded-lg bg-yellow-50 p-3 text-sm text-yellow-700" role="alert">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             {verificationMessage || "Waiting for verification..."}
           </div>
         );
       case "verified":
         return (
-          <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-3 text-sm text-green-400" role="alert">
+          <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-600" role="alert">
             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             {verificationMessage}
           </div>
         );
       case "failed":
         return (
-          <div className="flex items-center gap-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-400" role="alert">
+          <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-600" role="alert">
             <AlertCircle className="h-4 w-4" aria-hidden="true" />
             {verificationMessage}
           </div>
@@ -243,11 +243,11 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
         </div>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20">
-              <CheckCircle2 className="h-8 w-8 text-green-400" aria-hidden="true" />
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
+              <CheckCircle2 className="h-8 w-8 text-green-600" aria-hidden="true" />
             </div>
-            <h2 className="text-xl font-bold text-white">Payment Verified!</h2>
-            <p className="mt-2 text-surface-400">Your payment for order {order.order_number} has been confirmed on-chain.</p>
+            <h2 className="text-xl font-bold text-slate-900">Payment Verified!</h2>
+            <p className="mt-2 text-slate-500">Your payment for order {order.order_number} has been confirmed on-chain.</p>
             <Button className="mt-6" asChild>
               <Link href="/dashboard/orders">View My Orders</Link>
             </Button>
@@ -273,9 +273,9 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-white">Complete Payment</h1>
-          <p className="mt-1 text-sm text-surface-400">
-            Send crypto to complete order <span className="font-medium text-surface-200">{order.order_number}</span>
+          <h1 className="text-2xl font-bold text-slate-900">Complete Payment</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Send crypto to complete order <span className="font-medium text-slate-700">{order.order_number}</span>
           </p>
         </div>
       </div>
@@ -283,7 +283,7 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
       {renderStatusBadge()}
 
       {submitState?.error && (
-        <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400" role="alert">
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600" role="alert">
           {formatPaymentError(submitState.error).message}
         </div>
       )}
@@ -295,34 +295,34 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
             <CardDescription>Send the exact amount to the address below using Trust Wallet</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-xl border border-surface-800 bg-surface-900/50 p-4">
-              <p className="mb-1 text-xs text-surface-500">Amount to Pay</p>
-              <p className="text-2xl font-bold text-white">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="mb-1 text-xs text-slate-400">Amount to Pay</p>
+              <p className="text-2xl font-bold text-slate-900">
                 {order.amount_usdc} {order.token.toUpperCase()}
               </p>
-              <p className="text-sm text-surface-400">≈ ${order.amount_usdc.toFixed(2)} USD</p>
+              <p className="text-sm text-slate-500">≈ ${order.amount_usdc.toFixed(2)} USD</p>
             </div>
 
-            <div className="flex items-center gap-3 rounded-xl border border-surface-800 bg-surface-900/50 p-4">
-              <Smartphone className="h-5 w-5 text-brand-400" />
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <Smartphone className="h-5 w-5 text-brand-600" />
               <div>
-                <p className="text-sm font-medium text-surface-50">Trust Wallet</p>
-                <p className="text-xs text-surface-400">Connected Wallet</p>
+                <p className="text-sm font-medium text-slate-900">Trust Wallet</p>
+                <p className="text-xs text-slate-500">Connected Wallet</p>
               </div>
             </div>
 
             <div>
-              <p className="mb-2 text-xs text-surface-500">Network</p>
-              <div className="flex items-center gap-2 rounded-lg border border-surface-800 bg-surface-900/50 px-4 py-3">
+              <p className="mb-2 text-xs text-slate-400">Network</p>
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                 <div className="h-2 w-2 rounded-full bg-[#627EEA]" />
-                <span className="text-sm text-white">{network?.name ?? order.network}</span>
+                <span className="text-sm text-slate-900">{network?.name ?? order.network}</span>
               </div>
             </div>
 
             <div>
-              <p className="mb-2 text-xs text-surface-500">Receiving Address</p>
+              <p className="mb-2 text-xs text-slate-400">Receiving Address</p>
               {wallet?.address && (
-                <div className="mb-3 flex justify-center rounded-xl border border-surface-800 bg-surface-900/50 p-4">
+                <div className="mb-3 flex justify-center rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <AddressQR
                     value={wallet.address}
                     size={180}
@@ -330,15 +330,15 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
                   />
                 </div>
               )}
-              <div className="flex items-center gap-2 rounded-lg border border-surface-800 bg-surface-900/50 px-4 py-3">
-                <code className="flex-1 break-all font-mono text-xs text-surface-300">
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <code className="flex-1 break-all font-mono text-xs text-slate-600">
                   {wallet?.address ?? "No address available"}
                 </code>
                 {wallet?.address && (
                   <button
                     type="button"
                     onClick={copyAddress}
-                    className="shrink-0 rounded-md p-1.5 text-surface-500 hover:bg-surface-800 hover:text-white"
+                    className="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900"
                     aria-label="Copy receiving address"
                   >
                     {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
@@ -349,9 +349,9 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
 
             {txHash && (
               <div>
-                <p className="mb-2 text-xs text-surface-500">Transaction Hash</p>
-                <div className="rounded-lg border border-surface-800 bg-surface-900/50 px-4 py-3">
-                  <code className="break-all font-mono text-xs text-surface-300">{txHash}</code>
+                <p className="mb-2 text-xs text-slate-400">Transaction Hash</p>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                  <code className="break-all font-mono text-xs text-slate-600">{txHash}</code>
                 </div>
               </div>
             )}
@@ -359,7 +359,7 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
             {wallet?.address && network && verificationStatus === "idle" && (
               <Button
                 fullWidth
-                className="bg-gradient-to-r from-brand-500 to-brand-700 text-white"
+                className="bg-black text-white hover:bg-neutral-800"
                 onClick={handleSendPayment}
                 disabled={verificationStatus !== "idle" || !isConnected || isPending}
               >
@@ -374,21 +374,21 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
           <CardHeader>
             <CardTitle>Instructions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm text-surface-400">
+          <CardContent className="space-y-4 text-sm text-slate-500">
             <div className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">1</span>
-              <p>Click <strong className="text-white">Send Payment with Trust Wallet</strong> to open Trust Wallet on your phone.</p>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600" aria-hidden="true">1</span>
+              <p>Click <strong className="text-slate-900">Send Payment with Trust Wallet</strong> to open Trust Wallet on your phone.</p>
             </div>
             <div className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">2</span>
-              <p>Review the transaction details and confirm in Trust Wallet. Use the <strong className="text-white">{network?.name ?? order.network}</strong> network.</p>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600" aria-hidden="true">2</span>
+              <p>Review the transaction details and confirm in Trust Wallet. Use the <strong className="text-slate-900">{network?.name ?? order.network}</strong> network.</p>
             </div>
             <div className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">3</span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600" aria-hidden="true">3</span>
               <p>The system will automatically verify the transaction on-chain once sent.</p>
             </div>
             <div className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-400" aria-hidden="true">4</span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600" aria-hidden="true">4</span>
               <p>Your order status will update once payment is confirmed. This page refreshes automatically.</p>
             </div>
           </CardContent>
@@ -411,19 +411,19 @@ function PaymentConnectGate({ orderNumber }: { orderNumber: string }) {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-white">Complete Payment</h1>
-          <p className="mt-1 text-sm text-surface-400">
+          <h1 className="text-2xl font-bold text-slate-900">Complete Payment</h1>
+          <p className="mt-1 text-sm text-slate-500">
             Connect a wallet to pay for order {orderNumber}
           </p>
         </div>
       </div>
-      <Card className="overflow-hidden border-white/10">
+      <Card className="overflow-hidden border-slate-200">
         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/15 ring-1 ring-brand-500/25">
-            <Wallet className="h-6 w-6 text-brand-300" />
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 ring-1 ring-brand-200">
+            <Wallet className="h-6 w-6 text-brand-600" />
           </div>
-          <p className="font-medium text-white">Wallet required</p>
-          <p className="mt-2 max-w-sm text-sm text-surface-400">
+          <p className="font-medium text-slate-900">Wallet required</p>
+          <p className="mt-2 max-w-sm text-sm text-slate-500">
             Connect with WalletConnect (QR + 300+ wallets) or a browser extension, then send USDC to the platform receiving address.
           </p>
           <Button

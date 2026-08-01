@@ -31,7 +31,7 @@ const STATUS_CONFIG: Record<string, { color: string; icon: React.ElementType }> 
   confirming: { color: "text-info", icon: Loader2 },
   confirmed: { color: "text-success", icon: CheckCircle2 },
   failed: { color: "text-error", icon: XCircle },
-  expired: { color: "text-surface-500", icon: Clock },
+  expired: { color: "text-slate-400", icon: Clock },
   refunded: { color: "text-error", icon: RotateCcw },
 };
 
@@ -118,7 +118,7 @@ export default function TransactionsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div><h1 className="text-2xl font-bold text-white">Transactions</h1><p className="mt-1 text-sm text-surface-400">Your verified crypto payment history.</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Transactions</h1><p className="mt-1 text-sm text-slate-500">Your verified crypto payment history.</p></div>
         <Card><CardHeader><CardTitle>Transaction History</CardTitle></CardHeader><CardContent className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</CardContent></Card>
       </div>
     );
@@ -127,7 +127,7 @@ export default function TransactionsPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div><h1 className="text-2xl font-bold text-white">Transactions</h1><p className="mt-1 text-sm text-surface-400">Your verified crypto payment history.</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Transactions</h1><p className="mt-1 text-sm text-slate-500">Your verified crypto payment history.</p></div>
         <Alert variant="error"><p>Failed to load transactions. Please try again.</p></Alert>
       </div>
     );
@@ -137,8 +137,8 @@ export default function TransactionsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Transactions</h1>
-          <p className="mt-1 text-sm text-surface-400">Your verified crypto payment history.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Transactions</h1>
+          <p className="mt-1 text-sm text-slate-500">Your verified crypto payment history.</p>
         </div>
       </div>
 
@@ -148,13 +148,13 @@ export default function TransactionsPage() {
             {DATE_RANGES.find((d) => d.value === dateRange)?.label}
           </Button>
           {showDateDropdown && (
-            <div className="absolute left-0 top-full z-10 mt-1 w-40 rounded-md border border-surface-700 bg-surface-900 p-1 shadow-lg">
+            <div className="absolute left-0 top-full z-10 mt-1 w-40 rounded-md border border-slate-200 bg-white p-1 shadow-lg">
               {DATE_RANGES.map((range) => (
                 <button
                   key={range.value}
                   className={cn(
-                    "w-full rounded-sm px-2 py-1.5 text-left text-sm text-surface-300 hover:bg-surface-800",
-                    dateRange === range.value && "text-brand-400",
+                    "w-full rounded-sm px-2 py-1.5 text-left text-sm text-slate-600 hover:bg-slate-100",
+                    dateRange === range.value && "text-brand-600",
                   )}
                   onClick={() => { setDateRange(range.value); setPage(0); setShowDateDropdown(false); }}
                 >
@@ -173,8 +173,8 @@ export default function TransactionsPage() {
               className={cn(
                 "whitespace-nowrap rounded-full px-3 py-1 text-sm transition-colors",
                 statusTab === tab.value
-                  ? "bg-brand-600/20 text-brand-400"
-                  : "text-surface-400 hover:text-surface-200",
+                  ? "bg-brand-50 text-brand-700"
+                  : "text-slate-500 hover:text-slate-800",
               )}
             >
               {tab.label}
@@ -196,15 +196,15 @@ export default function TransactionsPage() {
         </Card>
       ) : (
         <>
-          <div className="hidden overflow-x-auto rounded-lg border border-surface-800 md:block">
+          <div className="hidden overflow-x-auto rounded-lg border border-slate-200 md:block">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-surface-800 bg-surface-900/50">
-                  <th className="px-4 py-3 text-left font-medium text-surface-400">Transaction Hash</th>
-                  <th className="px-4 py-3 text-left font-medium text-surface-400">Amount</th>
-                  <th className="px-4 py-3 text-left font-medium text-surface-400">Status</th>
-                  <th className="px-4 py-3 text-left font-medium text-surface-400">Date</th>
-                  <th className="px-4 py-3 text-right font-medium text-surface-400">Actions</th>
+                <tr className="border-b border-slate-200 bg-slate-50">
+                  <th className="px-4 py-3 text-left font-medium text-slate-500">Transaction Hash</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-500">Amount</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-500">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-500">Date</th>
+                  <th className="px-4 py-3 text-right font-medium text-slate-500">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,14 +212,14 @@ export default function TransactionsPage() {
                   const statusConfig = (STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending)!;
                   const StatusIcon = statusConfig.icon;
                   return (
-                    <tr key={tx.id} className="border-b border-surface-800 transition-colors hover:bg-surface-800/50">
+                    <tr key={tx.id} className="border-b border-slate-200 transition-colors hover:bg-slate-50">
                       <td className="px-4 py-3">
-                        <span className="font-mono text-sm text-surface-200">
+                        <span className="font-mono text-sm text-slate-700">
                           {tx.tx_hash ? formatAddress(tx.tx_hash, 10) : "—"}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono tabular-nums text-white">{tx.amount} USDC</span>
+                        <span className="font-mono tabular-nums text-slate-900">{tx.amount} USDC</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={cn("inline-flex items-center gap-1 text-xs font-medium", statusConfig.color)}>
@@ -227,7 +227,7 @@ export default function TransactionsPage() {
                           {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-surface-400">
+                      <td className="px-4 py-3 text-slate-500">
                         {new Date(tx.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </td>
                       <td className="px-4 py-3">
@@ -236,7 +236,7 @@ export default function TransactionsPage() {
                             <>
                               <button
                                 onClick={() => copyHash(tx.tx_hash!)}
-                                className="rounded p-1 text-surface-500 hover:bg-surface-700 hover:text-white"
+                                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-900"
                                 aria-label="Copy transaction hash"
                               >
                                 {copiedHash === tx.tx_hash ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
@@ -245,7 +245,7 @@ export default function TransactionsPage() {
                                 href={explorerUrl(tx)!}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="rounded p-1 text-surface-500 hover:bg-surface-700 hover:text-white"
+                                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-900"
                                 aria-label="View on explorer"
                               >
                                 <ExternalLink className="h-4 w-4" />
@@ -269,22 +269,22 @@ export default function TransactionsPage() {
                 <Card key={tx.id} className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <span className="font-mono text-sm text-surface-200">{tx.tx_hash ? formatAddress(tx.tx_hash, 10) : "—"}</span>
+                      <span className="font-mono text-sm text-slate-700">{tx.tx_hash ? formatAddress(tx.tx_hash, 10) : "—"}</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono tabular-nums text-white">{tx.amount} USDC</span>
+                        <span className="font-mono tabular-nums text-slate-900">{tx.amount} USDC</span>
                         <span className={cn("inline-flex items-center gap-1 text-xs font-medium", statusConfig.color)}>
                           <StatusIcon className={cn("h-3 w-3", tx.status === "confirming" && "animate-spin")} />
                           {tx.status}
                         </span>
                       </div>
-                      <p className="text-xs text-surface-500">{new Date(tx.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-400">{new Date(tx.created_at).toLocaleDateString()}</p>
                     </div>
                     {tx.tx_hash && (
                       <div className="flex gap-1">
-                        <button onClick={() => copyHash(tx.tx_hash!)} className="rounded p-1.5 text-surface-500 hover:bg-surface-700 hover:text-white">
+                        <button onClick={() => copyHash(tx.tx_hash!)} className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900">
                           {copiedHash === tx.tx_hash ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                         </button>
-                        <a href={explorerUrl(tx)!} target="_blank" rel="noopener noreferrer" className="rounded p-1.5 text-surface-500 hover:bg-surface-700 hover:text-white">
+                        <a href={explorerUrl(tx)!} target="_blank" rel="noopener noreferrer" className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900">
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       </div>
@@ -304,7 +304,7 @@ export default function TransactionsPage() {
                   onClick={() => setPage(i)}
                   className={cn(
                     "h-8 w-8 rounded-md text-sm transition-colors",
-                    page === i ? "bg-brand-600 text-white" : "text-surface-400 hover:bg-surface-800",
+                    page === i ? "bg-black text-white" : "text-slate-400 hover:bg-slate-100",
                   )}
                   aria-current={page === i ? "page" : undefined}
                 >

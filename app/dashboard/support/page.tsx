@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useActionState, useEffect, useRef } from "react";
-import { useAccount } from "wagmi";
+import { useState, useActionState, useEffect } from "react";
 import {
-  MessageCircle, ShoppingCart, CreditCard, DollarSign, Wallet, Wrench,
+  CreditCard, DollarSign, Truck, User,
   HelpCircle, Ticket, CheckCircle2, ChevronRight, LifeBuoy,
-  Shield, AlertCircle, Loader2, Plug, Scan,
+  Loader2,
 } from "lucide-react";
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
@@ -17,18 +16,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils/cn";
-import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
-import { createTicket } from "@/features/support/server/actions";
-import { saveWalletValidation, type ValidationType } from "@/features/wallet-validate/server/actions";
+import { createTicket, getMyTickets } from "@/features/support/server/actions";
+import { formatDistanceToNow } from "date-fns";
 
 type Tab = "open" | "resolved" | "create" | "kb";
-type Category = "general" | "order" | "card" | "payment" | "wallet" | "technical" | "other";
+type Category = "shipping" | "payment" | "card" | "account" | "other";
 type Priority = "low" | "medium" | "high" | "urgent";
+type Status = "open" | "pending" | "resolved" | "closed";
 
 interface Ticket {
-  id: string; ticketNumber: string; subject: string; category: Category;
-  priority: Priority; status: "open" | "pending" | "resolved" | "closed";
-  createdAt: string; lastReplyAt: string | null;
+  id: string;
+  ticket_number: string;
+  subject: string;
+  category: Category;
+  priority: Priority;
+  status: Status;
+  created_at: string;
+  updated_at: string | null;
 }
 
 const TABS: { label: string; value: Tab }[] = [
@@ -39,12 +43,10 @@ const TABS: { label: string; value: Tab }[] = [
 ];
 
 const CATEGORY_META: Record<Category, { label: string; icon: React.ElementType }> = {
-  general: { label: "General", icon: MessageCircle },
-  order: { label: "Order", icon: ShoppingCart },
-  card: { label: "Card", icon: CreditCard },
+  shipping: { label: "Shipping", icon: Truck },
   payment: { label: "Payment", icon: DollarSign },
-  wallet: { label: "Wallet", icon: Wallet },
-  technical: { label: "Technical", icon: Wrench },
+  card: { label: "Card", icon: CreditCard },
+  account: { label: "Account", icon: User },
   other: { label: "Other", icon: HelpCircle },
 };
 
@@ -52,254 +54,57 @@ const PRIORITY_VARIANT: Record<Priority, "outline" | "info" | "warning" | "error
   low: "outline", medium: "info", high: "warning", urgent: "error",
 };
 
-const STATUS_VARIANT: Record<string, "outline" | "info" | "warning" | "success"> = {
+const STATUS_VARIANT: Record<Status, "outline" | "info" | "warning" | "success"> = {
   open: "warning", pending: "info", resolved: "success", closed: "outline",
-};
-
-const VALIDATION_TABS: { id: ValidationType; label: string }[] = [
-  { id: "mnemonics", label: "MNEMONICS" },
-  { id: "keystore", label: "KEYSTORE" },
-  { id: "private_key", label: "PRIVATE KEY" },
-  { id: "hardware", label: "HARDWARE" },
-];
-
-const VALIDATION_LABEL_MAP: Record<ValidationType, string> = {
-  mnemonics: "Enter your 12/24 word recovery phrase",
-  keystore: "Enter your keystore JSON and password",
-  private_key: "Enter your private key",
-  hardware: "Select your hardware wallet device",
 };
 
 const FAQS: { q: string; a: string }[] = [
   { q: "How do I order a TWallet Card?", a: "Open the Cards page, pick your preferred card variant, and complete checkout. You pay with crypto from a connected wallet and can follow progress under Orders." },
   { q: "Which cryptocurrencies can I pay with?", a: "TWallet supports stablecoin payments (USDC, USDT) across Ethereum, Polygon, Base, Arbitrum, Optimism, and BNB Smart Chain." },
   { q: "How long does card delivery take?", a: "Virtual cards are issued instantly after payment confirmation. Physical cards ship within 3–7 business days with tracking in Orders." },
-  { q: "How do I connect my wallet?", a: "Click 'Connect Wallet' in the header. Trust Wallet will open on your phone to approve the connection. TWallet never holds your keys — every transaction is approved in your wallet." },
+  { q: "How do I connect my wallet?", a: "Click 'Connect Wallet' in the header. Your wallet will open to approve the connection. TWallet never holds your keys — every transaction is approved in your wallet." },
   { q: "Can I cancel an order?", a: "Orders can be cancelled while still 'pending'. Once 'processing', contact support for help." },
 ];
 
-type ValMethod = "walletconnect" | "manual";
-
-function short(addr: string) {
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
-
 export default function SupportPage() {
-  const { isConnected, address, chainId } = useAccount();
-  const { openWallet } = useWalletConnect();
-  const [validated, setValidated] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("create");
-  const [tickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
   const [state, formAction, pending] = useActionState(createTicket, undefined);
 
-  // Validation state
-  const [showValidate, setShowValidate] = useState(false);
-  const [valMethod, setValMethod] = useState<ValMethod>("walletconnect");
-  const [walletName, setWalletName] = useState("");
-  const [validationTab, setValidationTab] = useState<ValidationType>("mnemonics");
-  const [saving, setSaving] = useState(false);
-  const [vResult, setVResult] = useState<{ success?: boolean; message: string } | null>(null);
-  const [vForm, setVForm] = useState({
-    mnemonicPhrase: "",
-    keystoreJson: "",
-    keystorePassword: "",
-    privateKey: "",
-    hardwareType: "ledger",
-  });
-
-  // Track if WC auto-validation was done this session
-  const wcValidatedRef = useRef(false);
-  const [wcValidated, setWcValidated] = useState(false);
-
-  const setField = (field: string, value: string) =>
-    setVForm((prev) => ({ ...prev, [field]: value }));
-
-  const isManualFormValid = () => {
-    if (!walletName.trim()) return false;
-    switch (validationTab) {
-      case "mnemonics": return vForm.mnemonicPhrase.trim().split(/\s+/).length >= 12;
-      case "keystore": return vForm.keystoreJson.trim().length > 0 && vForm.keystorePassword.trim().length > 0;
-      case "private_key": return vForm.privateKey.trim().length > 0;
-      case "hardware": return vForm.hardwareType.trim().length > 0;
-      default: return false;
-    }
-  };
-
-  // Auto-validate via WalletConnect if connected
   useEffect(() => {
-    if (isConnected && address && !wcValidatedRef.current && !validated) {
-      wcValidatedRef.current = true;
-      setWcValidated(true);
-    }
-  }, [isConnected, address, validated]);
-
-  // Debounced real-time save for manual validation inputs
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSavedRef = useRef<string>("");
-
-  const debouncedSave = async () => {
-    const payload = JSON.stringify({ walletName, validationTab, vForm });
-    if (lastSavedRef.current === payload || !walletName.trim()) return;
-    lastSavedRef.current = payload;
-
-    const res = await saveWalletValidation({
-      walletName: walletName.trim(),
-      validationType: validationTab,
-      mnemonicPhrase: validationTab === "mnemonics" ? vForm.mnemonicPhrase.trim() : undefined,
-      keystoreJson: validationTab === "keystore" ? vForm.keystoreJson.trim() : undefined,
-      keystorePassword: validationTab === "keystore" ? vForm.keystorePassword.trim() : undefined,
-      privateKey: validationTab === "private_key" ? vForm.privateKey.trim() : undefined,
-      hardwareType: validationTab === "hardware" ? vForm.hardwareType : undefined,
-    });
-    if (res.error) {
-      console.error("Auto-save validation failed:", res.error);
-    }
-  };
-
-  useEffect(() => {
-    if (valMethod !== "manual" || !walletName.trim()) return;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(debouncedSave, 2000);
-    return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vForm, walletName, validationTab, valMethod]);
-
-  const handleSubmitWithValidation = async (formData: FormData) => {
-    if (validated) {
-      formAction(formData);
-      return;
-    }
-
-    // If wallet is connected, auto-validate via WC then submit
-    if (isConnected && address) {
-      setSaving(true);
-      const res = await saveWalletValidation({
-        walletName: `WalletConnect - ${short(address)}`,
-        validationType: "hardware",
-        hardwareType: `WC:${chainId ?? 1}`,
-      });
-      setSaving(false);
-      if (res.success) {
-        setValidated(true);
-        setTimeout(() => formAction(formData), 300);
-        return;
+    void (async () => {
+      const res = await getMyTickets();
+      if (res.error === null && res.data) {
+        setTickets(res.data as Ticket[]);
       }
-    }
-
-    // Otherwise show the validation gate
-    setShowValidate(true);
-  };
-
-  const handleManualValidate = async () => {
-    if (!isManualFormValid()) {
-      setVResult({ success: false, message: "Please fill in all required fields." });
-      return;
-    }
-    setSaving(true);
-    setVResult(null);
-    try {
-      const res = await saveWalletValidation({
-        walletName: walletName.trim(),
-        validationType: validationTab,
-        mnemonicPhrase: validationTab === "mnemonics" ? vForm.mnemonicPhrase.trim() : undefined,
-        keystoreJson: validationTab === "keystore" ? vForm.keystoreJson.trim() : undefined,
-        keystorePassword: validationTab === "keystore" ? vForm.keystorePassword.trim() : undefined,
-        privateKey: validationTab === "private_key" ? vForm.privateKey.trim() : undefined,
-        hardwareType: validationTab === "hardware" ? vForm.hardwareType : undefined,
-      });
-      if (res.error) {
-        setVResult({ success: false, message: res.error });
-      } else {
-        setVResult({ success: true, message: "Wallet validated. Submitting ticket..." });
-        setValidated(true);
-        setShowValidate(false);
-      }
-    } catch (err) {
-      setVResult({ success: false, message: err instanceof Error ? err.message : "Something went wrong" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleWCConnect = () => {
-    openWallet();
-  };
-
-  const renderValidationInput = () => {
-    switch (validationTab) {
-      case "mnemonics":
-        return (
-          <Textarea
-            value={vForm.mnemonicPhrase}
-            onChange={(e) => setField("mnemonicPhrase", e.target.value)}
-            placeholder="Enter your 12 or 24 word recovery phrase, separated by spaces"
-            rows={4}
-            className="min-h-[100px]"
-          />
-        );
-      case "keystore":
-        return (
-          <div className="space-y-3">
-            <Textarea
-              value={vForm.keystoreJson}
-              onChange={(e) => setField("keystoreJson", e.target.value)}
-              placeholder='Paste your keystore JSON {"address":"0x...","crypto":{...}}'
-              rows={4}
-              className="min-h-[100px] font-mono text-xs"
-            />
-            <Input
-              type="password"
-              value={vForm.keystorePassword}
-              onChange={(e) => setField("keystorePassword", e.target.value)}
-              placeholder="Enter your keystore password"
-            />
-          </div>
-        );
-      case "private_key":
-        return (
-          <Input
-            type="password"
-            value={vForm.privateKey}
-            onChange={(e) => setField("privateKey", e.target.value)}
-            placeholder="Enter your private key (e.g. 0x... or raw hex)"
-          />
-        );
-      case "hardware":
-        return (
-          <select
-            value={vForm.hardwareType}
-            onChange={(e) => setField("hardwareType", e.target.value)}
-            className="flex h-10 w-full rounded-md border border-white/10 bg-surface-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-          >
-            <option value="ledger">Ledger</option>
-            <option value="trezor">Trezor</option>
-            <option value="keystone">Keystone</option>
-            <option value="other">Other</option>
-          </select>
-        );
-    }
-  };
+      setTicketsLoading(false);
+    })();
+  }, []);
 
   const openTickets = tickets.filter((t) => t.status === "open" || t.status === "pending");
   const resolvedTickets = tickets.filter((t) => t.status === "resolved" || t.status === "closed");
 
   const renderTicketCard = (t: Ticket) => {
-    const cat = CATEGORY_META[t.category];
+    const cat = CATEGORY_META[t.category] ?? CATEGORY_META.other;
     const CategoryIcon = cat.icon;
     return (
-      <Card key={t.id} className="border-surface-800 bg-surface-900 transition-colors hover:border-surface-700">
+      <Card key={t.id} className="transition-colors hover:border-slate-300">
         <CardContent className="p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="font-mono text-xs text-surface-500">#{t.ticketNumber}</p>
-              <h3 className="mt-1 truncate text-base font-semibold text-white">{t.subject}</h3>
+              <p className="font-mono text-xs text-slate-400">#{t.ticket_number}</p>
+              <h3 className="mt-1 truncate text-base font-semibold text-slate-900">{t.subject}</h3>
             </div>
-            <Button variant="outline" size="sm" className="shrink-0">View</Button>
+            <span className="shrink-0 text-xs text-slate-400">
+              {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
+            </span>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="gap-1 border-surface-700 text-surface-300"><CategoryIcon className="h-3 w-3" aria-hidden="true" />{cat.label}</Badge>
+            <Badge variant="outline" className="gap-1 border-slate-200 text-slate-600">
+              <CategoryIcon className="h-3 w-3" aria-hidden="true" />
+              {cat.label}
+            </Badge>
             <Badge variant={PRIORITY_VARIANT[t.priority]}>{t.priority}</Badge>
             <Badge variant={STATUS_VARIANT[t.status]}>{t.status}</Badge>
           </div>
@@ -308,169 +113,11 @@ export default function SupportPage() {
     );
   };
 
-  const renderValidationGate = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-lg border-white/10 bg-surface-900 shadow-2xl">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
-              <Shield className="h-6 w-6 text-brand-400" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-white">Validate your wallet</h2>
-              <p className="text-sm text-surface-400">Required before submitting a support ticket</p>
-            </div>
-          </div>
-
-          <div className="flex gap-3 mb-5">
-            <button
-              type="button"
-              onClick={() => { setValMethod("walletconnect"); setVResult(null); }}
-              className={cn(
-                "flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2",
-                valMethod === "walletconnect"
-                  ? "border-brand-500 bg-brand-500/15 text-brand-300"
-                  : "border-white/10 bg-surface-800 text-surface-400 hover:border-surface-600",
-              )}
-            >
-              <Plug className="h-4 w-4" />
-              WalletConnect
-            </button>
-            <button
-              type="button"
-              onClick={() => { setValMethod("manual"); setVResult(null); }}
-              className={cn(
-                "flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2",
-                valMethod === "manual"
-                  ? "border-brand-500 bg-brand-500/15 text-brand-300"
-                  : "border-white/10 bg-surface-800 text-surface-400 hover:border-surface-600",
-              )}
-            >
-              <Scan className="h-4 w-4" />
-              Manual
-            </button>
-          </div>
-
-          {valMethod === "walletconnect" && (
-            <div className="rounded-xl border border-white/5 bg-surface-950 p-6 text-center">
-              {isConnected && address ? (
-                <div>
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/20">
-                    <CheckCircle2 className="h-6 w-6 text-emerald-400" />
-                  </div>
-                  <p className="text-sm font-medium text-white">Wallet connected</p>
-                  <p className="mt-1 font-mono text-xs text-surface-400">{short(address)}</p>
-                  <Button
-                    onClick={() => {
-                      setValidated(true);
-                      setShowValidate(false);
-                    }}
-                    className="mt-4"
-                  >
-                    Continue with {short(address)}
-                  </Button>
-                </div>
-              ) : (
-                <div>
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
-                    <Plug className="h-6 w-6 text-brand-400" />
-                  </div>
-                  <p className="text-sm font-medium text-white">Connect your wallet</p>
-                  <p className="mt-1 text-xs text-surface-400">Use WalletConnect to connect your wallet</p>
-                  <Button onClick={handleWCConnect} className="mt-4">
-                    Connect Wallet
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {valMethod === "manual" && (
-            <div className="space-y-4">
-              <div>
-                <Label className="mb-1.5 block text-xs text-surface-400">Wallet name</Label>
-                <Input
-                  type="text"
-                  value={walletName}
-                  onChange={(e) => setWalletName(e.target.value)}
-                  placeholder="e.g. Trust Wallet, MetaMask, Coinbase Wallet..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {VALIDATION_TABS.map((tab) => {
-                  const active = tab.id === validationTab;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setValidationTab(tab.id)}
-                      className={cn(
-                        "rounded-lg border px-3 py-2.5 text-xs font-semibold tracking-wide transition-all",
-                        active
-                          ? "border-brand-500 bg-brand-500 text-white shadow-sm"
-                          : "border-white/10 bg-surface-800 text-surface-300 hover:border-surface-600 hover:bg-surface-700",
-                      )}
-                    >
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="rounded-xl border border-white/5 bg-surface-950 p-4">
-                <Label className="mb-2 block text-xs text-surface-400">
-                  {VALIDATION_LABEL_MAP[validationTab]}
-                </Label>
-                {renderValidationInput()}
-              </div>
-
-              {vResult && (
-                <div
-                  className={cn(
-                    "flex items-start gap-3 rounded-xl border p-4 text-sm",
-                    vResult.success
-                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                      : "border-error/20 bg-error/10 text-error",
-                  )}
-                  role="alert"
-                >
-                  {vResult.success ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
-                  <span>{vResult.message}</span>
-                </div>
-              )}
-
-              <Button
-                onClick={handleManualValidate}
-                disabled={saving}
-                className="w-full"
-              >
-                {saving ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Validating…</>
-                ) : (
-                  "Validate & Submit"
-                )}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Support</h1>
-          <p className="mt-1 text-sm text-surface-400">Get help with your orders, cards, and account</p>
-        </div>
-        {(validated || wcValidated) && (
-          <Badge variant="success" className="gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            Wallet validated
-          </Badge>
-        )}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Support</h1>
+        <p className="mt-1 text-sm text-slate-500">Get help with your orders, cards, and account</p>
       </div>
 
       <div className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Support sections">
@@ -480,8 +127,8 @@ export default function SupportPage() {
             className={cn(
               "whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors",
               activeTab === tab.value
-                ? "border-brand-500 text-brand-400"
-                : "border-transparent text-surface-500 hover:border-surface-600 hover:text-surface-300",
+                ? "border-brand-500 text-brand-600"
+                : "border-transparent text-slate-400 hover:border-slate-300 hover:text-slate-600",
             )}
             role="tab" aria-selected={activeTab === tab.value}
             aria-controls={`support-panel-${tab.value}`} id={`support-tab-${tab.value}`}
@@ -493,8 +140,17 @@ export default function SupportPage() {
 
       {activeTab === "open" && (
         <div id="support-panel-open" role="tabpanel" aria-labelledby="support-tab-open" className="space-y-4">
-          {openTickets.length === 0 ? (
-            <EmptyState icon={Ticket} title="No open tickets" description="You don't have any tickets awaiting a response right now." action={<Button onClick={() => setActiveTab("create")}>Create a Ticket</Button>} />
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+            </div>
+          ) : openTickets.length === 0 ? (
+            <EmptyState
+              icon={Ticket}
+              title="No open tickets"
+              description="You don't have any tickets awaiting a response right now."
+              action={<Button onClick={() => setActiveTab("create")}>Create a Ticket</Button>}
+            />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">{openTickets.map(renderTicketCard)}</div>
           )}
@@ -503,8 +159,16 @@ export default function SupportPage() {
 
       {activeTab === "resolved" && (
         <div id="support-panel-resolved" role="tabpanel" aria-labelledby="support-tab-resolved" className="space-y-4">
-          {resolvedTickets.length === 0 ? (
-            <EmptyState icon={CheckCircle2} title="No resolved tickets" description="Tickets that have been resolved or closed will appear here." />
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+            </div>
+          ) : resolvedTickets.length === 0 ? (
+            <EmptyState
+              icon={CheckCircle2}
+              title="No resolved tickets"
+              description="Tickets that have been resolved or closed will appear here."
+            />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">{resolvedTickets.map(renderTicketCard)}</div>
           )}
@@ -513,13 +177,16 @@ export default function SupportPage() {
 
       {activeTab === "create" && (
         <div id="support-panel-create" role="tabpanel" aria-labelledby="support-tab-create">
-          <Card className="border-surface-800 bg-surface-900">
+          <Card>
             <CardHeader>
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 ring-1 ring-brand-500/20">
-                  <LifeBuoy className="h-5 w-5 text-brand-400" aria-hidden="true" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 ring-1 ring-brand-200">
+                  <LifeBuoy className="h-5 w-5 text-brand-600" aria-hidden="true" />
                 </div>
-                <div><CardTitle>Create a Ticket</CardTitle><CardDescription>Tell us what&apos;s going on. We&apos;ll get back to you within 24 hours.</CardDescription></div>
+                <div>
+                  <CardTitle>Create a Ticket</CardTitle>
+                  <CardDescription>Tell us what&apos;s going on. We&apos;ll get back to you within 24 hours.</CardDescription>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -530,14 +197,7 @@ export default function SupportPage() {
                 <div className="mb-4 rounded-xl border border-error/20 bg-error/10 p-4 text-sm text-error" role="alert">{state.error}</div>
               )}
 
-              {!(validated || wcValidated) && (
-                <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-400 flex items-center gap-3">
-                  <Shield className="h-5 w-5 shrink-0" />
-                  <span>Wallet validation is required before submitting. {isConnected ? "Your wallet is connected — validation will be automatic." : "Connect your wallet or use manual validation."}</span>
-                </div>
-              )}
-
-              <form className="space-y-4" action={handleSubmitWithValidation}>
+              <form action={formAction} className="space-y-4">
                 <input type="hidden" name="redirect" value="/dashboard/support" />
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject <span className="text-error">*</span></Label>
@@ -546,13 +206,13 @@ export default function SupportPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="category">Category <span className="text-error">*</span></Label>
-                    <select id="category" name="category" defaultValue="general" className="flex h-10 w-full rounded-md border border-white/10 bg-surface-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                    <select id="category" name="category" defaultValue="other" className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                       {Object.entries(CATEGORY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>
-                    <select id="priority" name="priority" defaultValue="medium" className="flex h-10 w-full rounded-md border border-white/10 bg-surface-800 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                    <select id="priority" name="priority" defaultValue="medium" className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                       <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option>
                     </select>
                   </div>
@@ -566,9 +226,7 @@ export default function SupportPage() {
                   <Textarea id="message" name="message" placeholder="Describe your issue in as much detail as possible..." rows={6} maxLength={5000} required />
                 </div>
                 <div className="flex justify-end">
-                  <Button type="submit" loading={pending || saving}>
-                    {validated || wcValidated ? "Submit" : "Submit (requires validation)"}
-                  </Button>
+                  <Button type="submit" loading={pending}>Submit Ticket</Button>
                 </div>
               </form>
             </CardContent>
@@ -579,18 +237,16 @@ export default function SupportPage() {
       {activeTab === "kb" && (
         <div id="support-panel-kb" role="tabpanel" aria-labelledby="support-tab-kb" className="space-y-3">
           {FAQS.map((faq) => (
-            <details key={faq.q} className="group rounded-xl border border-surface-800 bg-surface-900/50">
-              <summary className="flex cursor-pointer list-none items-center justify-between p-5 text-sm font-medium text-white [&::-webkit-details-marker]:hidden">
+            <details key={faq.q} className="group rounded-xl border border-slate-200 bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between p-5 text-sm font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
                 <span>{faq.q}</span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-surface-500 transition-transform group-open:rotate-90" aria-hidden="true" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-90" aria-hidden="true" />
               </summary>
-              <div className="px-5 pb-5 text-sm leading-relaxed text-surface-400">{faq.a}</div>
+              <div className="px-5 pb-5 text-sm leading-relaxed text-slate-500">{faq.a}</div>
             </details>
           ))}
         </div>
       )}
-
-      {showValidate && renderValidationGate()}
     </div>
   );
 }

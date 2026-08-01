@@ -56,7 +56,7 @@ export function AdminReceivingWalletsTable({ wallets }: { wallets: ReceivingWall
       key: "address",
       label: "Address",
       render: (row) => (
-        <span className="font-mono text-xs text-brand-400">
+        <span className="font-mono text-xs text-brand-600">
           {row.address.slice(0, 6)}...{row.address.slice(-4)}
         </span>
       ),
@@ -65,7 +65,7 @@ export function AdminReceivingWalletsTable({ wallets }: { wallets: ReceivingWall
       key: "network_name",
       label: "Network",
       render: (row) => (
-        <Badge variant="outline" className="text-xs border-surface-600 text-surface-300">
+        <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">
           {row.network_name}
         </Badge>
       ),
@@ -74,7 +74,7 @@ export function AdminReceivingWalletsTable({ wallets }: { wallets: ReceivingWall
       key: "label",
       label: "Label",
       render: (row) => (
-        <span className="text-sm text-surface-300">{row.label ?? "\u2014"}</span>
+        <span className="text-sm text-slate-600">{row.label ?? "\u2014"}</span>
       ),
     },
     {
@@ -90,7 +90,7 @@ export function AdminReceivingWalletsTable({ wallets }: { wallets: ReceivingWall
       key: "total_received",
       label: "Received",
       render: (row) => (
-        <span className="text-xs text-surface-300">${Number(row.total_received).toFixed(2)}</span>
+        <span className="text-xs text-slate-600">${Number(row.total_received).toFixed(2)}</span>
       ),
     },
     {
@@ -98,7 +98,7 @@ export function AdminReceivingWalletsTable({ wallets }: { wallets: ReceivingWall
       label: "Added",
       sortable: true,
       render: (row) => (
-        <span className="text-xs text-surface-400">
+        <span className="text-xs text-slate-500">
           {formatDistanceToNow(new Date(row.created_at), { addSuffix: true })}
         </span>
       ),
@@ -116,7 +116,7 @@ export function AdminReceivingWalletsTable({ wallets }: { wallets: ReceivingWall
                 "noopener,noreferrer"
               )
             }
-            className="p-1.5 rounded-lg hover:bg-surface-800 text-surface-400 hover:text-surface-200 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors"
             aria-label={`View address on ${row.network_name} explorer`}
           >
             <ExternalLink className="w-4 h-4" />

@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib";
+import { isAdminUser } from "@/lib/admin-provision";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -11,7 +12,18 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createServerSupabaseClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${next}`);
+    if (!error) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const destination =
+        next !== "/dashboard" && next.startsWith("/")
+          ? next
+          : user && (await isAdminUser(user.id))
+            ? "/admin"
+            : "/dashboard";
+      return NextResponse.redirect(`${origin}${destination}`);
+    }
     return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_failed`);
   }
 

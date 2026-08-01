@@ -12,13 +12,13 @@ export default async function Layout({ children }: { children: React.ReactNode }
     redirect("/auth/login");
   }
 
-  const { data: role } = await supabase
-    .from("user_roles")
-    .select("role, admins!inner(profile_id)")
-    .eq("user_id", user.id)
-    .single();
+  const { data: admin } = await supabase
+    .from("admins")
+    .select("profile_id")
+    .eq("profile_id", user.id)
+    .maybeSingle();
 
-  if (!role) {
+  if (!admin) {
     redirect("/dashboard");
   }
 

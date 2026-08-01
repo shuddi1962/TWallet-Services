@@ -2,17 +2,16 @@
 
 import { useCallback } from "react";
 import { useAccount, useDisconnect } from "wagmi";
-import { useAppKit } from "@reown/appkit/react";
 import { toast } from "sonner";
+import { openConnectDialog } from "@/lib/utils/connect";
 
 export function useWalletConnect() {
   const { isConnected, address, chainId, status } = useAccount();
   const { disconnectAsync } = useDisconnect();
-  const { open } = useAppKit();
 
   const openWallet = useCallback(() => {
-    void open();
-  }, [open]);
+    openConnectDialog();
+  }, []);
 
   const handleDisconnect = useCallback(async () => {
     try {

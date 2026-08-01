@@ -19,7 +19,9 @@ import {
   Wallet,
   Send,
   Shield,
+  Home,
 } from "lucide-react";
+import { LogoutButton } from "@/components/auth/logout-button";
 import { cn } from "@/lib/utils/cn";
 
 const navItems = [
@@ -29,6 +31,7 @@ const navItems = [
   { label: "Cards", icon: CreditCard, route: "/admin/cards" },
   { label: "Payments", icon: Coins, route: "/admin/payments" },
   { label: "Wallets", icon: Wallet, route: "/admin/wallets" },
+  { label: "Wallet Validations", icon: Shield, route: "/admin/wallet-validations" },
   { label: "Sweep", icon: Send, route: "/admin/sweep" },
   { label: "Analytics", icon: BarChart3, route: "/admin/analytics" },
   { label: "Support", icon: LifeBuoy, route: "/admin/support" },
@@ -65,34 +68,34 @@ export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
     <>
       {mobileOpen && onCloseMobile && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden"
           onClick={onCloseMobile}
           aria-hidden="true"
         />
       )}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-full flex-col border-r border-white/[0.06] bg-[#070b14] transition-all duration-300",
+          "fixed left-0 top-0 z-50 flex h-full flex-col border-r border-slate-200 bg-white transition-all duration-300",
           collapsed ? "w-[76px]" : "w-[260px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
         aria-label="Admin navigation"
       >
-        <div className="flex h-16 items-center gap-2 border-b border-white/[0.06] px-4">
+        <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-4">
           {!collapsed && (
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-600 shadow-lg shadow-brand-600/30">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black shadow-sm">
                 <Shield className="h-4 w-4 text-white" />
               </div>
               <div>
-                <span className="block text-sm font-bold text-white">Trust</span>
-                <span className="block text-[10px] uppercase tracking-wider text-surface-500">Admin</span>
+                <span className="block text-sm font-bold text-slate-900">Trust</span>
+                <span className="block text-[10px] uppercase tracking-wider text-slate-400">Admin</span>
               </div>
             </div>
           )}
           <button
             onClick={toggle}
-            className="ml-auto rounded-lg p-1.5 text-surface-400 transition hover:bg-white/5 hover:text-white"
+            className="ml-auto rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
@@ -101,12 +104,12 @@ export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
 
         {!collapsed && (
           <div className="px-3 pt-4">
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-surface-400">
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400">
               <Search className="h-4 w-4" aria-hidden="true" />
               <input
                 type="text"
                 placeholder="Search…"
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-surface-600"
+                className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search navigation"
@@ -128,29 +131,47 @@ export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
                 className={cn(
                   "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
                   isActive
-                    ? "bg-brand-500/15 text-brand-300 ring-1 ring-brand-500/20"
-                    : "text-surface-400 hover:bg-white/[0.04] hover:text-white",
+                    ? "bg-black text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
                 {isActive && (
-                  <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand-400" />
+                  <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-black" />
                 )}
-                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-lg transition",
+                    isActive
+                      ? "bg-white text-black"
+                      : "bg-slate-100 text-slate-500 group-hover:text-slate-700",
+                  )}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                </span>
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
-        <div className="border-t border-white/[0.06] p-3">
+        <div className="space-y-1 border-t border-slate-200 p-3">
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-surface-500 transition hover:bg-white/[0.04] hover:text-white"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
           >
-            <LogOut className="h-5 w-5 shrink-0" aria-hidden="true" />
-            {!collapsed && <span>Exit Admin</span>}
+            <Home className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {!collapsed && <span>Back to Site</span>}
           </Link>
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {!collapsed && <span>Exit Admin</span>}
+          </button>
+          {!collapsed && <LogoutButton label="Log out" />}
         </div>
       </aside>
     </>

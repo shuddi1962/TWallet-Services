@@ -59,7 +59,7 @@ const [order, setOrder] = useState<any>(null);
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
       </div>
     );
   }
@@ -68,8 +68,8 @@ const [order, setOrder] = useState<any>(null);
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">Order Not Found</h1>
-          <p className="mt-2 text-surface-400">{error ?? "Could not load order."}</p>
+          <h1 className="text-2xl font-bold text-slate-900">Order Not Found</h1>
+          <p className="mt-2 text-slate-500">{error ?? "Could not load order."}</p>
           <Button variant="outline" className="mt-4" asChild>
             <Link href="/dashboard/orders">Back to Orders</Link>
           </Button>
@@ -92,8 +92,8 @@ const [order, setOrder] = useState<any>(null);
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-white">Order {order.order_number}</h1>
-          <p className="mt-1 text-sm text-surface-400">
+          <h1 className="text-2xl font-bold text-slate-900">Order {order.order_number}</h1>
+          <p className="mt-1 text-sm text-slate-500">
             Placed {new Date(order.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
@@ -106,7 +106,7 @@ const [order, setOrder] = useState<any>(null);
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-white">Order Timeline</CardTitle>
+            <CardTitle className="text-slate-900">Order Timeline</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="relative space-y-0">
@@ -118,15 +118,15 @@ const [order, setOrder] = useState<any>(null);
                 return (
                   <div key={step} className="relative flex gap-4 pb-8 last:pb-0">
                     {i < TIMELINE_STEPS.length - 1 && (
-                      <div className={`absolute left-[15px] top-8 h-full w-px ${isComplete ? "bg-brand-500" : "bg-surface-800"}`} aria-hidden="true" />
+                      <div className={`absolute left-[15px] top-8 h-full w-px ${isComplete ? "bg-black" : "bg-slate-200"}`} aria-hidden="true" />
                     )}
                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                      isComplete ? (isCurrent ? "bg-brand-500" : "bg-brand-500/20") : "bg-surface-800"
+                      isComplete ? (isCurrent ? "bg-black" : "bg-neutral-200") : "bg-slate-100"
                     }`}>
-                      <StepIcon className={`h-4 w-4 ${isComplete ? "text-white" : "text-surface-500"}`} aria-hidden="true" />
+                      <StepIcon className={`h-4 w-4 ${isComplete ? "text-white" : "text-slate-400"}`} aria-hidden="true" />
                     </div>
                     <div className="pt-1">
-                      <p className={`text-sm font-medium ${isComplete ? "text-surface-50" : "text-surface-500"}`}>
+                      <p className={`text-sm font-medium ${isComplete ? "text-slate-900" : "text-slate-400"}`}>
                         {cfg.label}
                       </p>
                     </div>
@@ -140,29 +140,29 @@ const [order, setOrder] = useState<any>(null);
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-white">Details</CardTitle>
+              <CardTitle className="text-slate-900">Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-surface-400">Product</span>
-                <span className="text-surface-200">{order.card_products?.name ?? "—"}</span>
+                <span className="text-slate-500">Product</span>
+                <span className="text-slate-700">{order.card_products?.name ?? "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-surface-400">Type</span>
-                <span className="text-surface-200">{order.card_products?.type ?? "—"}</span>
+                <span className="text-slate-500">Type</span>
+                <span className="text-slate-700">{order.card_products?.type ?? "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-surface-400">Network</span>
-                <span className="text-surface-200 capitalize">{order.network}</span>
+                <span className="text-slate-500">Network</span>
+                <span className="text-slate-700 capitalize">{order.network}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-surface-400">Amount</span>
-                <span className="font-semibold text-brand-400">{order.amount_usdc} USDC</span>
+                <span className="text-slate-500">Amount</span>
+                <span className="font-semibold text-brand-600">{order.amount_usdc} USDC</span>
               </div>
               {order.tx_hash && (
                 <div className="flex justify-between">
-                  <span className="text-surface-400">Tx Hash</span>
-                  <span className="max-w-[160px] truncate font-mono text-xs text-surface-300">{order.tx_hash}</span>
+                  <span className="text-slate-500">Tx Hash</span>
+                  <span className="max-w-[160px] truncate font-mono text-xs text-slate-600">{order.tx_hash}</span>
                 </div>
               )}
             </CardContent>

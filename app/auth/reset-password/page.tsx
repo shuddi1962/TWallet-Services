@@ -17,7 +17,7 @@ export default function ResetPasswordPage() {
         <p className="mt-1 text-surface-400">Enter your new password below</p>
       </div>
 
-      <Card>
+      <Card className="border-white/10 bg-surface-900/70">
         <CardContent className="p-6">
           <form action={formAction} className="space-y-4">
             {state?.error && (
@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="password">New password</Label>
+              <Label htmlFor="password" className="text-surface-200">New password</Label>
               <Input
                 id="password"
                 name="password"
@@ -35,6 +35,7 @@ export default function ResetPasswordPage() {
                 autoComplete="new-password"
                 required
                 placeholder="••••••••"
+                className="border-white/10 bg-surface-800 text-white placeholder:text-surface-500"
               />
               <p className="text-xs text-surface-400">
                 Min 8 chars, 1 uppercase, 1 lowercase, 1 number

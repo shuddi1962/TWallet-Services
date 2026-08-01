@@ -1,10 +1,13 @@
 "use client";
 
-import { Wallet, ChevronDown, LogOut, Copy, Check, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Wallet, ChevronDown, LogOut, Copy, Check, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 import { copyToClipboard } from "@/lib/utils/clipboard";
+import { createClient } from "@/lib/supabase/client";
+import { openConnectDialog } from "@/lib/utils/connect";
 import { toast } from "sonner";
 
 function short(addr: string) {
@@ -12,9 +15,39 @@ function short(addr: string) {
 }
 
 export function ConnectButton() {
-  const { openWallet, disconnect, connecting, isConnected, address } = useWalletConnect();
+  const { disconnect, isConnected, address } = useWalletConnect();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    let mounted = true;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (mounted) setSignedIn(Boolean(data.user));
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event: string, session: { user: { id: string } | null } | null) => {
+      if (mounted) setSignedIn(Boolean(session));
+    });
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleConnect = () => {
+    if (signedIn === null) return;
+    if (!signedIn) {
+      const redirect = "/dashboard/wallet?connect=1";
+      window.sessionStorage.setItem("tw-pending-connect", "1");
+      router.push(`/auth/login?redirect=${encodeURIComponent(redirect)}&connect=1`);
+      return;
+    }
+    openConnectDialog();
+  };
 
   const copy = async () => {
     if (!address) return;
@@ -34,7 +67,7 @@ export function ConnectButton() {
         <button
           type="button"
           onClick={() => setMenuOpen((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1.5 text-sm font-medium text-brand-300 transition hover:bg-brand-500/20"
+          className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-brand-700"
         >
           <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
           {short(address)}
@@ -43,24 +76,24 @@ export function ConnectButton() {
         {menuOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-white/10 bg-surface-900 shadow-2xl">
+            <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
               <button
                 type="button"
                 onClick={() => {
                   setMenuOpen(false);
-                  void openWallet();
+                  openConnectDialog();
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-surface-200 hover:bg-white/5"
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50"
               >
-                <Wallet className="h-4 w-4" />
-                Switch wallet
+                <ShieldCheck className="h-4 w-4" />
+                Validate manually
               </button>
               <button
                 type="button"
                 onClick={() => void copy()}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-surface-200 hover:bg-white/5"
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50"
               >
-                {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
                 {copied ? "Copied" : "Copy address"}
               </button>
               <button
@@ -69,7 +102,7 @@ export function ConnectButton() {
                   setMenuOpen(false);
                   void disconnect();
                 }}
-                className="flex w-full items-center gap-2 border-t border-white/5 px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/5"
+                className="flex w-full items-center gap-2 border-t border-slate-200 px-4 py-2.5 text-left text-sm text-red-500 hover:bg-slate-50"
               >
                 <LogOut className="h-4 w-4" />
                 Disconnect
@@ -84,14 +117,11 @@ export function ConnectButton() {
   return (
     <Button
       type="button"
-      onClick={() => openWallet()}
+      onClick={handleConnect}
       size="sm"
       className="rounded-full"
-      // Never lock the header on WalletConnect QR / reconnect hangs
-      disabled={false}
-      aria-busy={connecting}
     >
-      {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+      <Wallet className="h-4 w-4" />
       <span>Connect</span>
     </Button>
   );
