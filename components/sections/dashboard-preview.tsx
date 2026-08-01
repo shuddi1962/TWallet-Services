@@ -6,13 +6,14 @@ import { ArrowRight, ArrowUpRight, Wallet, CreditCard, ShoppingBag, TrendingUp, 
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { TwalletCard } from "@/components/cards/twallet-card";
+import { ShippingCard } from "@/components/dashboard/shipping-card";
 import { cn } from "@/lib/utils/cn";
 
 const recentOrders = [
-  { id: "1", order_number: "TW-MSAFWLMJ-48YP", name: "Midnight Black", amount: 5.0, status: "delivered", time: "Today" },
-  { id: "2", order_number: "TW-MS5PZIRN-KB15", name: "Titanium", amount: 10.0, status: "delivered", time: "Yesterday" },
-  { id: "3", order_number: "TW-K7D2XQZN-91AH", name: "Sapphire", amount: 9.99, status: "paid", time: "Jul 28" },
-  { id: "4", order_number: "TW-RM4PVDLZ-62CK", name: "Gold", amount: 49.99, status: "processing", time: "Jul 26" },
+  { id: "1", order_number: "TW-MSAFWLMJ-48YP", name: "Midnight Black", amount: 5.0, status: "delivered", time: "Today", tracking_number: "TWLX4829137751", carrier: "DHL" },
+  { id: "2", order_number: "TW-MS5PZIRN-KB15", name: "Titanium", amount: 10.0, status: "delivered", time: "Yesterday", tracking_number: null, carrier: null },
+  { id: "3", order_number: "TW-K7D2XQZN-91AH", name: "Sapphire", amount: 9.99, status: "paid", time: "Jul 28", tracking_number: null, carrier: null },
+  { id: "4", order_number: "TW-RM4PVDLZ-62CK", name: "Gold", amount: 49.99, status: "processing", time: "Jul 26", tracking_number: null, carrier: null },
 ];
 
 const STATUS_STYLE: Record<string, string> = {
@@ -52,7 +53,7 @@ function PremiumStat({
 }
 
 export function DashboardPreview() {
-  const featuredOrder = recentOrders[0] ?? recentOrders[1] ?? { id: "0", order_number: "TW-XXXX-0000", name: "Card", amount: 0, status: "pending", time: "" };
+  const featuredOrder = recentOrders[0] ?? recentOrders[1] ?? { id: "0", order_number: "TW-XXXX-0000", name: "Card", amount: 0, status: "pending", time: "", tracking_number: null, carrier: null };
 
   return (
     <section id="dashboard" className="relative overflow-hidden bg-white py-20 lg:py-28">
@@ -66,7 +67,7 @@ export function DashboardPreview() {
         >
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs">
             <LayoutDashboard className="h-3.5 w-3.5 text-brand-600" />
-            <span className="font-medium text-brand-700">Dashboard Preview</span>
+            <span className="font-medium text-brand-700">Live Dashboard</span>
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Your control center
@@ -156,6 +157,19 @@ export function DashboardPreview() {
                         <Link href="/dashboard/orders">View order details</Link>
                       </Button>
                     </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <ShippingCard
+                      order={{
+                        id: featuredOrder.id,
+                        order_number: featuredOrder.order_number,
+                        status: featuredOrder.status,
+                        tracking_number: featuredOrder.tracking_number ?? null,
+                        carrier: featuredOrder.carrier ?? null,
+                      }}
+                      trackingHref="/dashboard/orders"
+                    />
                   </div>
                 </div>
 

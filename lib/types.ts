@@ -23,7 +23,10 @@ export interface RecentOrderItem {
   network: string;
   token: string;
   created_at: string;
-  card_products: { name: string; type: string } | null;
+  paid_at: string | null;
+  tracking_number: string | null;
+  carrier: string | null;
+  card_products: { name: string; type: string; slug?: string } | null;
 }
 
 export interface WalletInfoItem {

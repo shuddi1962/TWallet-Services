@@ -4,6 +4,7 @@ import { ReactNode, useState } from "react";
 import { AdminSidebar } from "./sidebar";
 import { AdminHeader } from "./header";
 import { AdminRealtime } from "./admin-realtime";
+import { AppFooter } from "@/components/layout/app-footer";
 
 export function AdminLayout({ children }: { children: ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -19,6 +20,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         <main className="relative min-h-screen p-4 md:p-6" aria-label="Admin Dashboard">
           <div className="relative mx-auto max-w-7xl">{children}</div>
         </main>
+        <AppFooter />
       </div>
       <AdminRealtime />
     </div>

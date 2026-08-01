@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TrustLogo } from "@/components/brand/trust-logo";
+import { AppFooter } from "@/components/layout/app-footer";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -23,6 +24,9 @@ export default function AuthLayout({
       </div>
       <div className="relative flex flex-1 items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="w-full max-w-md">{children}</div>
+      </div>
+      <div className="relative">
+        <AppFooter variant="dark" />
       </div>
     </div>
   );

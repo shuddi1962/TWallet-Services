@@ -19,6 +19,7 @@ import { NotificationPanel } from "./notification-panel";
 import { ActivityTimeline } from "./activity-timeline";
 import { Button } from "@/components/ui/button";
 import { TwalletCard, finishForSlug, networkForSlug } from "@/components/cards/twallet-card";
+import { ShippingCard } from "@/components/dashboard/shipping-card";
 import type { DashboardData } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
@@ -156,6 +157,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
               </div>
 
               {featuredOrder ? (
+                <>
                 <div className="relative grid gap-5 md:grid-cols-2">
                   <TwalletCard
                     finish={finishForSlug((featuredOrder.card_products as { slug?: string } | null)?.slug)}
@@ -192,6 +194,19 @@ export function DashboardContent({ data }: { data: DashboardData }) {
                     </Button>
                   </div>
                 </div>
+
+                <div className="mt-6">
+                  <ShippingCard
+                    order={{
+                      id: featuredOrder.id,
+                      order_number: featuredOrder.order_number,
+                      status: featuredOrder.status,
+                      tracking_number: featuredOrder.tracking_number ?? null,
+                      carrier: featuredOrder.carrier ?? null,
+                    }}
+                  />
+                </div>
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 py-14 text-center">
                   <CreditCard className="h-10 w-10 text-slate-400" />

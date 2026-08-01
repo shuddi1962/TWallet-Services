@@ -1,5 +1,4 @@
 import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { Mail } from "lucide-react";
 
 export default function VerifyEmailPage() {
@@ -20,7 +19,6 @@ export default function VerifyEmailPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }
