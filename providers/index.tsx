@@ -27,7 +27,7 @@ function readInitialState(config: Config, cookieHeader: string | null): State | 
     if (!trimmed.startsWith(`${key}=`)) continue;
     const raw = trimmed.slice(key.length + 1);
     try {
-      const parsed = deserialize(decodeCookieValue(raw));
+      const parsed = deserialize<{ state?: State }>(decodeCookieValue(raw));
       return parsed?.state ?? undefined;
     } catch {
       return undefined;
