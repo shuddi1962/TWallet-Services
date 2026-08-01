@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import {
   Snowflake,
@@ -109,7 +108,13 @@ function ToggleRow({
   );
 }
 
-export function MyCards({ cards: initial }: { cards: IssuedCardRow[] }) {
+export function MyCards({
+  cards: initial,
+  onOrderAnother,
+}: {
+  cards: IssuedCardRow[];
+  onOrderAnother?: () => void;
+}) {
   const [cards, setCards] = useState(initial);
   const [selectedId, setSelectedId] = useState(initial[0]?.id ?? "");
   const [fundAmount, setFundAmount] = useState("50");
@@ -135,8 +140,9 @@ export function MyCards({ cards: initial }: { cards: IssuedCardRow[] }) {
         <p className="mt-2 text-sm text-surface-400">
           Order a card and complete crypto payment — virtual cards activate instantly after on-chain verification.
         </p>
-        <Button className="mt-6 rounded-full" asChild>
-          <a href="#order-catalog">Browse cards</a>
+        <Button className="mt-6 rounded-full" onClick={onOrderAnother}>
+          <Plus className="h-4 w-4" />
+          Browse cards
         </Button>
       </div>
     );
@@ -188,11 +194,9 @@ export function MyCards({ cards: initial }: { cards: IssuedCardRow[] }) {
             Real debit design · fund with crypto · freeze & security controls
           </p>
         </div>
-        <Button variant="outline" className="rounded-full" asChild>
-          <a href="#order-catalog">
-            <Plus className="h-4 w-4" />
-            Order another
-          </a>
+        <Button variant="outline" className="rounded-full" onClick={onOrderAnother}>
+          <Plus className="h-4 w-4" />
+          Order another
         </Button>
       </div>
 
@@ -455,9 +459,13 @@ export function MyCards({ cards: initial }: { cards: IssuedCardRow[] }) {
 
           <p className="text-center text-xs text-surface-500">
             Need a new product?{" "}
-            <Link href="#order-catalog" className="text-brand-400 hover:underline">
+            <button
+              type="button"
+              onClick={onOrderAnother}
+              className="font-medium text-brand-400 transition hover:text-brand-300 hover:underline"
+            >
               Order from catalog
-            </Link>
+            </button>
           </p>
         </div>
       </div>

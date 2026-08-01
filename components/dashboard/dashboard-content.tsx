@@ -149,7 +149,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
                   <p className="text-sm text-slate-500">Your latest order status</p>
                 </div>
                 <Button size="sm" className="rounded-full" asChild>
-                  <Link href="/dashboard/cards">
+                  <Link href="/dashboard/cards?order=1">
                     <Plus className="h-4 w-4" />
                     New card
                   </Link>
@@ -215,7 +215,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
                     Order a virtual or physical crypto card in under a minute.
                   </p>
                   <Button className="mt-5 rounded-full" asChild>
-                    <Link href="/dashboard/cards">Browse cards</Link>
+                    <Link href="/dashboard/cards?order=1">Browse cards</Link>
                   </Button>
                 </div>
               )}

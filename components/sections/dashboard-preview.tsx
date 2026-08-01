@@ -244,7 +244,7 @@ export function DashboardPreview() {
                     </div>
                   </div>
                   <Button fullWidth className="mt-4 rounded-full" asChild>
-                    <Link href="/dashboard/cards">
+                    <Link href="/dashboard/cards?order=1">
                       Order Another Card
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Link>

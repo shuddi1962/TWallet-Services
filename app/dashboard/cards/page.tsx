@@ -3,8 +3,9 @@ import {
   getIssuedCards,
   syncIssuedCardsFromOrders,
 } from "@/features/cards/server/issued-actions";
-import { CardCatalog, type CatalogProduct } from "@/components/cards/card-catalog";
-import { MyCards, type IssuedCardRow } from "@/components/cards/my-cards";
+import { CardsPageClient } from "@/components/cards/cards-page-client";
+import type { CatalogProduct } from "@/components/cards/card-catalog";
+import type { IssuedCardRow } from "@/components/cards/my-cards";
 
 export const dynamic = "force-dynamic";
 
@@ -38,18 +39,14 @@ export default async function CardsPage() {
   }
 
   return (
-    <div className="space-y-12">
+    <div>
       {notice && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+        <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           {notice}
         </div>
       )}
 
-      <MyCards cards={myCards} />
-
-      <div id="order-catalog" className="scroll-mt-24">
-        <CardCatalog products={catalog} />
-      </div>
+      <CardsPageClient myCards={myCards} catalog={catalog} />
     </div>
   );
 }
