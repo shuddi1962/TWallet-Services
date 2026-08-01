@@ -71,7 +71,7 @@ export function Pricing() {
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br from-brand-500 to-accent-500 opacity-20 blur-2xl" />
+                  <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-brand-500 opacity-15 blur-2xl" />
                 )}
                 <div className="relative flex flex-1 flex-col">
                   <div className="mb-2 flex items-center justify-between">
@@ -102,7 +102,7 @@ export function Pricing() {
                     variant={plan.popular ? "primary" : "outline"}
                     className={
                       plan.popular
-                        ? "rounded-xl border-0 bg-gradient-to-r from-brand-600 to-accent-600 shadow-lg shadow-brand-600/25"
+                        ? "rounded-xl border-0 bg-gradient-to-r from-brand-500 to-brand-700 shadow-lg shadow-brand-600/30"
                         : "rounded-xl border-surface-300 text-surface-700 hover:bg-surface-50"
                     }
                     asChild

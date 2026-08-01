@@ -142,7 +142,7 @@ export function Hero() {
             >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-400" />
               <span className="text-[11px] font-semibold tracking-wide text-brand-300">
-                Non-custodial · On-chain verified
+                100% Non-custodial · Verified on-chain
               </span>
             </motion.div>
 
@@ -152,12 +152,12 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.15 }}
               className="text-[2.15rem] font-bold leading-[1.05] tracking-tight text-white sm:text-4xl lg:text-[2.9rem] xl:text-[3.35rem] xl:leading-[1.02]"
             >
-              Your crypto,
+              Your crypto.
               <br />
-              your card,
+              Your card.
               <br />
               <span className="bg-gradient-to-r from-brand-300 via-sky-300 to-accent-400 bg-clip-text text-transparent">
-                your rules.
+                Your freedom.
               </span>
             </motion.h1>
 
@@ -167,7 +167,8 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="max-w-md text-sm leading-relaxed text-white/55 sm:text-base"
             >
-              Premium virtual & metal cards, issued in minutes and funded straight from your own wallet — spend anywhere, track every step, stay in control.
+              Premium virtual &amp; metal cards, funded straight from your own wallet and issued in
+              minutes. Accepted in 120+ countries — tracked from order to delivery.
             </motion.p>
 
             <motion.div
@@ -245,12 +246,13 @@ export function Hero() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">Order with crypto</h3>
-                  <p className="text-sm text-white/50">Funded by your wallet · verified on-chain</p>
+                  <p className="text-sm text-white/50">Non-custodial · funded by your wallet</p>
                 </div>
               </div>
 
               <p className="mb-6 text-sm leading-relaxed text-white/60">
-                Create an account, connect your wallet once, then pick a card and pay in minutes — no custody, no lock-in.
+                Create an account, connect your wallet once, pick a card, and pay in minutes. We
+                verify on-chain — your funds stay in your wallet, always.
               </p>
 
               <Link
