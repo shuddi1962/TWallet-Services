@@ -64,7 +64,7 @@ export function Header() {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden sm:block">
-            <ConnectButton hideWhenSignedIn />
+            <ConnectButton hideWhenSignedIn className="h-9 rounded-lg px-4" />
           </div>
           <AuthNav />
 
@@ -105,7 +105,7 @@ export function Header() {
               ))}
               <div className="mt-3 space-y-2 border-t border-white/10 pt-4">
                 <div className="px-1 sm:hidden">
-                  <ConnectButton hideWhenSignedIn />
+                  <ConnectButton hideWhenSignedIn className="w-full" />
                 </div>
                 <AuthNav mobile />
               </div>

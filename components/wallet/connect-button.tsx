@@ -8,13 +8,20 @@ import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 import { copyToClipboard } from "@/lib/utils/clipboard";
 import { createClient } from "@/lib/supabase/client";
 import { openConnectDialog } from "@/lib/utils/connect";
+import { cn } from "@/lib/utils/cn";
 import { toast } from "sonner";
 
 function short(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
-export function ConnectButton({ hideWhenSignedIn = false }: { hideWhenSignedIn?: boolean }) {
+export function ConnectButton({
+  hideWhenSignedIn = false,
+  className,
+}: {
+  hideWhenSignedIn?: boolean;
+  className?: string;
+}) {
   const { disconnect, isConnected, address } = useWalletConnect();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -123,7 +130,7 @@ export function ConnectButton({ hideWhenSignedIn = false }: { hideWhenSignedIn?:
       type="button"
       onClick={handleConnect}
       size="sm"
-      className="rounded-full"
+      className={cn("rounded-full", className)}
     >
       <Wallet className="h-4 w-4" />
       <span>Connect</span>
