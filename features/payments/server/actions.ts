@@ -69,7 +69,6 @@ export async function submitPaymentTx(_prev: unknown, formData: FormData) {
 
   if (!orderId) return { error: "Order ID is required" };
   if (!txHash) return { error: "Transaction hash is required" };
-  if (!fromAddress) return { error: "From address is required" };
 
   const supabase = await createServerSupabaseClient() as any;
 
@@ -127,7 +126,7 @@ export async function submitPaymentTx(_prev: unknown, formData: FormData) {
         token_id: tokenRes.data.id,
         receiving_wallet_id: walletRes.data?.id ?? null,
         tx_hash: txHash,
-        from_address: fromAddress,
+        from_address: fromAddress || null,
         status: "pending",
         confirmations: 0,
       },

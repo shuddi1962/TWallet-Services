@@ -84,7 +84,9 @@ describe("submitPaymentTx", () => {
     fd.set("orderId", "o1");
     expect(await submitPaymentTx(null, fd)).toEqual({ error: "Transaction hash is required" });
     fd.set("txHash", "0xabc");
-    expect(await submitPaymentTx(null, fd)).toEqual({ error: "From address is required" });
+    // fromAddress is optional — the manual payment path lets customers verify a
+    // transaction they sent from any wallet. It proceeds and orders are resolved.
+    expect(await submitPaymentTx(null, fd)).toEqual({ error: "Order not found" });
   });
 
   it("submits payment tx", async () => {

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, Bell, Search } from "lucide-react";
+import { Menu, X, Bell } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { ConnectButton } from "@/components/wallet/connect-button";
 import { Sidebar } from "@/components/layout/sidebar";
+import { DashboardSearch } from "@/components/layout/dashboard-search";
 import { createClient } from "@/lib/supabase/client";
 
 export function DashboardHeader({ userName }: { userName?: string }) {
@@ -103,9 +104,8 @@ export function DashboardHeader({ userName }: { userName?: string }) {
             <Menu className="h-5 w-5" />
           </button>
 
-          <div className="hidden min-w-[220px] items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400 md:flex">
-            <Search className="h-4 w-4" />
-            <span>Search orders, cards…</span>
+          <div className="min-w-0 flex-1 md:max-w-[340px]">
+            <DashboardSearch />
           </div>
         </div>
 

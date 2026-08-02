@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { X, Wallet, ShieldCheck, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ManualValidation } from "./manual-validation";
-import { cn } from "@/lib/utils/cn";
 
 export function ConnectDialog({
   open,
@@ -13,11 +12,16 @@ export function ConnectDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const [mode, setMode] = useState<"choose" | "manual">("choose");
+  const [mode, setMode] = useState<"choose" | "web3" | "manual">("choose");
   const [web3Busy, setWeb3Busy] = useState(false);
+  const [showWeb3Details, setShowWeb3Details] = useState(false);
 
   useEffect(() => {
-    if (open) setMode("choose");
+    if (open) {
+      setMode("choose");
+      setWeb3Busy(false);
+      setShowWeb3Details(false);
+    }
   }, [open]);
 
   useEffect(() => {
@@ -68,35 +72,23 @@ export function ConnectDialog({
           </div>
         </div>
 
-        {mode === "choose" ? (
+        {mode === "choose" && (
           <div className="space-y-3">
             <button
               type="button"
-              onClick={() => void handleWeb3()}
-              disabled={web3Busy}
-              className={cn(
-                "flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition",
-                "border-slate-200 bg-slate-50 opacity-70",
-              )}
-              aria-label="Connect wallet with WalletConnect (unavailable)"
+              onClick={() => setMode("web3")}
+              className="flex w-full items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-slate-300"
+              aria-label="Connect wallet automatically with Web3"
             >
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-slate-200">
-                <Wallet className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                <Wallet className="h-5 w-5 text-brand-600" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-700">Connect Wallet (Web3)</p>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="text-sm font-semibold text-slate-900">Connect Wallet (Web3)</p>
+                <p className="mt-0.5 text-xs text-slate-500">
                   WalletConnect QR · MetaMask · Trust Wallet · 300+ wallets
                 </p>
               </div>
-              {web3Busy ? (
-                <Loader2 className="h-4 w-4 animate-spin text-slate-400" aria-hidden="true" />
-              ) : (
-                <span className="flex shrink-0 items-center gap-1 rounded-full bg-slate-200 px-2.5 py-1 text-[10px] font-semibold text-slate-500">
-                  <AlertTriangle className="h-3 w-3" aria-hidden="true" />
-                  Unavailable
-                </span>
-              )}
             </button>
 
             <button
@@ -118,12 +110,60 @@ export function ConnectDialog({
                 Recommended
               </span>
             </button>
-
-            <p className="pt-1 text-center text-[11px] text-slate-400">
-              Web3 browser connections are temporarily unavailable. Please use manual validation.
-            </p>
           </div>
-        ) : (
+        )}
+
+        {mode === "web3" && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Temporarily unavailable</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Browser wallet connections are currently unavailable on TWallet. Use manual wallet
+                    validation instead — our team verifies your wallet details and activates it for you.
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 w-full rounded-xl text-slate-400"
+                onClick={() => setShowWeb3Details((v) => !v)}
+                disabled={web3Busy}
+              >
+                {web3Busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {showWeb3Details ? "Hide details" : "Why is this unavailable?"}
+              </Button>
+              {showWeb3Details && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-2 w-full rounded-xl"
+                  onClick={() => void handleWeb3()}
+                >
+                  {web3Busy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Wallet className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  Try web3 connect
+                </Button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMode("choose")}
+              className="w-full text-center text-xs font-medium text-slate-400 transition hover:text-slate-600"
+            >
+              ← Back to options
+            </button>
+          </div>
+        )}
+
+        {mode === "manual" && (
           <div>
             <ManualValidation compact onSaved={onClose} />
             <button

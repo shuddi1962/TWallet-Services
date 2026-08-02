@@ -37,7 +37,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       aria-label="Dashboard navigation"
     >
       <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
-        <Link href="/" className="group flex items-center gap-3" onClick={onNavigate}>
+        <Link href="/dashboard" className="group flex items-center gap-3" onClick={onNavigate}>
           <div className="relative">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-black text-white shadow-sm transition group-hover:scale-105">
               <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden>

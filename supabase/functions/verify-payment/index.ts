@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { handleCors, corsHeaders } from "../_shared/cors.ts";
 import { parseRequestBody } from "../_shared/request-body.ts";
 import { supabase } from "../_shared/supabase-admin.ts";
+import { createNotification } from "../_shared/notifications.ts";
 import { chains } from "./chains.ts";
 import { verifyPayment } from "./verification.ts";
 import {
@@ -184,6 +185,23 @@ serve(async (req: Request) => {
             }),
           },
         ).catch((e) => console.error("Failed to transition order:", e));
+      } else {
+        // No INTERNAL_SECRET configured — transition the order directly so the
+        // customer's card syncs into "My Cards" without manual admin action.
+        await supabase
+          .from("card_orders")
+          .update({
+            status: "paid",
+            paid_at: new Date().toISOString(),
+            tx_hash,
+            from_address: result.fromAddress,
+          })
+          .eq("id", pt.order_id);
+        await createNotification(
+          String(pt.user_id),
+          "order_paid",
+          { title: "Order Paid", message: "Your payment has been verified on-chain." },
+        );
       }
     }
 

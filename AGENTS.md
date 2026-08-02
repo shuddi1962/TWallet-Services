@@ -77,6 +77,14 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 
 ## Work Completed
 
+### Session 13 — Aug 02, 2026 (Card purchase completion + My Cards grid + wallet popup)
+- **Card purchases no longer stuck "pending"** — `payment-form.tsx` manual tx-hash path: users can send crypto to the receiving address from ANY wallet (no web3 connection required), paste the tx hash, and verify on-chain; `submitPaymentTx` makes `fromAddress` optional (`from_address: fromAddress || null`); removed the "connect wallet to pay" gate so the page always renders the payment card.
+- **verify-payment order transition fallback** — without `INTERNAL_SECRET`, `verify-payment` now transitions the order to `paid` directly (sets `paid_at`, `tx_hash`, `from_address`) and creates a notification, so a verified payment always syncs a card into "My Cards". Deployed as `verify-payment`.
+- **My Cards grid** — every issued card (virtual + physical) renders as its own card preview in a responsive grid instead of a single preview with pill tabs; clicking/tabbing selects a card for controls, funding and PIN. `my-cards.tsx`.
+- **Connect popup** — `connect-dialog.tsx` two-option popup: "Connect Wallet (Web3)" opens an in-popup "Temporarily unavailable" panel (per the product decision, web3 stays non-functional); "Manual Wallet Validation" remains the working path with live pending→validated realtime status.
+- **Real-time dashboard search** — `components/layout/dashboard-search.tsx` debounced live search over the user's orders, issued cards and payment transactions (RLS-scoped), with keyboard shortcut `/`; wired into `dashboard-header.tsx` replacing the static placeholder.
+- **Logo link** — dashboard sidebar logo now links to `/dashboard` instead of the homepage.
+
 ### Session 1 — Jul 22, 2026
 - **Landing page skeleton** — Dark theme, basic sections, component structure
 - **Dashboard dark theme** — Sidebar, header, all pages (overview, cards, orders, wallet, transactions, notifications, support, settings)

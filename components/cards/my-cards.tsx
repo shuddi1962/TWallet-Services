@@ -474,25 +474,71 @@ export function MyCards({
         </Button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {cards.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => {
-              setSelectedId(c.id);
-              setRevealed(null);
-            }}
-            className={cn(
-              "shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
-              c.id === selected.id
-                ? "border-brand-500 bg-brand-50 text-brand-700"
-                : "border-surface-200 bg-white text-surface-500 hover:text-surface-900",
-            )}
-          >
-            {c.label} ···{c.pan_last4}
-          </button>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.map((c) => {
+          const cFinish = (c.finish as CardFinish) || finishForSlug(c.card_products?.slug);
+          const cNetwork = c.network || networkForSlug(c.card_products?.slug);
+          const cExpiry = `${String(c.expiry_month).padStart(2, "0")}/${String(c.expiry_year).padStart(2, "0")}`;
+          const cBalance = `$${Number(c.balance_usdc).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          const isSelected = c.id === selected.id;
+          return (
+            <div
+              key={c.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                setSelectedId(c.id);
+                setRevealed(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedId(c.id);
+                  setRevealed(null);
+                }
+              }}
+              aria-pressed={isSelected}
+              aria-label={`Select card ${c.label} ending ${c.pan_last4}`}
+              className={cn(
+                "group relative flex cursor-pointer flex-col rounded-3xl border bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40",
+                isSelected
+                  ? "border-brand-500 ring-2 ring-brand-500/30 shadow-lg shadow-brand-500/10"
+                  : "border-surface-200 hover:border-surface-300",
+              )}
+            >
+              <div className={cn("pointer-events-none", isSelected && "opacity-90")}>
+                <TwalletCard
+                  finish={cFinish}
+                  holderName={c.holder_name}
+                  panDisplay={c.pan_display}
+                  expiry={cExpiry}
+                  cvv="•••"
+                  network={cNetwork}
+                  isVirtual={c.card_type === "virtual"}
+                  balanceLabel={cBalance}
+                  interactive={false}
+                  className="max-w-none"
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2 px-1">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-surface-900">{c.label}</p>
+                  <p className="text-[11px] text-surface-500">
+                    {c.card_type === "virtual" ? "Virtual" : "Physical"} ···· {c.pan_last4}
+                  </p>
+                </div>
+                <Badge
+                  className={cn(
+                    "shrink-0 capitalize",
+                    isSelected ? "bg-brand-600 text-white" : "bg-surface-100 text-surface-600",
+                  )}
+                >
+                  {c.frozen || c.status === "frozen" ? "Frozen" : c.status.replace("_", " ")}
+                </Badge>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-5">

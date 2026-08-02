@@ -8,9 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 import { formatPaymentError } from "@/lib/payment-errors";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2, Smartphone, Wallet } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2, Smartphone } from "lucide-react";
 import Link from "next/link";
-import { openConnectDialog } from "@/lib/utils/connect";
 import { AddressQR } from "@/components/ui/address-qr";
 import { copyToClipboard } from "@/lib/utils/clipboard";
 import { toast } from "sonner";
@@ -85,6 +84,8 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
 
   const [submitState, setSubmitState] = useState<{ error?: string; success?: boolean; message?: string } | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [manualHash, setManualHash] = useState("");
+  const [manualFrom, setManualFrom] = useState("");
 
   const network = networks.find((n) => n.name.toLowerCase() === order.network.toLowerCase());
   const wallet = receivingWallets.find((w) => w.network_id === network?.id);
@@ -153,6 +154,40 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
       setVerificationMessage(formatted.message);
     }
   }, [wallet, network, address, chainId, switchChainAsync, sendTransactionAsync, order, token, orderId]);
+
+  const handleManualSubmit = useCallback(async () => {
+    const hash = manualHash.trim();
+    if (!/^0x[a-fA-F0-9]{64}$/.test(hash)) {
+      setVerificationStatus("failed");
+      setVerificationMessage("Enter a valid transaction hash (0x + 64 hex characters).");
+      return;
+    }
+
+    setVerificationStatus("submitted");
+    setVerificationMessage("");
+    setIsPending(true);
+    setTxHash(hash);
+
+    try {
+      const formData = new FormData();
+      formData.set("orderId", orderId);
+      formData.set("txHash", hash);
+      formData.set("fromAddress", manualFrom.trim());
+      const result = await submitPaymentTx(null, formData);
+      setSubmitState(result);
+      if (result?.error) {
+        setVerificationStatus("failed");
+        setVerificationMessage(result.error);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Payment submission failed";
+      const formatted = formatPaymentError(msg);
+      setVerificationStatus("failed");
+      setVerificationMessage(formatted.message);
+    } finally {
+      setIsPending(false);
+    }
+  }, [manualHash, manualFrom, orderId]);
 
   useEffect(() => {
     if (verificationStatus !== "submitted" && verificationStatus !== "verifying") return;
@@ -257,15 +292,9 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
     );
   }
 
-  if (!isConnected) {
-    return (
-      <PaymentConnectGate orderNumber={order.order_number} />
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/orders">
             <ArrowLeft className="h-4 w-4" />
@@ -307,7 +336,9 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
               <Smartphone className="h-5 w-5 text-brand-600" />
               <div>
                 <p className="text-sm font-medium text-slate-900">Trust Wallet</p>
-                <p className="text-xs text-slate-500">Connected Wallet</p>
+                <p className="text-xs text-slate-500">
+                  {isConnected ? "Connected Wallet" : "Send from any wallet, then verify below"}
+                </p>
               </div>
             </div>
 
@@ -367,6 +398,49 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
                 Send Payment with Trust Wallet
               </Button>
             )}
+
+            <div className="space-y-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Already sent the crypto?</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Sent the exact amount from any wallet? Paste your transaction hash to verify it on-chain.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={manualHash}
+                  onChange={(e) => {
+                    setManualHash(e.target.value);
+                    setSubmitState(null);
+                  }}
+                  placeholder="Transaction hash (0x…)"
+                  aria-label="Transaction hash"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                />
+                <input
+                  type="text"
+                  value={manualFrom}
+                  onChange={(e) => setManualFrom(e.target.value)}
+                  placeholder="Sending wallet address (optional)"
+                  aria-label="Sending wallet address"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                />
+              </div>
+              <Button
+                fullWidth
+                variant="outline"
+                onClick={() => void handleManualSubmit()}
+                disabled={verificationStatus !== "idle" && verificationStatus !== "failed" && verificationStatus !== "submitted"}
+              >
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                )}
+                I&apos;ve sent — Verify payment
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -377,62 +451,23 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
           <CardContent className="space-y-4 text-sm text-slate-500">
             <div className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600" aria-hidden="true">1</span>
-              <p>Click <strong className="text-slate-900">Send Payment with Trust Wallet</strong> to open Trust Wallet on your phone.</p>
+              <p>Send the exact amount ({order.amount_usdc} {order.token.toUpperCase()}) to the address from any wallet. Use the <strong className="text-slate-900">{network?.name ?? order.network}</strong> network.</p>
             </div>
             <div className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600" aria-hidden="true">2</span>
-              <p>Review the transaction details and confirm in Trust Wallet. Use the <strong className="text-slate-900">{network?.name ?? order.network}</strong> network.</p>
+              <p>Connected a wallet? Use <strong className="text-slate-900">Send Payment with Trust Wallet</strong> to send in one click.</p>
             </div>
             <div className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600" aria-hidden="true">3</span>
-              <p>The system will automatically verify the transaction on-chain once sent.</p>
+              <p>Paid manually? Paste the transaction hash under <strong className="text-slate-900">Already sent the crypto?</strong> and click <strong className="text-slate-900">Verify payment</strong>.</p>
             </div>
             <div className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-600" aria-hidden="true">4</span>
-              <p>Your order status will update once payment is confirmed. This page refreshes automatically.</p>
+              <p>The system verifies the transaction on-chain and your order status updates automatically.</p>
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-}
-
-function PaymentConnectGate({ orderNumber }: { orderNumber: string }) {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/orders">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Complete Payment</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Connect a wallet to pay for order {orderNumber}
-          </p>
-        </div>
-      </div>
-      <Card className="overflow-hidden border-slate-200">
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 ring-1 ring-brand-200">
-            <Wallet className="h-6 w-6 text-brand-600" />
-          </div>
-          <p className="font-medium text-slate-900">Wallet required</p>
-          <p className="mt-2 max-w-sm text-sm text-slate-500">
-            Browser wallet connections are temporarily unavailable. Use manual wallet validation instead — our team verifies your wallet details and activates it for you.
-          </p>
-          <Button
-            className="mt-6 rounded-full px-8"
-            onClick={() => openConnectDialog()}
-          >
-            <Wallet className="h-4 w-4" />
-            Connect Wallet
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }
