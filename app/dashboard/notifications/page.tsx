@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { createClient } from "@/lib/supabase/client";
 import {
   Bell,
   ShoppingCart,
@@ -73,6 +74,79 @@ export default function NotificationsPage() {
   }, []);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  const applyRealtime = useCallback(
+    (payload: {
+      eventType: "INSERT" | "UPDATE" | "DELETE";
+      new?: Record<string, unknown> | null;
+      old?: Record<string, unknown> | null;
+    }) => {
+      const row = payload.new;
+      if (payload.eventType === "DELETE") {
+        const id = String(payload.old?.id);
+        setNotifications((prev) => (prev ? prev.filter((n) => n.id !== id) : prev));
+        return;
+      }
+      if (!row?.id) return;
+      const item = {
+        id: String(row.id),
+        type: String(row.type ?? "system"),
+        title: String(row.title ?? ""),
+        message: (row.message as string | null) ?? null,
+        read: Boolean(row.read),
+        created_at: String(row.created_at),
+      };
+      if (payload.eventType === "INSERT") {
+        setNotifications((prev) => {
+          if (!prev) return prev;
+          return prev.some((n) => n.id === item.id) ? prev : [item, ...prev];
+        });
+        return;
+      }
+      if (payload.eventType === "UPDATE") {
+        setNotifications((prev) =>
+          prev
+            ? prev.map((n) => (n.id === item.id ? { ...n, ...item } : n))
+            : prev,
+        );
+      }
+    },
+    [],
+  );
+
+  const applyRealtimeRef = useRef(applyRealtime);
+  applyRealtimeRef.current = applyRealtime;
+
+  useEffect(() => {
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      channel = supabase
+        .channel(`notif-live-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload: unknown) => {
+            applyRealtimeRef.current?.(payload as Parameters<typeof applyRealtime>[0]);
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     if (!notifications) return [];
@@ -159,7 +233,7 @@ export default function NotificationsPage() {
           aria-selected={filter === "all"}
           onClick={() => setFilter("all")}
           className={cn(
-            "rounded-lg px-4 py-2 text-sm transition-colors",
+            "cursor-pointer rounded-lg px-4 py-2 text-sm transition-colors",
             filter === "all" ? "bg-black text-white" : "text-slate-500 hover:bg-slate-100",
           )}
         >
@@ -170,7 +244,7 @@ export default function NotificationsPage() {
           aria-selected={filter === "unread"}
           onClick={() => setFilter("unread")}
           className={cn(
-            "rounded-lg px-4 py-2 text-sm transition-colors",
+            "cursor-pointer rounded-lg px-4 py-2 text-sm transition-colors",
             filter === "unread" ? "bg-black text-white" : "text-slate-500 hover:bg-slate-100",
           )}
         >

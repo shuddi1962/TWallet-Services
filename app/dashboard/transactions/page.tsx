@@ -173,6 +173,14 @@ export default function TransactionsPage() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice(page * perPage, (page + 1) * perPage);
 
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: transactions?.length ?? 0 };
+    for (const tx of transactions ?? []) {
+      counts[tx.status] = (counts[tx.status] ?? 0) + 1;
+    }
+    return counts;
+  }, [transactions]);
+
   const copyHash = async (hash: string) => {
     await navigator.clipboard.writeText(hash);
     setCopiedHash(hash);
@@ -257,15 +265,27 @@ export default function TransactionsPage() {
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.value}
+              type="button"
               onClick={() => { setStatusTab(tab.value); setPage(0); }}
               className={cn(
                 "whitespace-nowrap rounded-full px-3 py-1 text-sm transition-colors",
+                "cursor-pointer",
                 statusTab === tab.value
-                  ? "bg-brand-50 text-brand-700"
-                  : "text-slate-500 hover:text-slate-800",
+                  ? "bg-black text-white"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
               )}
             >
               {tab.label}
+              {(statusCounts[tab.value] ?? 0) > 0 && (
+                <span
+                  className={cn(
+                    "ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-semibold",
+                    statusTab === tab.value ? "bg-white text-black" : "bg-slate-100 text-slate-500",
+                  )}
+                >
+                  {statusCounts[tab.value]}
+                </span>
+              )}
             </button>
           ))}
         </div>
