@@ -1476,15 +1476,20 @@ export type Database = {
           carrier: string | null
           created_at: string
           deleted_at: string | null
+          delivered_at: string | null
           flagged: boolean
+          from_address: string | null
           id: string
           network: string | null
           order_number: string
           paid_at: string | null
           paid_usdc: number
+          processing_at: string | null
           product_id: string
+          shipped_at: string | null
           shipping_status: Database["public"]["Enums"]["shipping_status"]
           status: Database["public"]["Enums"]["order_status"]
+          to_address: string | null
           token: string | null
           tracking_number: string | null
           tx_hash: string | null
@@ -1498,15 +1503,20 @@ export type Database = {
           carrier?: string | null
           created_at?: string
           deleted_at?: string | null
+          delivered_at?: string | null
           flagged?: boolean
+          from_address?: string | null
           id?: string
           network?: string | null
           order_number: string
           paid_at?: string | null
           paid_usdc?: number
+          processing_at?: string | null
           product_id: string
+          shipped_at?: string | null
           shipping_status?: Database["public"]["Enums"]["shipping_status"]
           status?: Database["public"]["Enums"]["order_status"]
+          to_address?: string | null
           token?: string | null
           tracking_number?: string | null
           tx_hash?: string | null
@@ -1520,15 +1530,20 @@ export type Database = {
           carrier?: string | null
           created_at?: string
           deleted_at?: string | null
+          delivered_at?: string | null
           flagged?: boolean
+          from_address?: string | null
           id?: string
           network?: string | null
           order_number?: string
           paid_at?: string | null
           paid_usdc?: number
+          processing_at?: string | null
           product_id?: string
+          shipped_at?: string | null
           shipping_status?: Database["public"]["Enums"]["shipping_status"]
           status?: Database["public"]["Enums"]["order_status"]
+          to_address?: string | null
           token?: string | null
           tracking_number?: string | null
           tx_hash?: string | null
@@ -1875,6 +1890,7 @@ export type Database = {
           confirmations: number | null
           created_at: string
           deleted_at: string | null
+          error_message: string | null
           expires_at: string
           from_address: string | null
           id: string
@@ -1897,6 +1913,7 @@ export type Database = {
           confirmations?: number | null
           created_at?: string
           deleted_at?: string | null
+          error_message?: string | null
           expires_at?: string
           from_address?: string | null
           id?: string
@@ -1919,6 +1936,7 @@ export type Database = {
           confirmations?: number | null
           created_at?: string
           deleted_at?: string | null
+          error_message?: string | null
           expires_at?: string
           from_address?: string | null
           id?: string
@@ -2546,6 +2564,69 @@ export type Database = {
           },
         ]
       }
+      user_addresses: {
+        Row: {
+          city: string
+          country: string
+          created_at: string
+          full_name: string
+          id: string
+          is_default: boolean
+          line1: string
+          line2: string | null
+          phone: string | null
+          postal_code: string
+          state: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city: string
+          country: string
+          created_at?: string
+          full_name: string
+          id?: string
+          is_default?: boolean
+          line1: string
+          line2?: string | null
+          phone?: string | null
+          postal_code?: string
+          state?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_default?: boolean
+          line1?: string
+          line2?: string | null
+          phone?: string | null
+          postal_code?: string
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_dashboard_summary"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           created_at: string
@@ -2582,62 +2663,6 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "vw_dashboard_summary"
             referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      user_addresses: {
-        Row: {
-          id: string
-          city: string
-          country: string
-          created_at: string
-          full_name: string
-          is_default: boolean
-          line1: string
-          line2: string | null
-          phone: string | null
-          postal_code: string
-          state: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          city: string
-          country: string
-          created_at?: string
-          full_name: string
-          is_default?: boolean
-          line1: string
-          line2?: string | null
-          phone?: string | null
-          postal_code: string
-          state?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          city?: string
-          country?: string
-          created_at?: string
-          full_name?: string
-          is_default?: boolean
-          line1?: string
-          line2?: string | null
-          phone?: string | null
-          postal_code?: string
-          state?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_addresses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -3053,11 +3078,11 @@ export type Database = {
         | "payment_failed"
         | "shipping_update"
         | "support_reply"
+        | "system"
+        | "promotion"
         | "ticket_created"
         | "ticket_resolved"
         | "ticket_closed"
-        | "system"
-        | "promotion"
       order_status:
         | "pending"
         | "paid"
@@ -3072,6 +3097,7 @@ export type Database = {
         | "failed"
         | "flagged"
         | "refunded"
+        | "confirming"
       shipping_status:
         | "not_shipped"
         | "processing"
@@ -3737,11 +3763,11 @@ export const Constants = {
         "payment_failed",
         "shipping_update",
         "support_reply",
+        "system",
+        "promotion",
         "ticket_created",
         "ticket_resolved",
         "ticket_closed",
-        "system",
-        "promotion",
       ],
       order_status: [
         "pending",
@@ -3752,7 +3778,14 @@ export const Constants = {
         "cancelled",
         "refunded",
       ],
-      payment_status: ["pending", "confirmed", "failed", "flagged", "refunded"],
+      payment_status: [
+        "pending",
+        "confirmed",
+        "failed",
+        "flagged",
+        "refunded",
+        "confirming",
+      ],
       shipping_status: [
         "not_shipped",
         "processing",
