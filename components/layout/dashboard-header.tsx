@@ -37,12 +37,36 @@ export function DashboardHeader({ userName }: { userName?: string }) {
           .on(
             "postgres_changes",
             {
-              event: "INSERT",
+              event: "*",
               schema: "public",
               table: "notifications",
               filter: `user_id=eq.${user.id}`,
             },
-            () => setUnread((u) => u + 1),
+            (payload: unknown) => {
+              const p = payload as {
+                eventType: "INSERT" | "UPDATE" | "DELETE";
+                new?: Record<string, unknown> | null;
+                old?: Record<string, unknown> | null;
+              };
+              if (p.eventType === "INSERT") {
+                const read = (p.new as { read?: boolean } | null)?.read;
+                if (!read) setUnread((u) => u + 1);
+                return;
+              }
+              const row = p.eventType === "DELETE" ? p.old : p.new;
+              const wasRead = (row as { read?: boolean } | null)?.read;
+              if (wasRead) {
+                // A notification was read or removed; recount to stay accurate.
+                void (async () => {
+                  const { count } = await supabase
+                    .from("notifications")
+                    .select("*", { count: "exact", head: true })
+                    .eq("user_id", user.id)
+                    .eq("read", false);
+                  setUnread(count ?? 0);
+                })();
+              }
+            },
           )
           .subscribe();
         return () => {

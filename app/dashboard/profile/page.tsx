@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { getProfile, getSecurityInfo, updateProfile } from "@/features/dashboard/server/actions";
+import { createClient } from "@/lib/supabase/client";
+import { getProfile, getSecurityInfo, updateProfile, getUserAddresses, upsertUserAddress, deleteUserAddress, uploadAvatar, removeAvatar } from "@/features/dashboard/server/actions";
 import { Loader2 } from "lucide-react";
 
 type Address = {
@@ -50,7 +51,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     void (async () => {
-      const [profileRes, securityRes] = await Promise.all([getProfile(), getSecurityInfo()]);
+      const [profileRes, securityRes, addressesRes] = await Promise.all([getProfile(), getSecurityInfo(), getUserAddresses()]);
       if (profileRes.error === null && profileRes.data) {
         setFullName(profileRes.data.fullName);
         setEmail(profileRes.data.email);
@@ -64,33 +65,152 @@ export default function ProfilePage() {
         setEmailConfirmed(securityRes.data.emailConfirmed);
         setWalletCount(securityRes.data.wallets.length);
       }
+      if (addressesRes.error === null && addressesRes.addresses) {
+        setAddresses(addressesRes.addresses.map((a) => ({
+          id: a.id,
+          recipient: a.full_name,
+          phone: a.phone ?? "",
+          line1: a.line1,
+          line2: a.line2 ?? "",
+          city: a.city,
+          state: a.state ?? "",
+          postalCode: a.postal_code,
+          country: a.country,
+          landmark: "",
+          isDefault: a.is_default,
+        })));
+      }
       setLoading(false);
     })();
   }, []);
 
+  useEffect(() => {
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      channel = supabase
+        .channel(`profile-live-${user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+          (payload: unknown) => {
+            const p = payload as { new?: Record<string, unknown> | null; eventType: string };
+            const row = p.new;
+            if (!row) return;
+            setFullName((f) => (row.full_name as string) || f);
+            setAvatarUrl((a) => (row.avatar_url as string | null) || a || "");
+            if (row.phone != null) setPhone(String(row.phone ?? ""));
+            if (row.country != null) setCountry(String(row.country));
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "user_addresses", filter: `user_id=eq.${user.id}` },
+          (payload: unknown) => {
+            const p = payload as {
+              eventType: string;
+              new?: Record<string, unknown> | null;
+              old?: Record<string, unknown> | null;
+            };
+            const toAddress = (r: Record<string, unknown>) => ({
+              id: String(r.id),
+              recipient: String(r.full_name ?? ""),
+              phone: String(r.phone ?? ""),
+              line1: String(r.line1 ?? ""),
+              line2: String(r.line2 ?? ""),
+              city: String(r.city ?? ""),
+              state: String(r.state ?? ""),
+              postalCode: String(r.postal_code ?? ""),
+              country: String(r.country ?? ""),
+              landmark: "",
+              isDefault: Boolean(r.is_default),
+            });
+            setAddresses((prev) => {
+              if (p.eventType === "DELETE") {
+                const id = String(p.old?.id);
+                const next = prev.filter((a) => a.id !== id);
+                return next;
+              }
+              const row = p.new;
+              if (!row?.id) return prev;
+              const item = toAddress(row);
+              const exists = prev.some((a) => a.id === item.id);
+              return exists ? prev.map((a) => (a.id === item.id ? item : a)) : [...prev, item];
+            });
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, []);
+
   const initials = fullName.trim() ? fullName.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase() : "U";
 
-  const onUploadAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     if (file.size > 5*1024*1024) { toast.error("Image must be smaller than 5MB."); return; }
-    setAvatarUrl(URL.createObjectURL(file)); toast.success("Profile photo updated.");
+    const fd = new FormData();
+    fd.set("file", file);
+    const result = await uploadAvatar(fd);
+    if (result.error) { toast.error(result.error); return; }
+    if (typeof result.avatarUrl === "string" && result.avatarUrl) setAvatarUrl(result.avatarUrl);
+    toast.success("Profile photo updated.");
   };
-  const removeAvatar = () => { setAvatarUrl(""); toast.success("Profile photo removed."); };
-  const saveAddress = () => {
+  const handleRemoveAvatar = async () => {
+    const res = await removeAvatar();
+    if (res.error) { toast.error(res.error); return; }
+    setAvatarUrl(""); toast.success("Profile photo removed.");
+  };
+  const saveAddress = async () => {
     if (!addressForm.recipient.trim()||!addressForm.line1.trim()||!addressForm.city.trim()||!addressForm.postalCode.trim()||!addressForm.country) { toast.error("Please complete all required address fields."); return; }
-    if (editingId === "new") {
-      const newAddr = { ...addressForm, id: crypto.randomUUID() };
-      if (addresses.length === 0) newAddr.isDefault = true;
-      setAddresses(prev => addressForm.isDefault ? [...prev.map(a=>({...a,isDefault:false})), newAddr] : [...prev, newAddr]);
-      toast.success("Address added.");
-    } else if (editingId) {
-      setAddresses(prev => prev.map(a => a.id===editingId ? (addressForm.isDefault?{...addressForm,isDefault:true}:{...addressForm}) : (addressForm.isDefault?{...a,isDefault:false}:a)));
-      toast.success("Address updated.");
+    const fd = new FormData();
+    if (addressForm.id) fd.append("id", addressForm.id);
+    fd.append("full_name", addressForm.recipient);
+    fd.append("phone", addressForm.phone);
+    fd.append("line1", addressForm.line1);
+    fd.append("line2", addressForm.line2);
+    fd.append("city", addressForm.city);
+    fd.append("state", addressForm.state);
+    fd.append("postal_code", addressForm.postalCode);
+    fd.append("country", addressForm.country);
+    fd.append("is_default", addressForm.isDefault ? "on" : "off");
+    const res = await upsertUserAddress(undefined, fd);
+    if (res.error) { toast.error(res.error); return; }
+    const wasNew = editingId === "new";
+    if (addressForm.isDefault) {
+      setAddresses(prev => prev.map(a => ({ ...a, isDefault: false })));
     }
     setEditingId(null); setAddressForm(emptyAddress);
+    toast.success(wasNew ? "Address added." : "Address updated.");
+    const refresh = await getUserAddresses();
+    if (refresh.error === null && refresh.addresses) {
+      setAddresses(refresh.addresses.map((a) => ({
+        id: a.id,
+        recipient: a.full_name,
+        phone: a.phone ?? "",
+        line1: a.line1,
+        line2: a.line2 ?? "",
+        city: a.city,
+        state: a.state ?? "",
+        postalCode: a.postal_code,
+        country: a.country,
+        landmark: "",
+        isDefault: a.is_default,
+      })));
+    }
   };
-  const deleteAddress = (id: string) => {
+  const deleteAddress = async (id: string) => {
     const target = addresses.find(a => a.id===id);
+    const res = await deleteUserAddress(id);
+    if (res.error) { toast.error(res.error); return; }
     setAddresses(prev => {
       const next = prev.filter(a => a.id!==id);
       if (target?.isDefault && next.length>0) return next.map((a,i)=> i===0?{...a,isDefault:true}:{...a,isDefault:false});
@@ -168,7 +288,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Button variant="outline" size="sm" onClick={()=>fileInputRef.current?.click()} aria-label="Upload avatar image"><Camera className="h-4 w-4" aria-hidden="true" />Upload</Button>
-              {avatarUrl && <Button variant="ghost" size="sm" onClick={removeAvatar} aria-label="Remove avatar"><X className="h-4 w-4" aria-hidden="true" />Remove Avatar</Button>}
+              {avatarUrl && <Button variant="ghost" size="sm" onClick={handleRemoveAvatar} aria-label="Remove avatar"><X className="h-4 w-4" aria-hidden="true" />Remove Avatar</Button>}
               <p className="text-xs text-slate-500">PNG, JPEG or WebP. Max 5MB.</p>
               <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={onUploadAvatar} />
             </div>

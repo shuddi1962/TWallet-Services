@@ -2582,6 +2582,62 @@ export type Database = {
           },
         ]
       }
+      user_addresses: {
+        Row: {
+          id: string
+          city: string
+          country: string
+          created_at: string
+          full_name: string
+          is_default: boolean
+          line1: string
+          line2: string | null
+          phone: string | null
+          postal_code: string
+          state: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          city: string
+          country: string
+          created_at?: string
+          full_name: string
+          is_default?: boolean
+          line1: string
+          line2?: string | null
+          phone?: string | null
+          postal_code: string
+          state?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          city?: string
+          country?: string
+          created_at?: string
+          full_name?: string
+          is_default?: boolean
+          line1?: string
+          line2?: string | null
+          phone?: string | null
+          postal_code?: string
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
