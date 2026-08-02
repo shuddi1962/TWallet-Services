@@ -11,7 +11,7 @@ import Link from "next/link";
 import { getCardProducts } from "@/features/cards/server/actions";
 import { createOrder } from "@/features/orders/server/actions";
 import { useActionState } from "react";
-import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { openConnectDialog } from "@/lib/utils/connect";
 
 interface CardProduct {
   id: string;
@@ -47,7 +47,6 @@ export default function NewOrderPage() {
   const [loading, setLoading] = useState(true);
 
   const { isConnected } = useAccount();
-  const { openWallet, connecting } = useWalletConnect();
 
   const [state, formAction, pending] = useActionState(createOrder, undefined);
 
@@ -88,9 +87,9 @@ export default function NewOrderPage() {
       {!isConnected && (
         <Alert variant="warning" className="flex items-center justify-between">
           <span>Validate your wallet to place orders and make crypto payments</span>
-          <Button size="sm" variant="dark" onClick={() => openWallet()} disabled={connecting}>
-            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
-            {connecting ? "Connecting..." : "Validate Wallet"}
+          <Button size="sm" variant="dark" onClick={() => openConnectDialog()}>
+            <Smartphone className="h-4 w-4" />
+            Validate Wallet
           </Button>
         </Alert>
       )}

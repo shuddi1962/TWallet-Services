@@ -6,7 +6,7 @@ import { useRealtime } from "@/lib/hooks/use-realtime";
 import { useAccount, useChainId, useSwitchChain, useWriteContract } from "wagmi";
 import { erc20Abi } from "viem";
 import { createClient } from "@/lib/supabase/client";
-import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { openConnectDialog } from "@/lib/utils/connect";
 import { formatPaymentError } from "@/lib/payment-errors";
 import type { FundingSetup } from "@/components/cards/funding-setup";
 import {
@@ -191,7 +191,6 @@ export function MyCards({
   const chainId = useChainId();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
-  const { openWallet, connecting } = useWalletConnect();
   const supabase = createClient();
 
   const selected = useMemo(
@@ -866,11 +865,10 @@ export function MyCards({
                     </p>
                     <Button
                       className="mt-1 rounded-full"
-                      onClick={() => void openWallet()}
-                      disabled={connecting}
+                      onClick={() => openConnectDialog()}
                     >
-                      {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-                      {connecting ? "Connecting…" : "Connect Wallet"}
+                      <Wallet className="h-4 w-4" />
+                      Connect Wallet
                     </Button>
                   </div>
                 )}

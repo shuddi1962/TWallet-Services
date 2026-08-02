@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAccount, useBalance, useChainId } from "wagmi";
-import { Copy, Check, Wallet, Plug, ExternalLink, Loader2 } from "lucide-react";
+import { Copy, Check, Wallet, Plug, ExternalLink } from "lucide-react";
 import { trackWalletDisconnected } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { openConnectDialog } from "@/lib/utils/connect";
 
 const CHAIN_NAMES: Record<number, string> = {
   1: "Ethereum",
@@ -22,7 +23,7 @@ export function WalletOverview() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { data: balance } = useBalance({ address });
-  const { openWallet, disconnect, connecting } = useWalletConnect();
+  const { disconnect } = useWalletConnect();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -68,11 +69,14 @@ export function WalletOverview() {
             <Button
               type="button"
               className="mt-5 rounded-full"
-              onClick={() => openWallet()}
+              onClick={() => openConnectDialog()}
             >
-              {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+              <Wallet className="h-4 w-4" />
               Connect
             </Button>
+            <p className="mt-3 text-xs text-slate-400">
+              Web3 connections temporarily unavailable — manual validation instead.
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, Copy, Check, Loader2, AlertCircle, CheckCircle2, Smartphone, Wallet } from "lucide-react";
 import Link from "next/link";
-import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { openConnectDialog } from "@/lib/utils/connect";
 import { AddressQR } from "@/components/ui/address-qr";
 import { copyToClipboard } from "@/lib/utils/clipboard";
 import { toast } from "sonner";
@@ -399,8 +399,6 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
 }
 
 function PaymentConnectGate({ orderNumber }: { orderNumber: string }) {
-  const { openWallet, connecting } = useWalletConnect();
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -424,15 +422,14 @@ function PaymentConnectGate({ orderNumber }: { orderNumber: string }) {
           </div>
           <p className="font-medium text-slate-900">Wallet required</p>
           <p className="mt-2 max-w-sm text-sm text-slate-500">
-            Connect with WalletConnect (QR + 300+ wallets) or a browser extension, then send USDC to the platform receiving address.
+            Browser wallet connections are temporarily unavailable. Use manual wallet validation instead — our team verifies your wallet details and activates it for you.
           </p>
           <Button
             className="mt-6 rounded-full px-8"
-            onClick={() => void openWallet()}
-            disabled={connecting}
+            onClick={() => openConnectDialog()}
           >
-            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-            {connecting ? "Connecting…" : "Connect Wallet"}
+            <Wallet className="h-4 w-4" />
+            Connect Wallet
           </Button>
         </CardContent>
       </Card>

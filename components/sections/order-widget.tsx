@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Minus, Plus, Smartphone, Check, Loader2 } from "lucide-react";
+import { ChevronDown, Minus, Plus, Smartphone, Check } from "lucide-react";
 import { useAccount } from "wagmi";
 import Link from "next/link";
-import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { openConnectDialog } from "@/lib/utils/connect";
 
 const networks = [
   { id: "ethereum", name: "Ethereum", color: "#627EEA", icon: "⟠" },
@@ -138,7 +138,6 @@ export function OrderWidget() {
   const [quantity, setQuantity] = useState(1);
   const [token, setToken] = useState("USDT");
   const { isConnected } = useAccount();
-  const { openWallet, connecting } = useWalletConnect();
 
   const price = activeTab === "Physical Card" ? 10 : 5;
   const total = price * quantity;
@@ -249,12 +248,11 @@ export function OrderWidget() {
         </Link>
       ) : (
         <button
-          onClick={() => openWallet()}
-          disabled={connecting}
-          className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052cc] hover:from-[#0052cc] hover:to-[#0044aa] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5 disabled:opacity-60"
+          onClick={() => openConnectDialog()}
+          className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052cc] hover:from-[#0052cc] hover:to-[#0044aa] transition-all text-white font-semibold text-sm shadow-lg shadow-[#0066FF]/25 hover:shadow-[#0066FF]/40 flex items-center justify-center gap-2.5"
         >
-          {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" strokeWidth={2} />}
-          {connecting ? "Connecting..." : "Connect Wallet to Continue"}
+          <Smartphone className="w-4 h-4" strokeWidth={2} />
+          Connect Wallet to Continue
         </button>
       )}
     </motion.div>

