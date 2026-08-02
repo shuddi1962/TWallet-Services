@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Save } from "lucide-react";
+import { useState, useActionState } from "react";
+import { Save, KeyRound, Check, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { updateSettings } from "@/lib/admin/actions";
+import { changePassword } from "@/features/auth/server/actions";
 
 const sections = ["General", "Payments", "Security", "Notifications", "KYC"] as const;
 
@@ -60,6 +61,12 @@ export default function AdminSettingsPage() {
     return initial;
   });
 
+  const [pwdState, pwdAction, pwdPending] = useActionState(changePassword, undefined);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+
   const handleSave = async () => {
     setSaving(true);
     const result = await updateSettings(activeTab.toLowerCase(), Object.fromEntries(
@@ -71,6 +78,14 @@ export default function AdminSettingsPage() {
     } else {
       toast.error(result.error ?? "Failed to save settings");
     }
+  };
+
+  const handleChangePassword = (formData: FormData) => {
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    pwdAction(formData);
   };
 
   return (
@@ -149,6 +164,91 @@ export default function AdminSettingsPage() {
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-md p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <KeyRound className="w-5 h-5 text-heading" aria-hidden="true" />
+          <h2 className="text-lg font-semibold text-heading">Admin account password</h2>
+        </div>
+        <p className="text-sm text-body mb-4">
+          Change the password you use to sign in to the admin dashboard. Saves instantly to your account and syncs across devices.
+        </p>
+
+        <form action={handleChangePassword} className="space-y-4 max-w-md">
+          <div>
+            <label htmlFor="admin-current-password" className="block mb-1.5 text-sm font-medium text-heading">
+              Current password
+            </label>
+            <div className="relative">
+              <input
+                id="admin-current-password"
+                name="currentPassword"
+                type={showPwd ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                className="w-full rounded-lg border border-surface-200 bg-white px-3 py-2 pr-10 text-sm text-heading focus:border-primary focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                aria-label={showPwd ? "Hide current password" : "Show current password"}
+              >
+                <Eye className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <div>
+            <label htmlFor="admin-new-password" className="block mb-1.5 text-sm font-medium text-heading">
+              New password
+            </label>
+            <input
+              id="admin-new-password"
+              name="password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 8 characters with upper, lower & number"
+              className="w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm text-heading focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="admin-confirm-password" className="block mb-1.5 text-sm font-medium text-heading">
+              Confirm new password
+            </label>
+            <input
+              id="admin-confirm-password"
+              name="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter your new password"
+              className="w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm text-heading focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          {pwdState?.error ? (
+            <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {pwdState.error}
+            </p>
+          ) : null}
+          {pwdState?.success ? (
+            <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              {pwdState.success}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={pwdPending}
+            className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-black/80 transition-colors disabled:opacity-50"
+          >
+            {pwdPending ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Check className="w-4 h-4" aria-hidden="true" />}
+            {pwdPending ? "Updating…" : "Update Password"}
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -16,7 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { getSecurityInfo } from "@/features/dashboard/server/actions";
-import { updatePassword } from "@/features/auth/server/actions";
+import { changePassword } from "@/features/auth/server/actions";
+import { createClient } from "@/lib/supabase/client";
 
 interface WalletRow {
   id: string;
@@ -34,14 +35,16 @@ function short(addr: string) {
 
 export default function SecurityPage() {
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordChangedAt, setPasswordChangedAt] = useState<Date | null>(null);
   const [wallets, setWallets] = useState<WalletRow[]>([]);
   const [email, setEmail] = useState("");
   const [lastLogin, setLastLogin] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [pwdState, pwdAction, pwdPending] = useActionState(updatePassword, undefined);
+  const [pwdState, pwdAction, pwdPending] = useActionState(changePassword, undefined);
 
   useEffect(() => {
     void (async () => {
@@ -50,9 +53,48 @@ export default function SecurityPage() {
         setWallets(res.data.wallets as WalletRow[]);
         setEmail(res.data.email);
         setLastLogin(res.data.lastLogin ? new Date(res.data.lastLogin) : null);
+        const ts = (res.data as { passwordChangedAt?: string | null }).passwordChangedAt;
+        setPasswordChangedAt(ts ? new Date(ts) : null);
       }
       setLoading(false);
     })();
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      channel = supabase
+        .channel(`pwd-live-${user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+          (payload: unknown) => {
+            const p = payload as {
+              new?: Record<string, unknown> | null;
+              old?: Record<string, unknown> | null;
+            };
+            const ts = p.new?.password_changed_at;
+            const prev = p.old?.password_changed_at;
+            if (typeof ts === "string" && ts !== prev) {
+              setPasswordChangedAt(new Date(ts));
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("toast", { detail: { title: "Password updated", description: "Synced to your account in real time." } }));
+              }
+            }
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      if (channel) void supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleChangePassword = (formData: FormData) => {
@@ -88,6 +130,9 @@ export default function SecurityPage() {
             <div>
               <p className="text-sm text-slate-500">Account: {email}</p>
               <p className={`text-sm font-medium ${newPassword ? strengthColor : "text-slate-400"}`}>Password strength: {newPassword ? strengthLabel : "—"}</p>
+              <p className="mt-1 text-xs text-slate-400">
+                Last changed: {passwordChangedAt ? formatDistanceToNow(passwordChangedAt, { addSuffix: true }) : "never"}
+              </p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setChangePasswordOpen((v) => !v)}>
               {changePasswordOpen ? "Cancel" : "Change Password"}
@@ -98,6 +143,18 @@ export default function SecurityPage() {
               action={handleChangePassword}
               className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
             >
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <Input
+                  id="currentPassword"
+                  name="currentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter your current password"
+                  required
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
                 <Input
@@ -115,6 +172,7 @@ export default function SecurityPage() {
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <Input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

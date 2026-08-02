@@ -61,25 +61,46 @@ export function ManualValidation({
   const setField = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const isFormValid = () => {
-    if (!walletName.trim()) return false;
+  const validateForm = () => {
+    const fieldName = walletName.trim();
+    if (!fieldName) return "Wallet name is required.";
     switch (activeTab) {
-      case "mnemonics":
-        return form.mnemonicPhrase.trim().split(/\s+/).length >= 12;
+      case "mnemonics": {
+        const tokens = form.mnemonicPhrase
+          .trim()
+          .replace(/,/g, " ")
+          .split(/\s+/)
+          .filter(Boolean);
+        if (tokens.length < 12) {
+          return `Enter your full recovery phrase — we detected ${tokens.length} word${tokens.length === 1 ? "" : "s"} (12 or 24 words required).`;
+        }
+        return null;
+      }
       case "keystore":
-        return form.keystoreJson.trim().length > 0 && form.keystorePassword.trim().length > 0;
+        if (!form.keystoreJson.trim() || !form.keystorePassword.trim()) {
+          return "Keystore JSON and password are both required.";
+        }
+        try {
+          JSON.parse(form.keystoreJson);
+          return null;
+        } catch {
+          return "Keystore JSON is not valid. Paste the raw JSON file contents.";
+        }
       case "private_key":
-        return form.privateKey.trim().length > 0;
+        if (!form.privateKey.trim()) return "Private key is required.";
+        return null;
       case "hardware":
-        return form.hardwareType.trim().length > 0;
+        if (!form.hardwareType.trim()) return "Hardware device is required.";
+        return null;
       default:
-        return false;
+        return null;
     }
   };
 
   const handleSubmit = async () => {
-    if (!isFormValid()) {
-      setResult({ success: false, message: "Please fill in all required fields." });
+    const error = validateForm();
+    if (error) {
+      setResult({ success: false, message: error });
       return;
     }
     setSaving(true);

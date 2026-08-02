@@ -2046,6 +2046,7 @@ export type Database = {
           id: string
           kyc_tier: string
           last_login: string | null
+          password_changed_at: string | null
           phone: string | null
           status: Database["public"]["Enums"]["user_status"]
           updated_at: string
@@ -2060,6 +2061,7 @@ export type Database = {
           id: string
           kyc_tier?: string
           last_login?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
@@ -2074,6 +2076,7 @@ export type Database = {
           id?: string
           kyc_tier?: string
           last_login?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string

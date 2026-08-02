@@ -6,6 +6,7 @@ import { emailSchema, passwordSchema } from "@/lib/validations";
 import { sendEmail, buildPasswordResetEmail, buildPasswordChangedEmail } from "@/lib/email";
 import { ensureAdminProvisioned, isAdminUser } from "@/lib/admin-provision";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://twalletservices.com";
 
@@ -127,4 +128,61 @@ export async function updatePassword(_prev: unknown, formData: FormData) {
   }
 
   redirect("/auth/login?reset=success");
+}
+
+export async function changePassword(_prev: unknown, formData: FormData) {
+  const { allowed } = await checkRateLimit("change-password", "changePassword", RATE_LIMITS.forgotPassword);
+  if (!allowed) return { error: "Too many requests. Please try again later." };
+
+  const supabase = await createServerSupabaseClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be logged in" };
+
+  const currentPassword = String(formData.get("currentPassword") ?? "");
+  const newPassword = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!currentPassword) return { error: "Current password is required" };
+  if (newPassword !== confirmPassword) return { error: "New passwords do not match" };
+
+  const parsed = passwordSchema.safeParse(newPassword);
+  if (!parsed.success) return { error: parsed.error.errors[0]!.message };
+
+  if (currentPassword === newPassword) return { error: "New password must be different from current password" };
+
+  // Verify the current password against the account before allowing a change.
+  if (user.email) {
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (verifyError) return { error: "Current password is incorrect" };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data });
+  if (error) return { error: error.message };
+
+  // Sync last-change timestamp to profiles so dashboards + realtime reflect it.
+  await supabase.from("profiles").update({ password_changed_at: new Date().toISOString() }).eq("id", user.id);
+
+  // Notify the account owner via the bell.
+  await supabase.from("notifications").insert({
+    user_id: user.id,
+    type: "system",
+    title: "Password changed",
+    message: "Your account password was updated successfully. If this wasn't you, contact support immediately.",
+  });
+
+  if (user.email) {
+    sendEmail({
+      to: user.email,
+      subject: "Password Changed - TWallet",
+      html: buildPasswordChangedEmail(),
+    });
+  }
+
+  revalidatePath("/dashboard/security");
+  revalidatePath("/admin/settings");
+  return { success: "Password updated successfully. Your account is synced across devices." };
 }
