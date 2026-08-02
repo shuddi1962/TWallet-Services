@@ -162,7 +162,10 @@ export async function getOrders(options?: { search?: string; status?: string; pa
   const supabase: any = await sb();
   const { search, status, page = 0, pageSize = 50 } = options ?? {};
   let q: any = supabase.from("card_orders").select("*, profiles(full_name, email), card_products(name, type)", { count: "exact" });
-  if (search) q = q.or(`id.ilike.%${search}%,profiles.full_name.ilike.%${search}%`);
+  if (search) {
+    const s = search.trim();
+    if (s) q = q.or(`id.ilike.%${s}%,order_number.ilike.%${s}%,profiles.full_name.ilike.%${s}%,profiles.email.ilike.%${s}%`);
+  }
   if (status && status !== "all") q = q.eq("status", status);
   const res: any = await q.range(page * pageSize, (page + 1) * pageSize - 1).order("created_at", { ascending: false });
   return { orders: (res.data ?? []) as RecentOrder[], count: (res.count ?? 0) as number };
@@ -192,7 +195,7 @@ export async function getOrderDetails(orderId: string) {
     .select(
       `*,
        profiles!inner(full_name, email, phone, country),
-       card_products(name, type, tier),
+       card_products(name, type, price_usdc),
        payment_transactions(id, tx_hash, amount, status, from_address, to_address, created_at)`,
     )
     .eq("id", orderId)

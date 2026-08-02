@@ -33,7 +33,7 @@ type OrderDetail = Record<string, unknown> & {
   created_at?: string;
   paid_at?: string | null;
   profiles?: { full_name?: string; email?: string; phone?: string | null; country?: string | null } | null;
-  card_products?: { name?: string; type?: string; tier?: string | null } | null;
+  card_products?: { name?: string; type?: string; price_usdc?: number | string | null } | null;
   payment_transactions?: {
     id: string;
     tx_hash?: string | null;
@@ -51,6 +51,8 @@ interface OrderRow {
   status: string;
   amount_usdc?: number | null;
   amount?: number | null;
+  tx_hash?: string | null;
+  tracking_number?: string | null;
   created_at: string;
   profiles?: Order["profiles"] | null;
   card_products?: Order["card_products"] | null;
@@ -98,6 +100,7 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
   const [selected, setSelected] = useState<Order | null>(null);
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const prevStatuses = useRef<Record<string, string>>({});
   const ownUpdateAt = useRef<Record<string, number>>({});
 
@@ -156,13 +159,31 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
           : o,
       );
     });
+
+    // Keep the detail drawer live when the selected order changes.
+    setSelected((prevSel) =>
+      prevSel && prevSel.id === incoming.id
+        ? { ...prevSel, ...toOrder(incoming) }
+        : prevSel,
+    );
+    setDetail((prevDetail) =>
+      prevDetail && prevDetail.id === incoming.id
+        ? { ...prevDetail, status: incoming.status, tx_hash: incoming.tx_hash ?? prevDetail.tx_hash, tracking_number: incoming.tracking_number ?? prevDetail.tracking_number }
+        : prevDetail,
+    );
+
     prevStatuses.current[incoming.id] = incoming.status;
   }, []);
 
   useRealtime<OrderPayload>("admin-orders-live", "*", "card_orders", handleRealtime);
 
   const filtered = orders.filter((o) => {
-    if (search && !o.id?.toLowerCase().includes(search.toLowerCase()) && !o.profiles?.full_name?.toLowerCase().includes(search.toLowerCase())) return false;
+    const q = search.trim().toLowerCase();
+    if (q &&
+      !o.id?.toLowerCase().includes(q) &&
+      !o.order_number?.toLowerCase().includes(q) &&
+      !o.profiles?.full_name?.toLowerCase().includes(q) &&
+      !o.profiles?.email?.toLowerCase().includes(q)) return false;
     if (statusFilter !== "all" && o.status !== statusFilter) return false;
     return true;
   });
@@ -182,11 +203,16 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
 
   const openDetails = async (order: Order) => {
     setSelected(order);
-    setDetail(null);
+    setDetail({ ...(order as unknown as OrderDetail) });
     setDetailLoading(true);
-    const res = await getOrderDetails(order.id);
-    setDetail((res ?? null) as OrderDetail | null);
-    setDetailLoading(false);
+    try {
+      const res = await getOrderDetails(order.id);
+      if (res) setDetail({ ...(order as unknown as OrderDetail), ...(res as OrderDetail) });
+    } catch {
+      /* keep row fallback */
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   return (
@@ -248,7 +274,9 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
               <tbody>
                 {filtered.map((order) => (
                   <tr key={order.id} className="border-b border-surface-100 hover:bg-surface-50 transition-colors">
-                    <td className="py-3 px-4 font-mono text-xs text-primary">{order.id?.slice(0, 8)}</td>
+                    <td className="py-3 px-4">
+                      <span className="font-mono text-xs text-primary">{order.order_number ?? order.id.slice(0, 8)}</span>
+                    </td>
                     <td className="py-3 px-4">
                       <p className="font-medium text-heading">{order.profiles?.full_name ?? "—"}</p>
                       <p className="text-xs text-body">{order.profiles?.email}</p>
@@ -265,23 +293,44 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <div className="relative group">
-                          <button className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors flex items-center gap-1">
+                        <div className="relative">
+                          <button
+                            onClick={() => setOpenMenuId(openMenuId === order.id ? null : order.id)}
+                            aria-expanded={openMenuId === order.id}
+                            aria-haspopup="menu"
+                            className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors flex items-center gap-1"
+                          >
+                            <span className="text-xs font-medium">Status</span>
                             <ChevronDown className="w-4 h-4" />
-                            <span className="text-xs">Status</span>
                           </button>
-                          <div className="absolute right-0 top-full mt-1 bg-white border border-surface-200 rounded-lg shadow-lg py-1 min-w-[140px] hidden group-hover:block z-10">
-                            {(validTransitions[order.status] ?? []).map((nextStatus) => (
-                              <button
-                                key={nextStatus}
-                                onClick={() => handleStatusChange(order.id, nextStatus)}
-                                disabled={updating === order.id}
-                                className="block w-full text-left px-3 py-1.5 text-sm text-body hover:bg-surface-100"
+                          {openMenuId === order.id && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} aria-hidden="true" />
+                              <div
+                                role="menu"
+                                className="absolute right-0 top-full mt-1 z-20 bg-white border border-surface-200 rounded-lg shadow-lg py-1 min-w-[140px]"
                               >
-                                {nextStatus}
-                              </button>
-                            ))}
-                          </div>
+                                {(validTransitions[order.status] ?? []).length === 0 ? (
+                                  <div className="px-3 py-1.5 text-sm text-body/60">No further transitions</div>
+                                ) : (
+                                  (validTransitions[order.status] ?? []).map((nextStatus) => (
+                                    <button
+                                      key={nextStatus}
+                                      role="menuitem"
+                                      onClick={() => {
+                                        setOpenMenuId(null);
+                                        handleStatusChange(order.id, nextStatus);
+                                      }}
+                                      disabled={updating === order.id}
+                                      className="block w-full text-left px-3 py-1.5 text-sm text-body hover:bg-surface-100 disabled:opacity-50"
+                                    >
+                                      {nextStatus}
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                            </>
+                          )}
                         </div>
                         <button onClick={() => openDetails(order)} className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors" aria-label="View order">
                           <Eye className="w-4 h-4" />
@@ -340,7 +389,7 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
                     <div className="text-slate-700 text-sm space-y-1">
                       <p><span className="text-slate-400">Product:</span> {detail?.card_products?.name ?? "—"}</p>
                       <p><span className="text-slate-400">Type:</span> {detail?.card_products?.type ?? "—"}</p>
-                      <p><span className="text-slate-400">Tier:</span> {detail?.card_products?.tier ?? "—"}</p>
+                      <p><span className="text-slate-400">Price:</span> {detail?.card_products?.price_usdc ? `${detail.card_products.price_usdc} USDC` : "—"}</p>
                     </div>
                   </section>
 
