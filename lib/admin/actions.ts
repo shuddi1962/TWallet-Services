@@ -315,18 +315,31 @@ export async function updateOrderShipping(
     .eq("id", orderId)
     .single();
 
+  // Auto-advance to "shipped" once a tracking number is provided, unless the
+  // order is already further along or cancelled.
+  const hasTracking = Boolean(fields.tracking_number?.trim());
+  const autoAdvanced = hasTracking &&
+    !["shipped", "delivered", "cancelled", "refunded"].includes(order?.status);
+  if (autoAdvanced) {
+    patch.status = "shipped";
+    patch.shipping_status = "shipped";
+  }
+
   const { error }: any = await supabase.from("card_orders").update(patch as any).eq("id", orderId);
   if (error) return { success: false, error: error.message as string };
 
   await supabase.from("audit_logs").insert({
-    action: "order_updated",
+    action: autoAdvanced ? "order_status_changed" : "order_updated",
     target_type: "card_orders",
     target_id: orderId,
-    details: { fields: Object.keys(patch), performed_by: user?.id ?? null },
+    details: {
+      ...(Object.keys(patch) as string[]).reduce((acc, k) => ({ ...acc, [k]: patch[k] }), {}),
+      auto_advanced_to_shipped: autoAdvanced,
+      performed_by: user?.id ?? null,
+    },
   });
 
   // Notify the customer when shipping info is set (tracking or carrier present).
-  const hasTracking = Boolean(fields.tracking_number?.trim());
   const hasCarrier = Boolean(fields.carrier?.trim());
   if (hasTracking || hasCarrier) {
     const orderNumber = order?.order_number ?? "Order";
