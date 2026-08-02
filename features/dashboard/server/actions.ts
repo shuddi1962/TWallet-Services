@@ -172,17 +172,61 @@ export async function getTransactions() {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated", data: null };
 
-  const { data, error } = await supabase
-    .from("payment_transactions")
-    .select(
-      "id, amount, status, confirmations, tx_hash, network_id, created_at, verified_at, order_id, card_orders(order_number)",
-    )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const FUNDING_STATUS: Record<string, string> = {
+    pending: "pending",
+    verifying: "confirming",
+    verified: "confirmed",
+    failed: "failed",
+  };
 
-  if (error) return { error: error.message, data: null };
-  return { data, error: null };
+  const [payments, funding] = await Promise.all([
+    supabase
+      .from("payment_transactions")
+      .select(
+        "id, amount, status, confirmations, tx_hash, network_id, created_at, verified_at, card_orders(order_number)",
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("card_funding")
+      .select("id, amount_usdc, status, confirmations, tx_hash, network_id, created_at, verified_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
+
+  if (payments.error) return { error: payments.error.message, data: null };
+  if (funding.error) return { error: funding.error.message, data: null };
+
+  const rows = [
+    ...(payments.data ?? []).map((tx) => ({
+      id: `pay_${tx.id}`,
+      kind: "payment" as const,
+      amount: Number(tx.amount),
+      status: tx.status,
+      confirmations: tx.confirmations,
+      tx_hash: tx.tx_hash,
+      network_id: tx.network_id,
+      created_at: tx.created_at,
+      verified_at: tx.verified_at,
+      order_number: (tx.card_orders as { order_number: string } | null)?.order_number ?? null,
+    })),
+    ...(funding.data ?? []).map((f) => ({
+      id: `fund_${f.id}`,
+      kind: "funding" as const,
+      amount: Number(f.amount_usdc),
+      status: FUNDING_STATUS[f.status] ?? f.status,
+      confirmations: f.confirmations,
+      tx_hash: f.tx_hash,
+      network_id: f.network_id,
+      created_at: f.created_at,
+      verified_at: f.verified_at,
+      order_number: null,
+    })),
+  ].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+
+  return { data: rows, error: null };
 }
 
 export async function getSecurityInfo() {

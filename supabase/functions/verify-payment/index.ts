@@ -10,9 +10,23 @@ import {
   successResponse,
 } from "./_utils/errors.ts";
 
+/**
+ * Errors that mean "keep checking" — the transaction exists on-chain but is
+ * still pending or lacks confirmations. Everything else is definitive.
+ */
+const RETRYABLE_ERRORS = new Set([
+  "TX_NOT_FOUND",
+  "TX_PENDING",
+  "TX_RECEIPT_NOT_FOUND",
+  "INSUFFICIENT_CONFIRMATIONS",
+  "RPC_URL_NOT_CONFIGURED",
+]);
+
 serve(async (req: Request) => {
   const cors = handleCors(req);
   if (cors) return cors;
+
+  let paymentTxId: string | null = null;
 
   try {
     if (req.method !== "POST") {
@@ -20,42 +34,75 @@ serve(async (req: Request) => {
     }
 
     const body = await parseRequestBody(req);
-    const { tx_hash, expected_amount, expected_address, chain_id, token_address } = body;
+    const { tx_hash, chain_id } = body;
 
     if (!tx_hash || typeof tx_hash !== "string") {
       return errorResponse(ErrorCodes.MISSING_TX_HASH, "tx_hash is required");
     }
-    if (!expected_amount || typeof expected_amount !== "string") {
-      return errorResponse(ErrorCodes.MISSING_EXPECTED_AMOUNT, "expected_amount is required");
+
+    // Ground truth comes from the DB, never from the request body: the
+    // payment record, its order, network, token and receiving wallet.
+    const { data: pt, error: ptErr } = await supabase
+      .from("payment_transactions")
+      .select("id, order_id, user_id, network_id, token_id, receiving_wallet_id, status")
+      .eq("tx_hash", tx_hash)
+      .maybeSingle();
+
+    if (ptErr) throw new Error(ptErr.message);
+    if (!pt) {
+      return errorResponse(ErrorCodes.INVALID_REQUEST, "Payment record not found for this transaction hash", 404);
     }
-    if (!expected_address || typeof expected_address !== "string") {
-      return errorResponse(ErrorCodes.MISSING_EXPECTED_ADDRESS, "expected_address is required");
-    }
-    if (!chain_id || typeof chain_id !== "number") {
-      return errorResponse(ErrorCodes.MISSING_CHAIN_ID, "chain_id is required");
+    paymentTxId = pt.id as string;
+
+    const { data: order } = await supabase
+      .from("card_orders")
+      .select("id, status, amount_usdc")
+      .eq("id", pt.order_id)
+      .maybeSingle();
+    if (!order) {
+      return errorResponse(ErrorCodes.INVALID_REQUEST, "Order not found", 404);
     }
 
-    const chain = chains[chain_id];
+    const { data: network, error: networkErr } = await supabase
+      .from("supported_networks")
+      .select("id, chain_id, active")
+      .eq("id", pt.network_id)
+      .maybeSingle();
+    if (networkErr) throw new Error(networkErr.message);
+    if (!network || !network.active) {
+      return errorResponse(ErrorCodes.UNSUPPORTED_CHAIN, "Network is not active");
+    }
+
+    const chainId = Number(network.chain_id);
+    const chain = chains[chainId];
     if (!chain) {
-      return errorResponse(ErrorCodes.UNSUPPORTED_CHAIN, `Chain ${chain_id} is not supported`);
+      return errorResponse(ErrorCodes.UNSUPPORTED_CHAIN, `Chain ${chainId} is not supported`);
     }
 
-    // Resolve token decimals from the DB (ground truth) so the expected amount
-    // can be compared against on-chain raw units. Falls back to the native
-    // currency decimals when no token is involved.
-    let tokenDecimals = chain.nativeDecimals;
-    if (token_address && typeof token_address === "string") {
-      const { data: token } = await supabase
-        .from("supported_tokens")
-        .select("decimals, active")
-        .eq("contract_address", token_address)
-        .eq("active", true)
-        .maybeSingle();
-      if (token && Number.isFinite(Number(token.decimals))) {
-        tokenDecimals = Number(token.decimals);
-      }
+    const { data: token } = await supabase
+      .from("supported_tokens")
+      .select("symbol, contract_address, decimals, active")
+      .eq("id", pt.token_id)
+      .maybeSingle();
+    if (!token || !token.active) {
+      return errorResponse(ErrorCodes.INVALID_REQUEST, "Token is not active");
     }
 
+    const { data: wallet } = await supabase
+      .from("supported_wallet_addresses")
+      .select("address, active")
+      .eq("id", pt.receiving_wallet_id)
+      .maybeSingle();
+    if (!wallet || !wallet.active) {
+      return errorResponse(ErrorCodes.INVALID_REQUEST, "Receiving wallet is not active");
+    }
+
+    // Cross-check client-supplied chain id against the DB record when provided
+    if (typeof chain_id === "number" && chain_id !== chainId) {
+      return errorResponse(ErrorCodes.INVALID_REQUEST, "chain_id does not match payment record");
+    }
+
+    // A hash can only ever verify one payment (immutable verification log)
     const { data: existing } = await supabase
       .from("payment_verifications")
       .select("id")
@@ -63,16 +110,32 @@ serve(async (req: Request) => {
       .maybeSingle();
 
     if (existing) {
+      if (pt.status === "confirmed") {
+        // Idempotent success — the hash was already verified and recorded.
+        return successResponse({ verified: true, tx_hash, chain_id: chainId });
+      }
       return errorResponse(ErrorCodes.HASH_ALREADY_USED, "Transaction hash has already been verified");
     }
+
+    const tokenDecimals =
+      token.decimals != null && Number.isFinite(Number(token.decimals))
+        ? Number(token.decimals)
+        : chain.nativeDecimals;
+
+    // Mark as confirming while on-chain checks run; the Transactions page
+    // picks this up in real time.
+    await supabase
+      .from("payment_transactions")
+      .update({ status: "confirming" })
+      .eq("id", pt.id);
 
     const result = await verifyPayment(
       {
         txHash: tx_hash,
-        expectedAmount: expected_amount,
-        expectedAddress: expected_address,
-        chainId: chain_id,
-        tokenAddress: token_address,
+        expectedAmount: Number(order.amount_usdc).toString(),
+        expectedAddress: wallet.address,
+        chainId,
+        tokenAddress: token.contract_address,
         tokenDecimals,
       },
       chain,
@@ -80,9 +143,9 @@ serve(async (req: Request) => {
 
     await supabase.from("payment_verifications").insert({
       tx_hash,
-      chain_id,
-      expected_amount,
-      expected_address,
+      chain_id: chainId,
+      expected_amount: Number(order.amount_usdc).toString(),
+      expected_address: wallet.address,
       actual_amount: result.actualAmount,
       from_address: result.fromAddress,
       block_number: result.blockNumber,
@@ -91,32 +154,36 @@ serve(async (req: Request) => {
     });
 
     if (result.verified) {
-      const { data: txData } = await supabase
+      await supabase
         .from("payment_transactions")
-        .select("order_id")
-        .eq("tx_hash", tx_hash)
-        .maybeSingle();
+        .update({
+          status: "confirmed",
+          confirmations: result.confirmations,
+          from_address: result.fromAddress,
+          to_address: wallet.address,
+          block_number: result.blockNumber,
+          verified_at: new Date().toISOString(),
+        })
+        .eq("id", pt.id);
 
-      if (txData?.order_id) {
-        const internalSecret = Deno.env.get("INTERNAL_SECRET");
-        if (internalSecret) {
-          await fetch(
-            `${Deno.env.get("SUPABASE_URL") ?? ""}/functions/v1/transition-order`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${internalSecret}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                order_id: txData.order_id,
-                status: "paid",
-                tx_hash,
-                from_address: result.fromAddress,
-              }),
+      const internalSecret = Deno.env.get("INTERNAL_SECRET");
+      if (internalSecret) {
+        await fetch(
+          `${Deno.env.get("SUPABASE_URL") ?? ""}/functions/v1/transition-order`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${internalSecret}`,
+              "Content-Type": "application/json",
             },
-          ).catch((e) => console.error("Failed to transition order:", e));
-        }
+            body: JSON.stringify({
+              order_id: pt.order_id,
+              status: "paid",
+              tx_hash,
+              from_address: result.fromAddress,
+            }),
+          },
+        ).catch((e) => console.error("Failed to transition order:", e));
       }
     }
 
@@ -124,10 +191,24 @@ serve(async (req: Request) => {
       verified: result.verified,
       confirmations: result.confirmations,
       tx_hash,
-      chain_id,
+      chain_id: chainId,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "INTERNAL_ERROR";
+
+    if (paymentTxId) {
+      try {
+        await supabase
+          .from("payment_transactions")
+          .update({
+            status: RETRYABLE_ERRORS.has(message) ? "confirming" : "failed",
+            error_message: message,
+          })
+          .eq("id", paymentTxId);
+      } catch {
+        // Best-effort sync; the verification error is still reported below.
+      }
+    }
 
     const codeMap: Record<string, string> = {
       TX_NOT_FOUND: ErrorCodes.TX_NOT_FOUND,

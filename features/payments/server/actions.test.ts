@@ -26,6 +26,7 @@ function makeSupabase() {
   const methods = [
     "select", "insert", "eq", "single", "order", "limit",
     "or", "range", "is", "not", "in", "gte", "update",
+    "upsert", "maybeSingle",
   ];
   for (const m of methods) {
     chain[m] = vi.fn(() => chain);
@@ -90,7 +91,11 @@ describe("submitPaymentTx", () => {
     const sb = makeSupabase();
     (createServerSupabaseClient as any).mockResolvedValue(sb);
 
-    pushResult({ id: "order-1", amount_usdc: 100, network: "ethereum" });
+    pushResult({ id: "order-1", amount_usdc: 100, network: "ethereum", token: "USDC" });
+    pushResult({ id: "ethereum" });
+    pushResult({ id: "token-1" });
+    pushResult({ id: "wallet-1" });
+    pushResult(null, null);
     pushResult(null, null);
 
     const fd = new FormData();
@@ -99,5 +104,55 @@ describe("submitPaymentTx", () => {
     fd.set("fromAddress", "0x123");
     const result = await submitPaymentTx(null, fd);
     expect(result).toEqual({ success: true, message: "Payment submitted for verification" });
+  });
+
+  it("inserts a pending payment transaction record", async () => {
+    const sb = makeSupabase();
+    (createServerSupabaseClient as any).mockResolvedValue(sb);
+
+    pushResult({ id: "order-1", order_number: "TW-1", amount_usdc: 100, user_id: "user-1", network: "ethereum", token: "USDC" });
+    pushResult({ id: "ethereum" });
+    pushResult({ id: "token-1" });
+    pushResult({ id: "wallet-1" });
+    pushResult(null, null);
+    pushResult(null, null);
+
+    const fd = new FormData();
+    fd.set("orderId", "order-1");
+    fd.set("txHash", "0xabc");
+    fd.set("fromAddress", "0x123");
+    await submitPaymentTx(null, fd);
+
+    const upsertCall = sb.chain.upsert.mock.calls[0];
+    expect(upsertCall[0]).toMatchObject({
+      order_id: "order-1",
+      user_id: "user-1",
+      amount: 100,
+      network_id: "ethereum",
+      token_id: "token-1",
+      receiving_wallet_id: "wallet-1",
+      tx_hash: "0xabc",
+      from_address: "0x123",
+      status: "pending",
+      confirmations: 0,
+    });
+    expect(upsertCall[1]).toEqual({ onConflict: "order_id" });
+  });
+
+  it("returns error when token is not configured", async () => {
+    const sb = makeSupabase();
+    (createServerSupabaseClient as any).mockResolvedValue(sb);
+
+    pushResult({ id: "order-1", amount_usdc: 100, network: "ethereum", token: "USDC" });
+    pushResult({ id: "ethereum" });
+    pushResult(null, null);
+    pushResult({ id: "wallet-1" });
+
+    const fd = new FormData();
+    fd.set("orderId", "order-1");
+    fd.set("txHash", "0xabc");
+    fd.set("fromAddress", "0x123");
+    const result = await submitPaymentTx(null, fd);
+    expect(result).toEqual({ error: "Payment token is not configured" });
   });
 });

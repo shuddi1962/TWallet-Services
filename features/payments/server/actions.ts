@@ -80,19 +80,66 @@ export async function submitPaymentTx(_prev: unknown, formData: FormData) {
 
   const { data: order } = await supabase
     .from("card_orders")
-    .select("id, amount_usdc, network")
+    .select("id, order_number, amount_usdc, user_id, network, token")
     .eq("id", orderId)
     .eq("user_id", user.id)
     .single();
 
   if (!order) return { error: "Order not found" };
 
+  // Resolve the payment configuration (network, token, receiving wallet) so
+  // the transaction record is complete for real-time tracking and on-chain
+  // verification by the verify-payment edge function.
+  const [networkRes, tokenRes, walletRes] = await Promise.all([
+    supabase
+      .from("supported_networks")
+      .select("id")
+      .eq("id", order.network)
+      .maybeSingle(),
+    supabase
+      .from("supported_tokens")
+      .select("id")
+      .eq("symbol", order.token)
+      .eq("network_id", order.network)
+      .maybeSingle(),
+    supabase
+      .from("supported_wallet_addresses")
+      .select("id")
+      .eq("network_id", order.network)
+      .eq("active", true)
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  if (tokenRes.error) return { error: tokenRes.error.message };
+  if (!tokenRes.data?.id) return { error: "Payment token is not configured" };
+
+  // One payment transaction per order (unique on order_id). Re-submitting a
+  // transaction hash updates the pending record in place.
   const { error } = await supabase
+    .from("payment_transactions")
+    .upsert(
+      {
+        order_id: order.id,
+        user_id: order.user_id,
+        amount: order.amount_usdc,
+        network_id: networkRes.data?.id ?? order.network,
+        token_id: tokenRes.data.id,
+        receiving_wallet_id: walletRes.data?.id ?? null,
+        tx_hash: txHash,
+        from_address: fromAddress,
+        status: "pending",
+        confirmations: 0,
+      },
+      { onConflict: "order_id" },
+    );
+
+  if (error) return { error: error.message };
+
+  await supabase
     .from("card_orders")
     .update({ tx_hash: txHash })
     .eq("id", orderId);
-
-  if (error) return { error: error.message };
 
   return { success: true, message: "Payment submitted for verification" };
 }

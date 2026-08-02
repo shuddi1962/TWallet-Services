@@ -26,6 +26,7 @@ function makeSupabase() {
   const methods = [
     "select", "insert", "eq", "single", "order", "limit",
     "or", "range", "is", "not", "in", "gte", "update",
+    "upsert", "maybeSingle",
   ];
   for (const m of methods) {
     chain[m] = vi.fn(() => chain);
@@ -91,9 +92,11 @@ describe("Payment Integration", () => {
     const order = { id: "order-1", order_number: "TW-ABC", amount_usdc: "50", status: "pending", network: "ethereum", token: "usdc" };
 
     pushResult(order);
-    pushResult(order);
-    pushResult({ id: "tx-1", order_id: "order-1", tx_hash: "0xabc" });
-    pushResult({ data: [{ id: "tx-1" }], error: null });
+    pushResult({ id: "ethereum" });
+    pushResult({ id: "tok-1" });
+    pushResult({ id: "wallet-1" });
+    pushResult(null, null);
+    pushResult(null, null);
 
     const formData = new FormData();
     formData.set("orderId", "order-1");

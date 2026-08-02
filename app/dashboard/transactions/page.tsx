@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { ArrowLeftRight, ExternalLink, Copy, Check, Clock, Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { ArrowLeftRight, ExternalLink, Copy, Check, Clock, Loader2, CheckCircle2, XCircle, RotateCcw, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert } from "@/components/ui/alert";
 import { getTransactions } from "@/features/dashboard/server/actions";
 import { formatAddress } from "@/utils";
+import { useRealtime } from "@/lib/hooks/use-realtime";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 
 const DATE_RANGES = [
@@ -35,8 +37,16 @@ const STATUS_CONFIG: Record<string, { color: string; icon: React.ElementType }> 
   refunded: { color: "text-error", icon: RotateCcw },
 };
 
+const FUNDING_STATUS: Record<string, string> = {
+  pending: "pending",
+  verifying: "confirming",
+  verified: "confirmed",
+  failed: "failed",
+};
+
 interface Transaction {
   id: string;
+  kind: "payment" | "funding";
   amount: number;
   status: string;
   confirmations: number | null;
@@ -44,9 +54,30 @@ interface Transaction {
   network_id: string | null;
   created_at: string;
   verified_at: string | null;
-  order_id: string | null;
-  card_orders: { order_number: string } | null;
+  order_number: string | null;
 }
+
+type TxPayload = {
+  eventType: "INSERT" | "UPDATE" | "DELETE";
+  new?: Record<string, unknown> | null;
+  old?: Record<string, unknown> | null;
+};
+
+const normalize = (
+  kind: "payment" | "funding",
+  row: Record<string, unknown>,
+): Transaction => ({
+  id: `${kind === "payment" ? "pay" : "fund"}_${String(row.id)}`,
+  kind,
+  amount: Number(kind === "payment" ? (row.amount as number | null) : (row.amount_usdc as number | null)),
+  status: kind === "funding" ? (FUNDING_STATUS[String(row.status)] ?? String(row.status)) : String(row.status),
+  confirmations: (row.confirmations as number | null) ?? null,
+  tx_hash: (row.tx_hash as string | null) ?? null,
+  network_id: (row.network_id as string | null) ?? null,
+  created_at: row.created_at as string,
+  verified_at: (row.verified_at as string | null) ?? null,
+  order_number: null,
+});
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
@@ -57,6 +88,7 @@ export default function TransactionsPage() {
   const [page, setPage] = useState(0);
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
+  const prevStatuses = useRef<Record<string, string>>({});
   const perPage = 10;
 
   useEffect(() => {
@@ -65,10 +97,56 @@ export default function TransactionsPage() {
         setError(result.error);
       } else {
         setTransactions(result.data ?? []);
+        const map: Record<string, string> = {};
+        for (const tx of result.data ?? []) map[tx.id] = tx.status;
+        prevStatuses.current = map;
       }
       setLoading(false);
     });
   }, []);
+
+  // Live updates: new payments and card top-ups appear instantly; statuses
+  // move pending → confirming → confirmed as verification completes.
+  const applyRealtime = useCallback(
+    (kind: "payment" | "funding") =>
+      (payload: TxPayload) => {
+        const row = payload.new;
+        if (payload.eventType === "DELETE") {
+          const id = `${kind === "payment" ? "pay" : "fund"}_${String(payload.old?.id)}`;
+          setTransactions((prev) => (prev ? prev.filter((t) => t.id !== id) : prev));
+          return;
+        }
+        if (!row) return;
+
+        const tx = normalize(kind, row);
+        const prevStatus = prevStatuses.current[tx.id];
+
+        if (payload.eventType === "UPDATE" && prevStatus && prevStatus !== tx.status) {
+          toast.success(
+            `${tx.kind === "payment" ? "Payment" : "Card top-up"} ${tx.amount} USDC is now ${tx.status}`,
+          );
+        }
+        if (payload.eventType === "INSERT") {
+          toast.info(`${tx.kind === "payment" ? "New payment" : "Card top-up"} detected — ${tx.amount} USDC`);
+        }
+
+        setTransactions((prev) => {
+          if (!prev) return prev;
+          const exists = prev.some((t) => t.id === tx.id);
+          const next = exists
+            ? prev.map((t) => (t.id === tx.id ? { ...t, ...tx } : t))
+            : [tx, ...prev];
+          return next
+            .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+            .slice(0, 100);
+        });
+        prevStatuses.current[tx.id] = tx.status;
+      },
+    [],
+  );
+
+  useRealtime<TxPayload>("transactions-live", "*", "payment_transactions", applyRealtime("payment"));
+  useRealtime<TxPayload>("card-funding-live", "*", "card_funding", applyRealtime("funding"));
 
   const filtered = useMemo(() => {
     if (!transactions) return [];
@@ -140,6 +218,16 @@ export default function TransactionsPage() {
           <h1 className="text-2xl font-bold text-slate-900">Transactions</h1>
           <p className="mt-1 text-sm text-slate-500">Your verified crypto payment history.</p>
         </div>
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600"
+          title="Transactions update in real time"
+        >
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          </span>
+          Live
+        </span>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -190,7 +278,7 @@ export default function TransactionsPage() {
             <EmptyState
               icon={ArrowLeftRight}
               title="No transactions found"
-              description={statusTab !== "all" ? "No transactions match the selected filter." : "Your payment history will appear here after your first order."}
+              description={statusTab !== "all" ? "No transactions match the selected filter." : "Your verified crypto payments and card top-ups will appear here."}
             />
           </CardContent>
         </Card>
@@ -201,6 +289,7 @@ export default function TransactionsPage() {
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="px-4 py-3 text-left font-medium text-slate-500">Transaction Hash</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-500">Type</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-500">Amount</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-500">Status</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-500">Date</th>
@@ -216,6 +305,15 @@ export default function TransactionsPage() {
                       <td className="px-4 py-3">
                         <span className="font-mono text-sm text-slate-700">
                           {tx.tx_hash ? formatAddress(tx.tx_hash, 10) : "—"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                          {tx.kind === "funding" ? (
+                            <><Wallet className="h-3.5 w-3.5" aria-hidden="true" /> Card top-up</>
+                          ) : (
+                            <><ArrowLeftRight className="h-3.5 w-3.5" aria-hidden="true" /> Payment</>
+                          )}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -270,6 +368,13 @@ export default function TransactionsPage() {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <span className="font-mono text-sm text-slate-700">{tx.tx_hash ? formatAddress(tx.tx_hash, 10) : "—"}</span>
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                        {tx.kind === "funding" ? (
+                          <><Wallet className="h-3 w-3" aria-hidden="true" /> Card top-up</>
+                        ) : (
+                          <><ArrowLeftRight className="h-3 w-3" aria-hidden="true" /> Payment</>
+                        )}
+                      </p>
                       <div className="flex items-center gap-2">
                         <span className="font-mono tabular-nums text-slate-900">{tx.amount} USDC</span>
                         <span className={cn("inline-flex items-center gap-1 text-xs font-medium", statusConfig.color)}>

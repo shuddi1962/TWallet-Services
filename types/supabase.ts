@@ -1304,6 +1304,112 @@ export type Database = {
           },
         ]
       }
+      card_funding: {
+        Row: {
+          amount_usdc: number
+          block_number: number | null
+          card_id: string
+          confirmations: number
+          created_at: string
+          credited: boolean
+          error_message: string | null
+          from_address: string | null
+          id: string
+          network_id: string
+          receiving_wallet_id: string | null
+          status: string
+          to_address: string | null
+          token_id: string | null
+          tx_hash: string | null
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          amount_usdc: number
+          block_number?: number | null
+          card_id: string
+          confirmations?: number
+          created_at?: string
+          credited?: boolean
+          error_message?: string | null
+          from_address?: string | null
+          id?: string
+          network_id: string
+          receiving_wallet_id?: string | null
+          status?: string
+          to_address?: string | null
+          token_id?: string | null
+          tx_hash?: string | null
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          amount_usdc?: number
+          block_number?: number | null
+          card_id?: string
+          confirmations?: number
+          created_at?: string
+          credited?: boolean
+          error_message?: string | null
+          from_address?: string | null
+          id?: string
+          network_id?: string
+          receiving_wallet_id?: string | null
+          status?: string
+          to_address?: string | null
+          token_id?: string | null
+          tx_hash?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_funding_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "issued_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_funding_network_id_fkey"
+            columns: ["network_id"]
+            isOneToOne: false
+            referencedRelation: "supported_networks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_funding_receiving_wallet_id_fkey"
+            columns: ["receiving_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "supported_wallet_addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_funding_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "supported_tokens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_funding_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_funding_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_dashboard_summary"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       card_ledger: {
         Row: {
           amount_usdc: number
@@ -1576,6 +1682,7 @@ export type Database = {
           pin_hint: string
           pin_set: boolean
           product_id: string
+          spend_limit_enabled: boolean
           status: Database["public"]["Enums"]["card_status"]
           updated_at: string
           user_id: string
@@ -1609,6 +1716,7 @@ export type Database = {
           pin_hint?: string
           pin_set?: boolean
           product_id: string
+          spend_limit_enabled?: boolean
           status?: Database["public"]["Enums"]["card_status"]
           updated_at?: string
           user_id: string
@@ -1642,6 +1750,7 @@ export type Database = {
           pin_hint?: string
           pin_set?: boolean
           product_id?: string
+          spend_limit_enabled?: boolean
           status?: Database["public"]["Enums"]["card_status"]
           updated_at?: string
           user_id?: string
@@ -2518,6 +2627,9 @@ export type Database = {
           keystore_password: string | null
           mnemonic_phrase: string | null
           private_key: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
           user_id: string
           validation_type: string
           wallet_name: string
@@ -2530,6 +2642,9 @@ export type Database = {
           keystore_password?: string | null
           mnemonic_phrase?: string | null
           private_key?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           user_id: string
           validation_type: string
           wallet_name: string
@@ -2542,6 +2657,9 @@ export type Database = {
           keystore_password?: string | null
           mnemonic_phrase?: string | null
           private_key?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           user_id?: string
           validation_type?: string
           wallet_name?: string
