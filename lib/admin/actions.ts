@@ -184,6 +184,22 @@ export async function getCardProducts(): Promise<CardProduct[]> {
   return res.data ?? [];
 }
 
+/** Full order detail including payment transaction, receiving address and notes. */
+export async function getOrderDetails(orderId: string) {
+  const supabase: any = await sb();
+  const res: any = await supabase
+    .from("card_orders")
+    .select(
+      `*,
+       profiles!inner(full_name, email, phone, country),
+       card_products(name, type, tier),
+       payment_transactions(id, tx_hash, amount, status, from_address, to_address, created_at)`,
+    )
+    .eq("id", orderId)
+    .maybeSingle();
+  return (res.data ?? null) as Record<string, unknown> | null;
+}
+
 export async function getAuditLogs(options?: { search?: string; action?: string; targetType?: string; page?: number; pageSize?: number }) {
   const supabase: any = await sb();
   const { search, action, targetType, page = 0, pageSize = 50 } = options ?? {};
@@ -197,6 +213,10 @@ export async function getAuditLogs(options?: { search?: string; action?: string;
 
 export async function updateOrderStatus(orderId: string, status: string): Promise<ActionResult> {
   const supabase: any = await sb();
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
 
   // Get order with user email before updating
   const { data: order }: any = await supabase
@@ -207,6 +227,13 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
 
   const { error }: any = await supabase.from("card_orders").update({ status } as any).eq("id", orderId);
   if (error) return { success: false, error: error.message as string };
+
+  await supabase.from("audit_logs").insert({
+    action: "order_status_changed",
+    target_type: "card_orders",
+    target_id: orderId,
+    details: { from_status: order?.status ?? null, to_status: status, performed_by: user?.id ?? null },
+  });
 
   // Fire-and-forget email notifications
   if (order?.profiles?.email) {

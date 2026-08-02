@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronDown, Eye } from "lucide-react";
+import { Search, ChevronDown, Eye, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { updateOrderStatus, getOrders, type ActionResult } from "@/lib/admin/actions";
+import { updateOrderStatus, getOrders, getOrderDetails, type ActionResult } from "@/lib/admin/actions";
 import { toast } from "sonner";
 import { useRealtime } from "@/lib/hooks/use-realtime";
 
@@ -17,6 +17,33 @@ interface Order {
   profiles?: { full_name: string; email: string } | null;
   card_products?: { name: string; type: string } | null;
 }
+
+type OrderDetail = Record<string, unknown> & {
+  id: string;
+  order_number?: string | null;
+  status?: string;
+  amount_usdc?: number | string | null;
+  paid_usdc?: number | string | null;
+  network?: string | null;
+  token?: string | null;
+  tx_hash?: string | null;
+  tracking_number?: string | null;
+  carrier?: string | null;
+  admin_note?: string | null;
+  created_at?: string;
+  paid_at?: string | null;
+  profiles?: { full_name?: string; email?: string; phone?: string | null; country?: string | null } | null;
+  card_products?: { name?: string; type?: string; tier?: string | null } | null;
+  payment_transactions?: {
+    id: string;
+    tx_hash?: string | null;
+    amount?: number | string | null;
+    status?: string | null;
+    from_address?: string | null;
+    to_address?: string | null;
+    created_at?: string | null;
+  }[];
+};
 
 interface OrderRow {
   id: string;
@@ -68,6 +95,9 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Order | null>(null);
+  const [detail, setDetail] = useState<OrderDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const prevStatuses = useRef<Record<string, string>>({});
   const ownUpdateAt = useRef<Record<string, number>>({});
 
@@ -148,6 +178,15 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
     } else {
       toast.error(result.error);
     }
+  };
+
+  const openDetails = async (order: Order) => {
+    setSelected(order);
+    setDetail(null);
+    setDetailLoading(true);
+    const res = await getOrderDetails(order.id);
+    setDetail((res ?? null) as OrderDetail | null);
+    setDetailLoading(false);
   };
 
   return (
@@ -244,7 +283,7 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
                             ))}
                           </div>
                         </div>
-                        <button className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors" aria-label="View order">
+                        <button onClick={() => openDetails(order)} className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors" aria-label="View order">
                           <Eye className="w-4 h-4" />
                         </button>
                       </div>
@@ -255,6 +294,101 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
             </table>
           </div>
         </div>
+      )}
+
+      {selected && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setSelected(null)} aria-hidden="true" />
+          <div
+            className="fixed inset-y-0 right-0 z-50 w-full max-w-lg border-l border-slate-200 bg-white shadow-xl overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Order ${selected.order_number ?? selected.id.slice(0, 8)} details`}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Order {selected.order_number ?? selected.id.slice(0, 8)}
+                </h2>
+                <p className="text-xs text-body">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[detail?.status ?? selected.status] ?? "bg-surface-200 text-body"}`}>
+                    {detail?.status ?? selected.status}
+                  </span>
+                </p>
+              </div>
+              <button onClick={() => setSelected(null)} className="rounded-lg p-2 text-slate-400 hover:text-slate-800" aria-label="Close drawer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-6">
+              {detailLoading ? (
+                <p className="text-sm text-body">Loading details...</p>
+              ) : (
+                <>
+                  <section>
+                    <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">Customer</h3>
+                    <div className="text-slate-700 text-sm space-y-1">
+                      <p><span className="text-slate-400">Name:</span> {detail?.profiles?.full_name ?? "—"}</p>
+                      <p><span className="text-slate-400">Email:</span> {detail?.profiles?.email ?? "—"}</p>
+                      <p><span className="text-slate-400">Phone:</span> {detail?.profiles?.phone ?? "—"}</p>
+                      <p><span className="text-slate-400">Country:</span> {detail?.profiles?.country ?? "—"}</p>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">Card</h3>
+                    <div className="text-slate-700 text-sm space-y-1">
+                      <p><span className="text-slate-400">Product:</span> {detail?.card_products?.name ?? "—"}</p>
+                      <p><span className="text-slate-400">Type:</span> {detail?.card_products?.type ?? "—"}</p>
+                      <p><span className="text-slate-400">Tier:</span> {detail?.card_products?.tier ?? "—"}</p>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">Payment</h3>
+                    {detail?.payment_transactions?.length ? (
+                      <div className="space-y-2">
+                        {detail.payment_transactions.map((tx) => (
+                          <div key={tx.id} className="text-slate-700 text-sm space-y-1 rounded-lg bg-surface-50 p-3">
+                            <p><span className="text-slate-400">Status:</span> {tx.status ?? "—"}</p>
+                            <p><span className="text-slate-400">Amount:</span> {tx.amount ?? "—"}</p>
+                            <p className="font-mono text-xs break-all"><span className="text-slate-400">Hash:</span> {tx.tx_hash ?? "—"}</p>
+                            <p className="font-mono text-xs break-all"><span className="text-slate-400">From:</span> {tx.from_address ?? "—"}</p>
+                            <p className="font-mono text-xs break-all"><span className="text-slate-400">To:</span> {tx.to_address ?? "—"}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-sm">No payment transaction recorded</p>
+                    )}
+                    <div className="text-slate-700 text-sm space-y-1 mt-2">
+                      <p><span className="text-slate-400">Paid:</span> {detail?.paid_usdc ? `${detail.paid_usdc} USDC` : "—"}</p>
+                      <p><span className="text-slate-400">Network:</span> {detail?.network ?? "—"}</p>
+                      <p><span className="text-slate-400">Token:</span> {detail?.token ?? "—"}</p>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">Shipping</h3>
+                    <div className="text-slate-700 text-sm space-y-1">
+                      <p><span className="text-slate-400">Tracking:</span> {detail?.tracking_number ?? "—"}</p>
+                      <p><span className="text-slate-400">Carrier:</span> {detail?.carrier ?? "—"}</p>
+                      <p><span className="text-slate-400">Admin note:</span> {detail?.admin_note ?? "—"}</p>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">Dates</h3>
+                    <div className="text-slate-700 text-sm space-y-1">
+                      <p><span className="text-slate-400">Created:</span> {detail?.created_at ? new Date(detail.created_at).toLocaleString() : "—"}</p>
+                      <p><span className="text-slate-400">Paid:</span> {detail?.paid_at ? new Date(detail.paid_at).toLocaleString() : "—"}</p>
+                    </div>
+                  </section>
+                </>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
