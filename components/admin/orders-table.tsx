@@ -1,20 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ChevronDown, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { updateOrderStatus, type ActionResult } from "@/lib/admin/actions";
+import { updateOrderStatus, getOrders, type ActionResult } from "@/lib/admin/actions";
 import { toast } from "sonner";
+import { useRealtime } from "@/lib/hooks/use-realtime";
 
 interface Order {
   id: string;
+  order_number?: string | null;
   status: string;
   amount?: number;
   created_at: string;
   profiles?: { full_name: string; email: string } | null;
   card_products?: { name: string; type: string } | null;
 }
+
+interface OrderRow {
+  id: string;
+  order_number?: string | null;
+  status: string;
+  amount_usdc?: number | null;
+  amount?: number | null;
+  created_at: string;
+  profiles?: Order["profiles"] | null;
+  card_products?: Order["card_products"] | null;
+}
+
+type OrderPayload = {
+  eventType: "INSERT" | "UPDATE" | "DELETE";
+  new?: OrderRow | null;
+  old?: OrderRow | null;
+};
+
+const toOrder = (row: OrderRow): Order => ({
+  id: row.id,
+  order_number: row.order_number,
+  status: row.status,
+  amount: row.amount_usdc ?? row.amount ?? undefined,
+  created_at: row.created_at,
+  profiles: row.profiles ?? null,
+  card_products: row.card_products ?? null,
+});
 
 const statusColors: Record<string, string> = {
   pending: "bg-warning/10 text-warning",
@@ -33,11 +62,74 @@ const validTransitions: Record<string, string[]> = {
   shipped: ["delivered"],
 };
 
-export function AdminOrdersTable({ orders }: { orders: Order[]; count: number }) {
+export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; count: number }) {
   const router = useRouter();
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [updating, setUpdating] = useState<string | null>(null);
+  const prevStatuses = useRef<Record<string, string>>({});
+  const ownUpdateAt = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const map: Record<string, string> = {};
+    for (const o of initialOrders) map[o.id] = o.status;
+    prevStatuses.current = map;
+    setOrders(initialOrders);
+  }, [initialOrders]);
+
+  // Live updates: new orders and status changes (payment verified, cancelled by
+  // user, etc.) appear instantly without a page refresh.
+  const handleRealtime = useCallback((payload: OrderPayload) => {
+    const incoming = payload.new;
+
+    if (payload.eventType === "DELETE") {
+      setOrders((prev) => prev.filter((o) => o.id !== payload.old?.id));
+      return;
+    }
+    if (!incoming) return;
+
+    if (payload.eventType === "UPDATE") {
+      const prevStatus = prevStatuses.current[incoming.id];
+      if (prevStatus && prevStatus !== incoming.status) {
+        const ownAt = ownUpdateAt.current[incoming.id] ?? 0;
+        if (Date.now() - ownAt > 4000) {
+          toast.info(`Order ${incoming.order_number ?? incoming.id.slice(0, 8)} is now ${incoming.status}`);
+        }
+      }
+    }
+
+    if (payload.eventType === "INSERT") {
+      toast.info(`New order ${incoming.order_number ?? incoming.id.slice(0, 8)} created`);
+      getOrders({}).then((result) => {
+        setOrders((prev) => {
+          const byId = new Map(prev.map((o) => [o.id, o]));
+          for (const o of result.orders) byId.set(o.id, o);
+          return Array.from(byId.values())
+            .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+            .slice(0, 200);
+        });
+      });
+    }
+
+    setOrders((prev) => {
+      const idx = prev.findIndex((o) => o.id === incoming.id);
+      if (idx === -1) return [toOrder(incoming), ...prev].slice(0, 200);
+      return prev.map((o, i) =>
+        i === idx
+          ? {
+              ...o,
+              ...toOrder(incoming),
+              profiles: incoming.profiles ?? o.profiles,
+              card_products: incoming.card_products ?? o.card_products,
+            }
+          : o,
+      );
+    });
+    prevStatuses.current[incoming.id] = incoming.status;
+  }, []);
+
+  useRealtime<OrderPayload>("admin-orders-live", "*", "card_orders", handleRealtime);
 
   const filtered = orders.filter((o) => {
     if (search && !o.id?.toLowerCase().includes(search.toLowerCase()) && !o.profiles?.full_name?.toLowerCase().includes(search.toLowerCase())) return false;
@@ -47,6 +139,7 @@ export function AdminOrdersTable({ orders }: { orders: Order[]; count: number })
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     setUpdating(orderId);
+    ownUpdateAt.current[orderId] = Date.now();
     const result: ActionResult = await updateOrderStatus(orderId, newStatus);
     setUpdating(null);
     if (result.success) {
@@ -82,6 +175,16 @@ export function AdminOrdersTable({ orders }: { orders: Order[]; count: number })
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        <span
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success"
+          title="Orders update in real time"
+        >
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
+          </span>
+          Live
+        </span>
       </div>
 
       {filtered.length === 0 ? (
