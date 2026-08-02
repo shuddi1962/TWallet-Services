@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ChevronDown, Eye, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { updateOrderStatus, getOrders, getOrderDetails, type ActionResult } from "@/lib/admin/actions";
+import { updateOrderStatus, getOrders, getOrderDetails, updateOrderShipping, type ActionResult } from "@/lib/admin/actions";
 import { toast } from "sonner";
 import { useRealtime } from "@/lib/hooks/use-realtime";
 
@@ -103,6 +103,8 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const prevStatuses = useRef<Record<string, string>>({});
   const ownUpdateAt = useRef<Record<string, number>>({});
+  const [shippingDraft, setShippingDraft] = useState({ tracking_number: "", carrier: "", admin_note: "" });
+  const [savingShipping, setSavingShipping] = useState(false);
 
   useEffect(() => {
     const map: Record<string, string> = {};
@@ -212,6 +214,34 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
       /* keep row fallback */
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  // Keep draft inputs in sync whenever detail data changes (load, realtime).
+  useEffect(() => {
+    if (!detail) return;
+    const d = detail as Pick<OrderDetail, "tracking_number" | "carrier" | "admin_note">;
+    setShippingDraft({
+      tracking_number: String(d.tracking_number ?? ""),
+      carrier: String(d.carrier ?? ""),
+      admin_note: String(d.admin_note ?? ""),
+    });
+  }, [detail?.tracking_number, detail?.carrier, detail?.admin_note, detail]);
+
+  const saveShipping = async () => {
+    if (!selected) return;
+    setSavingShipping(true);
+    const result: ActionResult = await updateOrderShipping(selected.id, {
+      tracking_number: shippingDraft.tracking_number.trim() || null,
+      carrier: shippingDraft.carrier.trim() || null,
+      admin_note: shippingDraft.admin_note.trim() || null,
+    });
+    setSavingShipping(false);
+    if (result.success) {
+      toast.success("Shipping details saved");
+      router.refresh();
+    } else {
+      toast.error(result.error);
     }
   };
 
@@ -419,10 +449,44 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
 
                   <section>
                     <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">Shipping</h3>
-                    <div className="text-slate-700 text-sm space-y-1">
-                      <p><span className="text-slate-400">Tracking:</span> {detail?.tracking_number ?? "—"}</p>
-                      <p><span className="text-slate-400">Carrier:</span> {detail?.carrier ?? "—"}</p>
-                      <p><span className="text-slate-400">Admin note:</span> {detail?.admin_note ?? "—"}</p>
+                    <div className="space-y-3">
+                      <label className="block">
+                        <span className="text-xs text-slate-400">Tracking number</span>
+                        <input
+                          type="text"
+                          value={shippingDraft.tracking_number}
+                          onChange={(e) => setShippingDraft((s) => ({ ...s, tracking_number: e.target.value }))}
+                          placeholder="e.g. 1Z999AA10123456784"
+                          className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-xs text-slate-400">Carrier</span>
+                        <input
+                          type="text"
+                          value={shippingDraft.carrier}
+                          onChange={(e) => setShippingDraft((s) => ({ ...s, carrier: e.target.value }))}
+                          placeholder="e.g. DHL, FedEx, UPS"
+                          className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-xs text-slate-400">Admin note</span>
+                        <textarea
+                          value={shippingDraft.admin_note}
+                          onChange={(e) => setShippingDraft((s) => ({ ...s, admin_note: e.target.value }))}
+                          placeholder="Internal note visible to admins"
+                          rows={3}
+                          className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                        />
+                      </label>
+                      <button
+                        onClick={saveShipping}
+                        disabled={savingShipping}
+                        className="w-full py-2 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                      >
+                        {savingShipping ? "Saving..." : "Save Shipping Details"}
+                      </button>
                     </div>
                   </section>
 

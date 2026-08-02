@@ -291,6 +291,37 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
   return { success: true };
 }
 
+/** Update shipping metadata (tracking number, carrier, admin note) for an order. */
+export async function updateOrderShipping(
+  orderId: string,
+  fields: { tracking_number?: string | null; carrier?: string | null; admin_note?: string | null },
+): Promise<ActionResult> {
+  const supabase: any = await sb();
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  const patch: Record<string, unknown> = {};
+  if (fields.tracking_number !== undefined) patch.tracking_number = fields.tracking_number ?? null;
+  if (fields.carrier !== undefined) patch.carrier = fields.carrier ?? null;
+  if (fields.admin_note !== undefined) patch.admin_note = fields.admin_note ?? null;
+  if (Object.keys(patch).length === 0) return { success: false, error: "No fields to update" };
+
+  const { error }: any = await supabase.from("card_orders").update(patch as any).eq("id", orderId);
+  if (error) return { success: false, error: error.message as string };
+
+  await supabase.from("audit_logs").insert({
+    action: "order_updated",
+    target_type: "card_orders",
+    target_id: orderId,
+    details: { fields: Object.keys(patch), performed_by: user?.id ?? null },
+  });
+
+  revalidatePath("/admin/orders");
+  return { success: true };
+}
+
 export async function suspendUser(userId: string): Promise<ActionResult> {
   const supabase: any = await sb();
   const authClient = await createServerSupabaseClient();
