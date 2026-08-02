@@ -2994,6 +2994,9 @@ export type Database = {
         | "payment_failed"
         | "shipping_update"
         | "support_reply"
+        | "ticket_created"
+        | "ticket_resolved"
+        | "ticket_closed"
         | "system"
         | "promotion"
       order_status:
@@ -3018,7 +3021,25 @@ export type Database = {
         | "out_for_delivery"
         | "delivered"
         | "returned"
-      ticket_category: "shipping" | "payment" | "card" | "account" | "other"
+      ticket_category:
+        | "shipping"
+        | "payment"
+        | "card"
+        | "account"
+        | "other"
+        | "order"
+        | "transaction"
+        | "browser"
+        | "gas_fee"
+        | "claims"
+        | "security"
+        | "token"
+        | "swap"
+        | "buy_crypto"
+        | "wallet_connect"
+        | "restore_wallet"
+        | "staking"
+        | "partnership"
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status: "open" | "pending" | "resolved" | "closed" | "escalated"
       user_status: "active" | "suspended" | "deleted"
@@ -3657,6 +3678,9 @@ export const Constants = {
         "payment_failed",
         "shipping_update",
         "support_reply",
+        "ticket_created",
+        "ticket_resolved",
+        "ticket_closed",
         "system",
         "promotion",
       ],
@@ -3679,7 +3703,26 @@ export const Constants = {
         "delivered",
         "returned",
       ],
-      ticket_category: ["shipping", "payment", "card", "account", "other"],
+      ticket_category: [
+        "shipping",
+        "payment",
+        "card",
+        "account",
+        "other",
+        "order",
+        "transaction",
+        "browser",
+        "gas_fee",
+        "claims",
+        "security",
+        "token",
+        "swap",
+        "buy_crypto",
+        "wallet_connect",
+        "restore_wallet",
+        "staking",
+        "partnership",
+      ],
       ticket_priority: ["low", "medium", "high", "urgent"],
       ticket_status: ["open", "pending", "resolved", "closed", "escalated"],
       user_status: ["active", "suspended", "deleted"],

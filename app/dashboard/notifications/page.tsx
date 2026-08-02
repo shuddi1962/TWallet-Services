@@ -13,6 +13,8 @@ import {
   Trash2,
   CheckCheck,
   Loader2,
+  MessageSquare,
+  Ticket as TicketIcon,
 } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -31,6 +33,10 @@ const TYPE_CONFIG: Record<string, { icon: React.ElementType; label: string }> = 
   payment_confirmed: { icon: CheckCircle2, label: "Payment Confirmed" },
   card_activated: { icon: CreditCard, label: "Card Activated" },
   card_declined: { icon: XCircle, label: "Card Declined" },
+  ticket_created: { icon: TicketIcon, label: "Ticket Received" },
+  support_reply: { icon: MessageSquare, label: "Support Reply" },
+  ticket_resolved: { icon: CheckCircle2, label: "Ticket Resolved" },
+  ticket_closed: { icon: CheckCheck, label: "Ticket Closed" },
   system: { icon: Bell, label: "System" },
 };
 

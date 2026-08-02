@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState, useEffect, useCallback, useRef } from "react";
 import {
   CreditCard, DollarSign, Truck, User,
   HelpCircle, Ticket, CheckCircle2, ChevronRight, LifeBuoy,
-  Loader2,
+  Loader2, RefreshCcw, RefreshCw, Coins, Zap, Puzzle,
+  FileCheck2, TriangleAlert, HandCoins, Wrench, TrendingUp, Handshake,
 } from "lucide-react";
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
@@ -16,23 +17,39 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils/cn";
-import { createTicket, getMyTickets } from "@/features/support/server/actions";
+import { createClient } from "@/lib/supabase/client";
+import { Dialog, DialogHeader } from "@/components/ui/dialog";
+import {
+  createTicket,
+  getMyTickets,
+  getCustomerTicketMessages,
+  replyToTicket,
+} from "@/features/support/server/actions";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 type Tab = "open" | "resolved" | "create" | "kb";
-type Category = "shipping" | "payment" | "card" | "account" | "other";
-type Priority = "low" | "medium" | "high" | "urgent";
-type Status = "open" | "pending" | "resolved" | "closed";
+
+type Status = "open" | "pending" | "resolved" | "closed" | "escalated";
 
 interface Ticket {
   id: string;
   ticket_number: string;
   subject: string;
-  category: Category;
-  priority: Priority;
+  category: string;
+  priority: string;
   status: Status;
   created_at: string;
   updated_at: string | null;
+}
+
+interface TicketMessage {
+  id: string;
+  ticket_id: string;
+  author: "customer" | "admin";
+  message: string;
+  internal: boolean;
+  created_at: string;
 }
 
 const TABS: { label: string; value: Tab }[] = [
@@ -42,21 +59,40 @@ const TABS: { label: string; value: Tab }[] = [
   { label: "Knowledge Base", value: "kb" },
 ];
 
-const CATEGORY_META: Record<Category, { label: string; icon: React.ElementType }> = {
+const CATEGORY_META: Record<string, { label: string; icon: React.ElementType }> = {
   shipping: { label: "Shipping", icon: Truck },
   payment: { label: "Payment", icon: DollarSign },
   card: { label: "Card", icon: CreditCard },
   account: { label: "Account", icon: User },
+  order: { label: "Order Card", icon: Ticket },
+  transaction: { label: "Transaction", icon: RefreshCw },
+  browser: { label: "Browser / Extension", icon: Puzzle },
+  gas_fee: { label: "Gas Fee", icon: Zap },
+  claims: { label: "Claims", icon: FileCheck2 },
+  security: { label: "Security Issues", icon: TriangleAlert },
+  token: { label: "Token / NFT", icon: Coins },
+  swap: { label: "Swap", icon: RefreshCcw },
+  buy_crypto: { label: "Buy Crypto", icon: Coins },
+  wallet_connect: { label: "WalletConnect / DApps", icon: HandCoins },
+  restore_wallet: { label: "Restoring My Wallet", icon: Wrench },
+  staking: { label: "Staking", icon: TrendingUp },
+  partnership: { label: "Partnership", icon: Handshake },
   other: { label: "Other", icon: HelpCircle },
 };
 
-const PRIORITY_VARIANT: Record<Priority, "outline" | "info" | "warning" | "error"> = {
+const PRIORITY_VARIANT: Record<string, "outline" | "info" | "warning" | "error"> = {
   low: "outline", medium: "info", high: "warning", urgent: "error",
 };
 
-const STATUS_VARIANT: Record<Status, "outline" | "info" | "warning" | "success"> = {
+const STATUS_VARIANT: Record<string, "outline" | "info" | "warning" | "success"> = {
   open: "warning", pending: "info", resolved: "success", closed: "outline",
 };
+
+const CATEGORY_ORDER = [
+  "order", "payment", "transaction", "card", "shipping", "claims",
+  "account", "security", "token", "restore_wallet",
+  "wallet_connect", "browser", "buy_crypto", "swap", "staking", "gas_fee", "partnership", "other",
+];
 
 const FAQS: { q: string; a: string }[] = [
   { q: "How do I order a TWallet Card?", a: "Open the Cards page, pick your preferred card variant, and complete checkout. You pay with crypto from a connected wallet and can follow progress under Orders." },
@@ -64,6 +100,8 @@ const FAQS: { q: string; a: string }[] = [
   { q: "How long does card delivery take?", a: "Virtual cards are issued instantly after payment confirmation. Physical cards ship within 3–7 business days with tracking in Orders." },
   { q: "How do I connect my wallet?", a: "Click 'Connect Wallet' in the header. Your wallet will open to approve the connection. TWallet never holds your keys — every transaction is approved in your wallet." },
   { q: "Can I cancel an order?", a: "Orders can be cancelled while still 'pending'. Once 'processing', contact support for help." },
+  { q: "My transaction shows as failed. What now?", a: "Open a ticket under 'Transaction' and include the tx hash. Our team verifies on-chain and will credit or refund if the payment failed after submission." },
+  { q: "Is my wallet a custodial account?", a: "No. TWallet is non-custodial — you keep custody of your funds and approve every transaction from your wallet." },
 ];
 
 export default function SupportPage() {
@@ -71,6 +109,13 @@ export default function SupportPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
   const [state, formAction, pending] = useActionState(createTicket, undefined);
+
+  const [activeThread, setActiveThread] = useState<Ticket | null>(null);
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [messages, setMessages] = useState<TicketMessage[]>([]);
+  const [replyText, setReplyText] = useState("");
+  const [replyPending, setReplyPending] = useState(false);
+  const [replyError, setReplyError] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -82,11 +127,189 @@ export default function SupportPage() {
     })();
   }, []);
 
+  const lastSuccess = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const s = state?.success;
+    if (s && s !== lastSuccess.current) {
+      lastSuccess.current = s;
+      toast.success("Ticket submitted", { description: s });
+      setActiveTab("open");
+      void (async () => {
+        const res = await getMyTickets();
+        if (res.error === null && res.data) {
+          setTickets(res.data as Ticket[]);
+        }
+      })();
+    }
+  }, [state]);
+
+  const applyRealtime = useCallback(
+    (payload: {
+      eventType: "INSERT" | "UPDATE" | "DELETE";
+      new?: Record<string, unknown> | null;
+      old?: Record<string, unknown> | null;
+      id?: string;
+    }) => {
+      const row = payload.eventType === "DELETE" ? payload.old : payload.new;
+      if (!row?.id) return;
+      const item: Ticket = {
+        id: String(row.id),
+        ticket_number: String(row.ticket_number ?? ""),
+        subject: String(row.subject ?? ""),
+        category: String(row.category ?? "other"),
+        priority: String(row.priority ?? "medium"),
+        status: String(row.status ?? "open") as Status,
+        created_at: String(row.created_at),
+        updated_at: (row.updated_at as string | null) ?? null,
+      };
+      setTickets((prev) => {
+        if (payload.eventType === "DELETE") {
+          return prev.filter((t) => t.id !== item.id);
+        }
+        const exists = prev.some((t) => t.id === item.id);
+        const next = exists
+          ? prev.map((t) => (t.id === item.id ? item : t))
+          : [item, ...prev];
+        return next.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+      });
+    },
+    [],
+  );
+
+  const applyRealtimeRef = useRef(applyRealtime);
+  applyRealtimeRef.current = applyRealtime;
+
+  useEffect(() => {
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      channel = supabase
+        .channel(`support-live-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "support_tickets",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload: unknown) => {
+            applyRealtimeRef.current?.(
+              payload as Parameters<typeof applyRealtime>[0],
+            );
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const openThread = useCallback(async (ticket: Ticket) => {
+    setActiveThread(ticket);
+    setThreadLoading(true);
+    setMessages([]);
+    setReplyError(null);
+    const res = await getCustomerTicketMessages(ticket.id);
+    if (res.error === null && res.messages) {
+      setMessages(res.messages as TicketMessage[]);
+    }
+    setThreadLoading(false);
+  }, []);
+
+  const closeThread = useCallback(() => {
+    setActiveThread(null);
+    setMessages([]);
+    setReplyText("");
+    setReplyError(null);
+  }, []);
+
+  const activeThreadRef = useRef<Ticket | null>(null);
+  activeThreadRef.current = activeThread;
+
+  useEffect(() => {
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      channel = supabase
+        .channel(`support-thread-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "ticket_messages",
+          },
+          (payload: unknown) => {
+            const p = payload as { new?: Record<string, unknown> | null };
+            const row = p.new;
+            if (!row?.ticket_id || !row?.author || row.author === "customer") return;
+            if (row.ticket_id !== activeThreadRef.current?.id) return;
+            if (row.internal === true) return;
+            const item: TicketMessage = {
+              id: String(row.id),
+              ticket_id: String(row.ticket_id),
+              author: String(row.author) as TicketMessage["author"],
+              message: String(row.message),
+              internal: Boolean(row.internal),
+              created_at: String(row.created_at),
+            };
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === item.id)) return prev;
+              return [...prev, item];
+            });
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleReply = async () => {
+    const text = replyText.trim();
+    if (!text || !activeThread) return;
+    setReplyPending(true);
+    setReplyError(null);
+    const res = await replyToTicket(activeThread.id, text);
+    setReplyPending(false);
+    if (res.success) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `local-${Date.now()}`,
+          ticket_id: activeThread.id,
+          author: "customer",
+          message: text,
+          internal: false,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      setReplyText("");
+    } else {
+      setReplyError(res.error ?? "Could not send reply");
+    }
+  };
+
   const openTickets = tickets.filter((t) => t.status === "open" || t.status === "pending");
   const resolvedTickets = tickets.filter((t) => t.status === "resolved" || t.status === "closed");
 
   const renderTicketCard = (t: Ticket) => {
-    const cat = CATEGORY_META[t.category] ?? CATEGORY_META.other;
+    const cat = CATEGORY_META[t.category] ?? CATEGORY_META.other!;
     const CategoryIcon = cat.icon;
     return (
       <Card key={t.id} className="transition-colors hover:border-slate-300">
@@ -105,9 +328,17 @@ export default function SupportPage() {
               <CategoryIcon className="h-3 w-3" aria-hidden="true" />
               {cat.label}
             </Badge>
-            <Badge variant={PRIORITY_VARIANT[t.priority]}>{t.priority}</Badge>
-            <Badge variant={STATUS_VARIANT[t.status]}>{t.status}</Badge>
+            <Badge variant={PRIORITY_VARIANT[t.priority] ?? "outline"}>{t.priority}</Badge>
+            <Badge variant={STATUS_VARIANT[t.status] ?? "outline"}>{t.status}</Badge>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4 w-full"
+            onClick={() => void openThread(t)}
+          >
+            <ChevronRight className="h-4 w-4 mr-1" aria-hidden="true" /> View Conversation
+          </Button>
         </CardContent>
       </Card>
     );
@@ -207,7 +438,7 @@ export default function SupportPage() {
                   <div className="space-y-2">
                     <Label htmlFor="category">Category <span className="text-error">*</span></Label>
                     <select id="category" name="category" defaultValue="other" className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-                      {Object.entries(CATEGORY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                      {CATEGORY_ORDER.map((k) => <option key={k} value={k}>{CATEGORY_META[k]?.label ?? k}</option>)}
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -247,6 +478,64 @@ export default function SupportPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!activeThread} onOpenChange={(open) => !open && closeThread()}>
+        {activeThread && (
+          <div>
+            <DialogHeader
+              title={`${activeThread.ticket_number} — ${activeThread.subject}`}
+              description={`${CATEGORY_META[activeThread.category]?.label ?? activeThread.category} · ${activeThread.priority} priority · ${activeThread.status}`}
+              onClose={closeThread}
+            />
+
+            <div className="max-h-[45vh] space-y-3 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3">
+              {threadLoading ? (
+                <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-400">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading conversation...
+                </div>
+              ) : messages.length === 0 ? (
+                <p className="py-8 text-center text-sm text-slate-400">No messages yet.</p>
+              ) : (
+                messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                      m.author === "customer"
+                        ? "ml-auto bg-brand-600 text-white"
+                        : "bg-white text-slate-700 border border-slate-200"
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap break-words">{m.message}</p>
+                    <p className={`mt-1 text-[10px] ${m.author === "customer" ? "text-brand-100" : "text-slate-400"}`}>
+                      {m.author === "customer" ? "You" : "Support"} ·{" "}
+                      {formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {replyError && (
+                <div className="rounded-xl border border-error/20 bg-error/10 p-3 text-sm text-error" role="alert">{replyError}</div>
+              )}
+              <Textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Write a follow-up message..."
+                rows={3}
+                maxLength={5000}
+                aria-label="Reply message"
+              />
+              <div className="flex justify-end">
+                <Button onClick={handleReply} loading={replyPending} disabled={!replyText.trim()}>
+                  Send Reply
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </Dialog>
     </div>
   );
 }

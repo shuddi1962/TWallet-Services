@@ -137,8 +137,35 @@ route("POST", "support/tickets", async (req, _p, user) => {
   const valErr = validateBody(createTicketSchema, body);
   if (valErr) return valErr;
   const supabase: any = sb();
-  const { data, error }: any = await supabase.from("support_tickets").insert({ user_id: user.id, subject: body.subject, category: body.category ?? "general", priority: body.priority ?? "medium", message: body.message }).select().single();
+  const { data: ticketNumber } = await supabase.rpc("generate_ticket_number");
+  const { data, error }: any = await supabase
+    .from("support_tickets")
+    .insert({
+      ticket_number: ticketNumber ?? `TKT-${Date.now()}`,
+      user_id: user.id,
+      subject: body.subject,
+      category: body.category ?? "other",
+      priority: body.priority ?? "medium",
+      status: "open",
+      ...(body.orderId ? { order_id: body.orderId } : {}),
+    })
+    .select()
+    .single();
   if (error) return apiError([{ code: "GEN_001", message: error.message }], 400);
+
+  await supabase.from("ticket_messages").insert({
+    ticket_id: data.id,
+    author: "customer",
+    message: body.message,
+  });
+
+  await supabase.from("notifications").insert({
+    user_id: user.id,
+    type: "ticket_created",
+    title: `Ticket ${data.ticket_number} received`,
+    message: "We've received your request and will get back to you within 24 hours.",
+  });
+
   return apiSuccess(data, "Ticket created", 201);
 });
 

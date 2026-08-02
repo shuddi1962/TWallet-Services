@@ -54,9 +54,32 @@ export const updateProfileSchema = z.object({
   avatarUrl: urlSchema.optional(),
 });
 
+export const ticketCategories = [
+  "shipping",
+  "payment",
+  "card",
+  "account",
+  "other",
+  "order",
+  "transaction",
+  "browser",
+  "gas_fee",
+  "claims",
+  "security",
+  "token",
+  "swap",
+  "buy_crypto",
+  "wallet_connect",
+  "restore_wallet",
+  "staking",
+  "partnership",
+] as const;
+
+export type TicketCategory = (typeof ticketCategories)[number];
+
 export const createTicketSchema = z.object({
   subject: z.string().min(1, "Subject is required").max(200),
-  category: z.enum(["general", "order", "card", "payment", "wallet", "technical", "other"]),
+  category: z.enum(ticketCategories),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
   message: z.string().min(1, "Message is required").max(5000),
   orderId: z.string().uuid().optional(),

@@ -20,6 +20,7 @@ import type {
   AdminNotification,
   AdminTicket,
   AdminInfo,
+  TicketMessage,
   AdminRoleUser,
   ReportType,
   ReportFormat,
@@ -851,20 +852,56 @@ export async function replyToTicket(
   // Insert the admin reply message
   const { error: msgError }: any = await supabase.from("ticket_messages").insert({
     ticket_id: ticketId,
-    sender_id: adminId,
-    sender_type: "admin",
+    author: "admin",
+    admin_id: adminId,
     message,
   } as any);
   if (msgError) return { success: false, error: msgError.message as string };
 
   // Update ticket status to waiting on customer
-  const { error: updateError }: any = await supabase
+  const { data: updated, error: updateError }: any = await supabase
     .from("support_tickets")
-    .update({ status: "waiting_on_customer", updated_at: new Date().toISOString() } as any)
-    .eq("id", ticketId);
+    .update({ status: "pending", updated_at: new Date().toISOString() } as any)
+    .eq("id", ticketId)
+    .select("user_id, ticket_number");
   if (updateError) return { success: false, error: updateError.message as string };
 
+  if (updated?.[0]?.user_id) {
+    await supabase
+      .from("notifications")
+      .insert({
+        user_id: updated[0].user_id,
+        type: "support_reply",
+        title: `Reply on ticket ${updated[0].ticket_number ?? ""}`,
+        message: "Support has replied to your ticket. Check the Support page.",
+      } as any);
+  }
+
   revalidatePath("/admin/support");
+  revalidatePath("/dashboard/support");
+  return { success: true };
+}
+
+export async function closeTicket(ticketId: string): Promise<ActionResult> {
+  const supabase: any = await sb();
+  const { data: updated, error: updateError }: any = await supabase
+    .from("support_tickets")
+    .update({ status: "closed", updated_at: new Date().toISOString() } as any)
+    .eq("id", ticketId)
+    .select("user_id, ticket_number");
+  if (updateError) return { success: false, error: updateError.message as string };
+
+  if (updated?.[0]?.user_id) {
+    await supabase.from("notifications").insert({
+      user_id: updated[0].user_id,
+      type: "ticket_closed",
+      title: `Ticket ${updated[0].ticket_number ?? ""} closed`,
+      message: "Your support ticket has been closed. If you need more help, create a new ticket.",
+    } as any);
+  }
+
+  revalidatePath("/admin/support");
+  revalidatePath("/dashboard/support");
   return { success: true };
 }
 
@@ -879,14 +916,47 @@ export async function escalateTicket(ticketId: string): Promise<ActionResult> {
   return { success: true };
 }
 
-export async function closeTicket(ticketId: string): Promise<ActionResult> {
+export async function getTicketMessages(ticketId: string): Promise<{ messages: TicketMessage[] }> {
   const supabase: any = await sb();
-  const { error }: any = await supabase
+  const { data }: any = await supabase
+    .from("ticket_messages")
+    .select("*")
+    .eq("ticket_id", ticketId)
+    .order("created_at", { ascending: true });
+  return { messages: (data ?? []) as TicketMessage[] };
+}
+
+export async function getCurrentAdminId(): Promise<string | null> {
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+  if (!user) return null;
+  const supabase: any = await sb();
+  const { data }: any = await supabase.from("admins").select("id").eq("profile_id", user.id).single();
+  return data?.id ?? null;
+}
+
+export async function resolveTicket(ticketId: string): Promise<ActionResult> {
+  const supabase: any = await sb();
+  const { data: updated, error: updateError }: any = await supabase
     .from("support_tickets")
-    .update({ status: "closed", updated_at: new Date().toISOString() } as any)
-    .eq("id", ticketId);
-  if (error) return { success: false, error: error.message as string };
+    .update({ status: "resolved", updated_at: new Date().toISOString() } as any)
+    .eq("id", ticketId)
+    .select("user_id, ticket_number");
+  if (updateError) return { success: false, error: updateError.message as string };
+
+  if (updated?.[0]?.user_id) {
+    await supabase.from("notifications").insert({
+      user_id: updated[0].user_id,
+      type: "ticket_resolved",
+      title: `Ticket ${updated[0].ticket_number ?? ""} resolved`,
+      message: "Your support ticket has been resolved. Thanks for your patience.",
+    } as any);
+  }
+
   revalidatePath("/admin/support");
+  revalidatePath("/dashboard/support");
   return { success: true };
 }
 
@@ -898,10 +968,10 @@ export async function addInternalNote(
   const supabase: any = await sb();
   const { error }: any = await supabase.from("ticket_messages").insert({
     ticket_id: ticketId,
-    sender_id: adminId,
-    sender_type: "admin",
+    author: "admin",
+    admin_id: adminId,
     message: note,
-    is_internal: true,
+    internal: true,
   } as any);
   if (error) return { success: false, error: error.message as string };
   revalidatePath("/admin/support");

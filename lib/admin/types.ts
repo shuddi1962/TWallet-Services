@@ -130,6 +130,16 @@ export interface AdminTicket {
   assigned_admin?: { profile_id: string; profiles: { full_name: string } } | null;
 }
 
+export interface TicketMessage {
+  id: string;
+  ticket_id: string;
+  author: "customer" | "admin";
+  admin_id?: string | null;
+  message: string;
+  internal: boolean;
+  created_at: string;
+}
+
 export interface AdminInfo {
   id: string;
   profile_id: string;

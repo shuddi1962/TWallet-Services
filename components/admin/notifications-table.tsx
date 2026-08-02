@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Check, CheckCheck, ExternalLink } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
@@ -8,6 +8,7 @@ import { markAdminNotificationRead, type ActionResult } from "@/lib/admin/action
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client";
 
 interface AdminNotification {
   id: string;
@@ -30,6 +31,7 @@ const NOTIFICATION_TYPES = [
   { value: "payment_failed", label: "Failed Payment" },
   { value: "shipping_update", label: "Shipping Update" },
   { value: "support_reply", label: "Support Reply" },
+  { value: "ticket_created", label: "New Support Ticket" },
   { value: "system", label: "System Alert" },
   { value: "promotion", label: "Promotion" },
 ];
@@ -47,6 +49,7 @@ const typeVariants: Record<string, string> = {
   payment_failed: "error",
   shipping_update: "info",
   support_reply: "info",
+  ticket_created: "warning",
   system: "warning",
   promotion: "secondary",
 };
@@ -58,6 +61,7 @@ const typeLabels: Record<string, string> = {
   payment_failed: "Failed Payment",
   shipping_update: "Shipping Update",
   support_reply: "Support Reply",
+  ticket_created: "New Support Ticket",
   system: "System Alert",
   promotion: "Promotion",
 };
@@ -65,12 +69,14 @@ const typeLabels: Record<string, string> = {
 const relatedLinks: Record<string, string> = {
   order: "/admin/orders",
   payment: "/admin/payments",
-  ticket: "/admin/tickets",
+  ticket: "/admin/support",
   user: "/admin/users",
 };
 
 export function AdminNotificationsTable({ notifications, count }: { notifications: AdminNotification[]; count: number }) {
   const router = useRouter();
+  const [rows, setRows] = useState<AdminNotification[]>(notifications);
+  const [liveCount, setLiveCount] = useState(count);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [readFilter, setReadFilter] = useState("all");
@@ -78,7 +84,56 @@ export function AdminNotificationsTable({ notifications, count }: { notification
   const [dateTo, setDateTo] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
 
-  const filtered = notifications.filter((n) => {
+  useEffect(() => {
+    setRows(notifications);
+    setLiveCount(count);
+  }, [notifications, count]);
+
+const applyRealtime = useCallback((payload: { new?: Record<string, unknown> | null }) => {
+    const row = payload.new;
+    if (!row?.id) return;
+    const item: AdminNotification = {
+      id: String(row.id),
+      admin_id: String(row.admin_id ?? ""),
+      type: String(row.type ?? "system"),
+      title: String(row.title ?? ""),
+      message: (row.message as string | null) ?? null,
+      related_type: (row.related_type as string | null) ?? null,
+      related_id: (row.related_id as string | null) ?? null,
+      read: Boolean(row.read),
+      created_at: String(row.created_at),
+      updated_at: String(row.updated_at),
+    };
+    setRows((prev) => {
+      const exists = prev.some((n) => n.id === item.id);
+      const next = exists ? prev.map((n) => (n.id === item.id ? item : n)) : [item, ...prev];
+      return next.slice(0, 200);
+    });
+    setLiveCount((prev) => prev + 1);
+    toast.info(item.title, { description: item.message ?? undefined });
+  }, []);
+
+  const applyRealtimeRef = useRef(applyRealtime);
+  applyRealtimeRef.current = applyRealtime;
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("admin-notifications-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "admin_notifications" },
+        (payload: unknown) => {
+          applyRealtimeRef.current?.(payload as { new?: Record<string, unknown> | null });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const filtered = rows.filter((n) => {
     if (search && !n.title?.toLowerCase().includes(search.toLowerCase()) && !n.message?.toLowerCase().includes(search.toLowerCase())) return false;
     if (typeFilter !== "all" && n.type !== typeFilter) return false;
     if (readFilter !== "all" && n.read !== (readFilter === "read")) return false;
@@ -183,9 +238,9 @@ export function AdminNotificationsTable({ notifications, count }: { notification
 
       {/* Notifications count */}
       <p className="text-sm text-body mb-4">
-        {filtered.length === count
-          ? `${count} notification${count === 1 ? "" : "s"}`
-          : `${filtered.length} of ${count} notification${count === 1 ? "" : "s"}`}
+        {filtered.length === liveCount
+          ? `${liveCount} notification${liveCount === 1 ? "" : "s"}`
+          : `${filtered.length} of ${liveCount} notification${liveCount === 1 ? "" : "s"}`}
       </p>
 
       {/* Empty state */}
@@ -194,10 +249,10 @@ export function AdminNotificationsTable({ notifications, count }: { notification
           <div className="flex flex-col items-center gap-2">
             <CheckCheck className="w-12 h-12 text-success/60" aria-hidden="true" />
             <p className="text-lg font-medium text-heading">
-              {notifications.length === 0 ? "No notifications yet" : "All caught up!"}
+              {rows.length === 0 ? "No notifications yet" : "All caught up!"}
             </p>
             <p className="text-sm text-body">
-              {notifications.length === 0
+              {rows.length === 0
                 ? "Admin notifications will appear here when events occur."
                 : "No notifications match the current filters."}
             </p>
