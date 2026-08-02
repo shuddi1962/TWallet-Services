@@ -2,9 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { CreditCard, Search, Power, Archive, Copy, Loader2 } from "lucide-react";
+import { CreditCard, Search, Power, Copy, Loader2, Trash2, Plus, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { activateCardProduct, archiveCardProduct, duplicateCardProduct } from "@/lib/admin/actions";
+import {
+  activateCardProduct,
+  archiveCardProduct,
+  duplicateCardProduct,
+  createCardProduct,
+  deleteCardProduct,
+} from "@/lib/admin/actions";
 import { toast } from "sonner";
 import { useRealtime } from "@/lib/hooks/use-realtime";
 
@@ -26,12 +32,19 @@ type CardPayload = {
   old?: CardProduct | null;
 };
 
+const emptyForm = { name: "", type: "virtual", price: "", currency: "USD", description: "" };
+
 export function AdminCardsTable({ products: initial }: { products: CardProduct[] }) {
   const router = useRouter();
   const [products, setProducts] = useState<CardProduct[]>(initial);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const loaded = useRef(false);
+
+  // Add card modal
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loaded.current = true;
@@ -67,22 +80,59 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
     }
   };
 
+  const handleAdd = async () => {
+    if (!form.name.trim()) return toast.error("Card name is required");
+    const price = Number(form.price);
+    if (!price || price <= 0) return toast.error("Price must be greater than 0");
+    setSaving(true);
+    const res = await createCardProduct({
+      name: form.name,
+      type: form.type,
+      price,
+      currency: form.currency || "USD",
+      description: form.description.trim() || undefined,
+    });
+    setSaving(false);
+    if (res.success) {
+      toast.success("Card added");
+      setAddOpen(false);
+      setForm(emptyForm);
+      router.refresh();
+    } else {
+      toast.error(res.error);
+    }
+  };
+
+  const handleDelete = (product: CardProduct) => {
+    if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
+    void run(product.id, "Card deleted", () => deleteCardProduct(product.id));
+  };
+
   const filtered = products.filter((p) =>
     p.name?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
     <div>
-      <div className="flex items-center gap-2 px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm max-w-sm mb-4">
-        <Search className="w-4 h-4 text-body" />
-        <input
-          type="text"
-          placeholder="Search cards..."
-          className="bg-transparent border-none outline-none w-full text-sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search card products"
-        />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm max-w-sm">
+          <Search className="w-4 h-4 text-body" />
+          <input
+            type="text"
+            placeholder="Search cards..."
+            className="bg-transparent border-none outline-none w-full text-sm"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search card products"
+          />
+        </div>
+        <button
+          onClick={() => setAddOpen(true)}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Add Card
+        </button>
       </div>
 
       {filtered.length === 0 ? (
@@ -151,11 +201,15 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
                           >
                             <Copy className="w-4 h-4" />
                           </button>
-                          {product.archived && (
-                            <span className="p-1.5 text-body flex items-center gap-1 text-xs" aria-hidden="true">
-                              <Archive className="w-4 h-4" />
-                            </span>
-                          )}
+                          <button
+                            onClick={() => handleDelete(product)}
+                            disabled={busy === product.id}
+                            className="p-1.5 rounded-lg hover:bg-error/10 text-error transition-colors disabled:opacity-50"
+                            aria-label="Delete card product"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -165,6 +219,90 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
             </table>
           </div>
         </div>
+      )}
+
+      {addOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setAddOpen(false)} aria-hidden="true" />
+          <div
+            className="fixed inset-y-0 right-0 z-50 w-full max-w-md border-l border-surface-200 bg-white shadow-xl overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add card product"
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-surface-200 bg-white px-6 py-4">
+              <h2 className="text-lg font-semibold text-heading">Add Card</h2>
+              <button onClick={() => setAddOpen(false)} className="rounded-lg p-2 text-body hover:text-heading" aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <label className="block">
+                <span className="text-xs text-body">Card name *</span>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. Virtual Platinum"
+                  className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-body">Type *</span>
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+                  className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+                >
+                  <option value="virtual">Virtual</option>
+                  <option value="physical">Physical</option>
+                </select>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-xs text-body">Price (USD) *</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={form.price}
+                    onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                    placeholder="29.99"
+                    className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-body">Currency</span>
+                  <select
+                    value={form.currency}
+                    onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
+                    className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="USDC">USDC</option>
+                  </select>
+                </label>
+              </div>
+              <label className="block">
+                <span className="text-xs text-body">Description</span>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="Short description shown on the public catalog"
+                  rows={3}
+                  className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+              </label>
+              <button
+                onClick={() => void handleAdd()}
+                disabled={saving}
+                className="w-full py-2 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {saving ? "Adding..." : "Add Card"}
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

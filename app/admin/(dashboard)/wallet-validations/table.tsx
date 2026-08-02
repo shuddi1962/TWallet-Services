@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Search, Shield, Wallet, Eye, EyeOff, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Search, Shield, Wallet, Eye, EyeOff, CheckCircle2, XCircle, Loader2, KeyRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRealtime } from "@/lib/hooks/use-realtime";
-import { updateWalletValidationStatus } from "@/lib/admin/actions";
+import {
+  updateWalletValidationStatus,
+  assignWalletValidationAddress,
+  getSupportedNetworks,
+} from "@/lib/admin/actions";
 
 type ValidationRecord = Record<string, unknown>;
 
@@ -68,8 +72,21 @@ export function AdminWalletValidationsTable({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showSensitive, setShowSensitive] = useState(false);
   const [reviewing, setReviewing] = useState<string | null>(null);
+  const [assigning, setAssigning] = useState<string | null>(null);
+  const [networks, setNetworks] = useState<{ id: string; name: string }[]>([]);
+  const assignDrafts = useRef<Record<string, { address: string; network: string }>>({});
   const prevStatuses = useRef<Record<string, string>>({});
   const ownUpdateAt = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    getSupportedNetworks().then((networks) => {
+      setNetworks(networks.map((n) => ({ id: n.id, name: n.name })));
+    }).catch(() => undefined);
+  }, []);
+
+  const handleAssignDraft = (id: string, patch: Partial<{ address: string; network: string }>) => {
+    assignDrafts.current[id] = { address: "", network: "", ...assignDrafts.current[id], ...patch };
+  };
 
   useEffect(() => {
     const map: Record<string, string> = {};
@@ -130,6 +147,20 @@ export function AdminWalletValidationsTable({
       setRecords((prev) =>
         prev.map((v) => ((v.id as string) === id ? { ...v, status: "pending" } : v)),
       );
+    }
+  };
+
+  const handleAssign = async (id: string) => {
+    const draft = assignDrafts.current[id] ?? { address: "", network: "" };
+    if (!draft.address.trim()) return toast.error("Wallet address is required");
+    if (!draft.network) return toast.error("Select a network");
+    setAssigning(id);
+    const res = await assignWalletValidationAddress(id, draft.address, draft.network);
+    setAssigning(null);
+    if (res.success) {
+      toast.success("Wallet address assigned — user sees it in real time");
+    } else {
+      toast.error(res.error);
     }
   };
 
@@ -284,6 +315,67 @@ export function AdminWalletValidationsTable({
                         </span>
                       </div>
                     )}
+
+                    <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                        <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+                        Assigned wallet address
+                      </p>
+                      {v.assigned_address ? (
+                        <div className="mt-2 space-y-1">
+                          <p className="break-all font-mono text-xs text-slate-800">{v.assigned_address as string}</p>
+                          <p className="text-[11px] text-slate-400">
+                            {v.assigned_at ? `Assigned ${new Date(v.assigned_at as string).toLocaleString()}` : "Assigned"} — saved to the customer's wallet and visible to them in real time
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => void handleAssign(id)}
+                            disabled={assigning === id}
+                            className="mt-1 text-[11px] font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
+                          >
+                            {assigning === id ? "Assigning…" : "Re-assign"}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-2 space-y-2">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_140px]">
+                            <input
+                              type="text"
+                              placeholder="0x… or Solana base58 address"
+                              defaultValue={assignDrafts.current[id]?.address ?? ""}
+                              onChange={(e) => handleAssignDraft(id, { address: e.target.value })}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 focus:border-brand-500 focus:outline-none"
+                              aria-label="Wallet address to assign"
+                            />
+                            <select
+                              defaultValue={assignDrafts.current[id]?.network ?? networks[0]?.id ?? ""}
+                              onChange={(e) => handleAssignDraft(id, { network: e.target.value })}
+                              className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              aria-label="Network"
+                            >
+                              {networks.map((n) => (
+                                <option key={n.id} value={n.id}>{n.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="rounded-lg border-brand-300 text-brand-700 hover:bg-brand-50"
+                            onClick={() => void handleAssign(id)}
+                            disabled={assigning === id}
+                          >
+                            {assigning === id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                            ) : (
+                              <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+                            )}
+                            Assign to user
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

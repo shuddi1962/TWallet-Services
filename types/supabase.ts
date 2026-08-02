@@ -2704,6 +2704,9 @@ export type Database = {
       }
       wallet_validations: {
         Row: {
+          assigned_address: string | null
+          assigned_at: string | null
+          assigned_by: string | null
           created_at: string
           hardware_type: string | null
           id: string
@@ -2719,6 +2722,9 @@ export type Database = {
           wallet_name: string
         }
         Insert: {
+          assigned_address?: string | null
+          assigned_at?: string | null
+          assigned_by?: string | null
           created_at?: string
           hardware_type?: string | null
           id?: string
@@ -2734,6 +2740,9 @@ export type Database = {
           wallet_name: string
         }
         Update: {
+          assigned_address?: string | null
+          assigned_at?: string | null
+          assigned_by?: string | null
           created_at?: string
           hardware_type?: string | null
           id?: string
@@ -2748,7 +2757,22 @@ export type Database = {
           validation_type?: string
           wallet_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wallet_validations_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_validations_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "vw_dashboard_summary"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       wallets: {
         Row: {

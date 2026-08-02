@@ -947,13 +947,23 @@ export async function createCardProduct(data: {
   active?: boolean;
   image_url?: string;
 }): Promise<ActionResult> {
+  const name = data.name.trim();
+  if (!name) return { success: false, error: "Card name is required" };
+  if (!data.price || data.price <= 0) return { success: false, error: "Price must be greater than 0" };
+
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
   const supabase: any = await sb();
   const { error }: any = await supabase.from("card_products").insert({
-    name: data.name,
+    name,
+    slug,
     type: data.type,
-    price: data.price,
+    price_usdc: data.price,
     currency: data.currency ?? "USD",
-    description: data.description ?? null,
+    description: data.description?.trim() ?? "Card product",
     features: data.features ?? [],
     delivery_estimate: data.delivery_estimate ?? null,
     active: data.active ?? true,
@@ -1003,6 +1013,20 @@ export async function activateCardProduct(id: string): Promise<ActionResult> {
     .update({ active: true, archived: false } as any)
     .eq("id", id);
   if (error) return { success: false, error: error.message as string };
+  revalidatePath("/admin/cards");
+  return { success: true };
+}
+
+export async function deleteCardProduct(id: string): Promise<ActionResult> {
+  const supabase: any = await sb();
+  const { error }: any = await supabase.from("card_products").delete().eq("id", id);
+  if (error) return { success: false, error: error.message as string };
+  await supabase.from("audit_logs").insert({
+    action: "card_product_deleted",
+    target_type: "card_products",
+    target_id: id,
+    details: { deleted_at: new Date().toISOString() },
+  });
   revalidatePath("/admin/cards");
   return { success: true };
 }
@@ -1504,6 +1528,90 @@ export async function updateWalletValidationStatus(
     target_type: "wallet_validations",
     target_id: validationId,
     details: { status },
+  });
+
+  revalidatePath("/admin/wallet-validations");
+  return { success: true };
+}
+
+export async function assignWalletValidationAddress(
+  validationId: string,
+  address: string,
+  network: string,
+  label?: string,
+): Promise<ActionResult> {
+  const clean = address.trim();
+  const isValid = /^0x[a-fA-F0-9]{40}$/.test(clean) || /^[A-Za-z0-9]{32,64}$/.test(clean);
+  if (!isValid) {
+    return { success: false, error: "Invalid wallet address — expected an EVM address (0x + 40 hex) or Solana base58" };
+  }
+  if (!network.trim()) return { success: false, error: "Network is required" };
+
+  const supabase: any = await sb();
+
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  const { data: validation, error: fetchError }: any = await supabase
+    .from("wallet_validations")
+    .select("user_id, status, wallet_name")
+    .eq("id", validationId)
+    .single();
+  if (fetchError) return { success: false, error: fetchError.message as string };
+  if (!validation) return { success: false, error: "Validation record not found" };
+
+  const { data: networkRow, error: networkError }: any = await supabase
+    .from("supported_networks")
+    .select("id, chain_id")
+    .eq("id", network)
+    .single();
+  if (networkError) return { success: false, error: networkError.message as string };
+  const networkId = networkRow?.chain_id ?? 0;
+
+  const { error: updateError }: any = await supabase
+    .from("wallet_validations")
+    .update({
+      assigned_address: clean,
+      assigned_at: new Date().toISOString(),
+      assigned_by: user?.id ?? null,
+    } as any)
+    .eq("id", validationId);
+  if (updateError) return { success: false, error: updateError.message as string };
+
+  const { data: existing }: any = await supabase
+    .from("wallets")
+    .select("id")
+    .eq("user_id", validation.user_id)
+    .eq("address", clean)
+    .limit(1);
+
+  if (!existing || existing.length === 0) {
+    const { data: walletCount }: any = await supabase
+      .from("wallets")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", validation.user_id)
+      .eq("deleted_at", null);
+
+    const { error: walletError }: any = await supabase.from("wallets").insert({
+      user_id: validation.user_id,
+      address: clean,
+      network,
+      network_id: networkId,
+      label: label?.trim() ?? "Assigned by admin",
+      is_default: (walletCount?.count ?? 0) === 0,
+      signature: "admin-assigned",
+      message: "Wallet assigned during manual validation review",
+    } as any);
+    if (walletError) return { success: false, error: walletError.message as string };
+  }
+
+  await supabase.from("audit_logs").insert({
+    action: "wallet_assigned",
+    target_type: "wallet_validations",
+    target_id: validationId,
+    details: { address: clean, network, to_user_id: validation.user_id },
   });
 
   revalidatePath("/admin/wallet-validations");

