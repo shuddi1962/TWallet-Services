@@ -4,15 +4,18 @@ import { useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { MyCards, type IssuedCardRow } from "./my-cards";
 import { CardCatalog, type CatalogProduct } from "./card-catalog";
+import type { FundingSetup } from "./funding-setup";
 import { Button } from "@/components/ui/button";
 import { Plus, Sparkles, ArrowDown } from "lucide-react";
 
 export function CardsPageClient({
   myCards,
   catalog,
+  funding,
 }: {
   myCards: IssuedCardRow[];
   catalog: CatalogProduct[];
+  funding: FundingSetup;
 }) {
   const searchParams = useSearchParams();
   const openFromLink = searchParams.get("order") === "1";
@@ -28,7 +31,7 @@ export function CardsPageClient({
 
   return (
     <div className="space-y-12">
-      <MyCards cards={myCards} onOrderAnother={openCatalog} />
+      <MyCards cards={myCards} funding={funding} onOrderAnother={openCatalog} />
 
       {!showCatalog && catalog.length > 0 && (
         <div className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-white/15 bg-surface-900/40 px-6 py-14 text-center">

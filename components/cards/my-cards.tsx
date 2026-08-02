@@ -1,7 +1,14 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useRealtime } from "@/lib/hooks/use-realtime";
+import { useAccount, useChainId, useSwitchChain, useWriteContract } from "wagmi";
+import { erc20Abi } from "viem";
+import { createClient } from "@/lib/supabase/client";
+import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { formatPaymentError } from "@/lib/payment-errors";
+import type { FundingSetup } from "@/components/cards/funding-setup";
 import {
   Snowflake,
   Globe2,
@@ -17,17 +24,24 @@ import {
   EyeOff,
   Copy,
   Check,
+  Send,
+  ExternalLink,
+  CheckCircle2,
+  AlertCircle,
+  Gauge,
 } from "lucide-react";
 import { TwalletCard, finishForSlug, networkForSlug } from "@/components/cards/twallet-card";
 import type { CardFinish } from "@/lib/cards";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AddressQR } from "@/components/ui/address-qr";
 import {
   updateCardControls,
   updateCardPin,
-  fundCard,
+  updateCardLimit,
   cancelCard,
   revealCardSecrets,
+  submitCardFundingTx,
 } from "@/features/cards/server/issued-actions";
 import { cn } from "@/lib/utils/cn";
 
@@ -51,6 +65,8 @@ export type IssuedCardRow = {
   international_enabled: boolean;
   contactless_enabled: boolean;
   online_enabled: boolean;
+  spend_limit_enabled: boolean;
+  daily_limit_usdc: number;
   pin_hint: string;
   card_products?: { slug?: string; name?: string; type?: string } | null;
 };
@@ -67,9 +83,9 @@ function CopyValue({ label, value, mono = true }: { label: string; value: string
     }
   };
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+    <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-surface-900 px-3 py-2">
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] uppercase tracking-[0.14em] text-surface-500">{label}</p>
+        <p className="text-[10px] uppercase tracking-[0.14em] text-surface-400">{label}</p>
         <p className={cn("truncate text-sm font-semibold text-white", mono && "font-mono tracking-wider")}>
           {value}
         </p>
@@ -79,7 +95,7 @@ function CopyValue({ label, value, mono = true }: { label: string; value: string
         onClick={() => void copy()}
         aria-label={`Copy ${label}`}
         title={`Copy ${label}`}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-surface-400 transition hover:border-brand-500/40 hover:text-brand-300"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/[0.06] text-surface-300 transition hover:border-brand-500/40 hover:text-brand-300"
       >
         {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
       </button>
@@ -101,7 +117,7 @@ function ToggleRow({
   description: string;
   checked: boolean;
   onChange: (v: boolean) => void;
-  tone?: "blue" | "green" | "yellow" | "cyan";
+  tone?: "blue" | "green" | "yellow" | "cyan" | "purple";
   disabled?: boolean;
 }) {
   const toneMap = {
@@ -109,9 +125,10 @@ function ToggleRow({
     green: "bg-emerald-500/15 text-emerald-300",
     yellow: "bg-amber-500/15 text-amber-300",
     cyan: "bg-cyan-500/15 text-cyan-300",
+    purple: "bg-purple-500/15 text-purple-300",
   };
   return (
-    <div className="flex items-center gap-4 border-b border-white/[0.06] py-4 last:border-0">
+    <div className="flex items-center gap-4 border-b border-white/[0.12] py-4 last:border-0">
       <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", toneMap[tone])}>
         <Icon className="h-5 w-5" />
       </div>
@@ -144,27 +161,81 @@ function ToggleRow({
 
 export function MyCards({
   cards: initial,
+  funding,
   onOrderAnother,
 }: {
   cards: IssuedCardRow[];
+  funding?: FundingSetup;
   onOrderAnother?: () => void;
 }) {
   const [cards, setCards] = useState(initial);
   const [selectedId, setSelectedId] = useState(initial[0]?.id ?? "");
   const [fundAmount, setFundAmount] = useState("50");
+  const [fundNetworkId, setFundNetworkId] = useState<string>(funding?.networks[0]?.id ?? "");
   const [pin, setPin] = useState("");
+  const [limitDraft, setLimitDraft] = useState("");
   const [pending, startTransition] = useTransition();
   const [revealed, setRevealed] = useState<{ pan: string; cvv: string; holder: string | null } | null>(null);
   const [revealing, setRevealing] = useState(false);
+  const [fundStatus, setFundStatus] = useState<
+    "idle" | "sending" | "submitted" | "verifying" | "verified" | "failed"
+  >("idle");
+  const [fundMessage, setFundMessage] = useState("");
+  const [fundTxHash, setFundTxHash] = useState("");
+  const [manualTxHash, setManualTxHash] = useState("");
+  const [copiedAddr, setCopiedAddr] = useState(false);
+
+  const { address: walletAddress, isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
+  const { writeContractAsync } = useWriteContract();
+  const { openWallet, connecting } = useWalletConnect();
+  const supabase = createClient();
 
   const selected = useMemo(
     () => cards.find((c) => c.id === selectedId) ?? cards[0] ?? null,
     [cards, selectedId],
   );
 
+  // Keep the limit draft in sync when switching cards
+  useEffect(() => {
+    if (selected) setLimitDraft(String(selected.daily_limit_usdc ?? ""));
+  }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fundNetwork =
+    funding?.networks.find((n) => n.id === fundNetworkId) ?? funding?.networks[0] ?? null;
+  const fundWallet = funding?.wallets.find((w) => w.network_id === fundNetwork?.id) ?? null;
+  const fundToken =
+    funding?.tokens.find(
+      (t) => t.network_id === fundNetwork?.id && t.symbol === "USDC",
+    ) ?? null;
+
   const patchLocal = (id: string, patch: Partial<IssuedCardRow>) => {
     setCards((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   };
+
+  useRealtime<{
+    eventType: "INSERT" | "UPDATE" | "DELETE";
+    new?: IssuedCardRow | null;
+    old?: IssuedCardRow | null;
+  }>("my-cards-live", "*", "issued_cards", (payload) => {
+    setCards((prev) => {
+      if (payload.eventType === "DELETE") {
+        return prev.filter((c) => c.id !== payload.old?.id);
+      }
+      if (!payload.new) return prev;
+      const exists = prev.some((c) => c.id === payload.new?.id);
+      if (!exists) return [payload.new, ...prev];
+      return prev.map((c) => (c.id === payload.new?.id ? { ...c, ...payload.new } : c));
+    });
+  });
+
+  // Auto-select the network the connected wallet is on, if supported
+  useEffect(() => {
+    if (!isConnected || !chainId || !funding?.networks.length) return;
+    const match = funding.networks.find((n) => n.chain_id === chainId);
+    if (match) setFundNetworkId(match.id);
+  }, [isConnected, chainId, funding]);
 
   if (!cards.length) {
     return (
@@ -208,15 +279,182 @@ export function MyCards({
     toast.success("Card details visible — hide when done");
   };
 
-  const run = (fn: () => Promise<{ error?: string; success?: boolean; balance?: number }>, ok?: string) => {
+  const run = (
+    fn: () => Promise<{ error?: string; success?: boolean; balance?: number }>,
+    ok?: string,
+    revert?: () => void,
+  ) => {
     startTransition(async () => {
       const res = await fn();
-      if (res.error) toast.error(res.error);
-      else {
+      if (res.error) {
+        if (revert) revert();
+        toast.error(res.error);
+      } else {
         if (ok) toast.success(ok);
         if (typeof res.balance === "number") patchLocal(selected.id, { balance_usdc: res.balance });
       }
     });
+  };
+
+  const copyFundAddress = async () => {
+    if (!fundWallet) return;
+    try {
+      await navigator.clipboard.writeText(fundWallet.address);
+      setCopiedAddr(true);
+      setTimeout(() => setCopiedAddr(false), 2000);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const submitFunding = async (txHash: string, fromAddr: string) => {
+    if (!selected || !fundNetwork || !fundToken || !fundWallet) return null;
+    const res = await submitCardFundingTx(
+      selected.id,
+      Number(fundAmount),
+      fundNetwork.id,
+      fundToken.id,
+      fundWallet.id,
+      txHash,
+      fromAddr,
+    );
+    if (res.error || !res.fundingId) {
+      toast.error(res.error ?? "Could not submit funding");
+      setFundStatus("failed");
+      setFundMessage(res.error ?? "Could not submit funding");
+      return null;
+    }
+    return res.fundingId;
+  };
+
+  const startVerification = async (fundingId: string, tx: string) => {
+    if (!selected || !fundNetwork || !fundToken || !fundWallet) return;
+    setFundStatus("verifying");
+    setFundMessage("Verifying on-chain...");
+
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts += 1;
+      try {
+        const { data, error } = await supabase.functions.invoke("verify-card-funding", {
+          body: {
+            funding_id: fundingId,
+            tx_hash: tx,
+            expected_amount: Number(fundAmount).toString(),
+            expected_address: fundWallet.address,
+            chain_id: fundNetwork.chain_id,
+            token_address: fundToken?.contract_address ?? null,
+          },
+        });
+
+        if (error) {
+          setFundMessage("Verification check failed. Retrying...");
+          return;
+        }
+
+        if (data?.verified) {
+          clearInterval(interval);
+          setFundStatus("verified");
+          setFundMessage("Funding verified on-chain — balance updated!");
+          const amt = Number(fundAmount);
+          if (Number.isFinite(amt) && amt > 0) {
+            setCards((prev) =>
+              prev.map((c) =>
+                c.id === selected.id ? { ...c, balance_usdc: Number(c.balance_usdc) + amt } : c,
+              ),
+            );
+          }
+        } else if (data?.confirmations && data.confirmations > 0) {
+          setFundMessage(`Waiting for confirmations (${data.confirmations})`);
+        } else {
+          setFundMessage("Checking transaction...");
+        }
+      } catch {
+        setFundMessage("Verification check failed. Retrying...");
+      }
+      if (attempts > 36) {
+        clearInterval(interval);
+        setFundStatus("failed");
+        setFundMessage("Verification timed out — check your transaction on the explorer.");
+      }
+    }, 5000);
+  };
+
+  const handleSendFunding = async () => {
+    if (!selected || !fundNetwork || !fundWallet) return;
+    const amt = Number(fundAmount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    if (amt < 5) {
+      toast.error("Minimum funding is $5 USDC");
+      return;
+    }
+
+    // Manual path: user already sent from another wallet and pastes the tx hash
+    const manualTx = manualTxHash.trim();
+    if (/^0x[a-fA-F0-9]{64}$/.test(manualTx)) {
+      setFundTxHash(manualTx);
+      setFundStatus("submitted");
+      const fundingId = await submitFunding(manualTx, walletAddress ?? "");
+      if (!fundingId) return;
+      await startVerification(fundingId, manualTx);
+      return;
+    }
+
+    if (!isConnected) {
+      toast.error("Connect a wallet or paste the transaction hash above");
+      return;
+    }
+
+    if (!walletAddress) return;
+
+    if (chainId !== fundNetwork.chain_id && switchChainAsync) {
+      try {
+        await switchChainAsync({ chainId: fundNetwork.chain_id });
+      } catch {
+        setFundStatus("failed");
+        setFundMessage("Failed to switch network. Switch manually in your wallet.");
+        return;
+      }
+    }
+
+    setFundStatus("sending");
+    setFundMessage("");
+
+    try {
+      const tokenDecimals = fundToken?.decimals ?? 6;
+      const rawAmount = BigInt(Math.floor(amt * 10 ** tokenDecimals));
+      const isErc20 = fundToken?.contract_address && fundToken.contract_address.length > 0;
+
+      const tx = isErc20 && writeContractAsync
+        ? await writeContractAsync({
+            address: fundToken!.contract_address as `0x${string}`,
+            abi: erc20Abi,
+            functionName: "transfer",
+            args: [fundWallet.address as `0x${string}`, rawAmount],
+          })
+        : null;
+
+      if (!tx) {
+        setFundStatus("failed");
+        setFundMessage("Token not supported on this network yet");
+        return;
+      }
+
+      setFundTxHash(tx);
+      setFundStatus("submitted");
+
+      const fundingId = await submitFunding(tx, walletAddress);
+      if (!fundingId) return;
+
+      await startVerification(fundingId, tx);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Transaction failed";
+      setFundStatus("failed");
+      setFundMessage(formatPaymentError(msg).message);
+    }
   };
 
   return (
@@ -285,15 +523,15 @@ export function MyCards({
             {revealed ? "Hide full number & CVV" : "Show full number & CVV"}
           </Button>
           {revealed && (
-            <div className="space-y-2 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <div className="space-y-2 rounded-2xl border border-amber-500/30 bg-[#1a1508] p-4 shadow-lg shadow-black/30">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300/90">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
                   Card details
                 </p>
                 <button
                   type="button"
                   onClick={() => void toggleReveal()}
-                  className="text-[11px] font-medium text-surface-400 transition hover:text-white"
+                  className="text-[11px] font-medium text-surface-300 transition hover:text-white"
                 >
                   Hide
                 </button>
@@ -307,13 +545,13 @@ export function MyCards({
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <p className="text-xs text-surface-500">Available balance</p>
+            <div className="rounded-2xl border border-white/15 bg-surface-900 p-4">
+              <p className="text-xs text-surface-400">Available balance</p>
               <p className="mt-1 text-xl font-bold text-white">{balanceLabel}</p>
-              <p className="mt-0.5 text-[11px] text-surface-500">USDC spendable</p>
+              <p className="mt-0.5 text-[11px] text-surface-400">USDC spendable</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <p className="text-xs text-surface-500">Status</p>
+            <div className="rounded-2xl border border-white/15 bg-surface-900 p-4">
+              <p className="text-xs text-surface-400">Status</p>
               <Badge
                 className={cn(
                   "mt-2 capitalize",
@@ -324,7 +562,7 @@ export function MyCards({
               >
                 {selected.frozen ? "Frozen" : selected.status.replace("_", " ")}
               </Badge>
-              <p className="mt-2 text-[11px] text-surface-500">
+              <p className="mt-2 text-[11px] text-surface-400">
                 {selected.card_type === "virtual" ? "Instant virtual" : "Physical metal"} · {network}
               </p>
             </div>
@@ -332,7 +570,7 @@ export function MyCards({
         </div>
 
         <div className="space-y-4 xl:col-span-3">
-          <div className="rounded-3xl border border-white/[0.07] bg-[#0b1220]/90 p-5 sm:p-6">
+          <div className="rounded-3xl border border-white/15 bg-[#0b1220] p-5 sm:p-6">
             <h3 className="text-lg font-semibold text-white">Card settings & security</h3>
             <p className="mt-1 text-sm text-surface-400">
               Managing: {selected.label} (···{selected.pan_last4})
@@ -351,6 +589,7 @@ export function MyCards({
                   run(
                     () => updateCardControls(selected.id, { frozen: v }),
                     v ? "Card frozen" : "Card unfrozen",
+                    () => patchLocal(selected.id, { frozen: !v, status: v ? "active" : "frozen" }),
                   );
                 }}
               />
@@ -363,7 +602,11 @@ export function MyCards({
                 disabled={pending}
                 onChange={(v) => {
                   patchLocal(selected.id, { international_enabled: v });
-                  run(() => updateCardControls(selected.id, { international_enabled: v }), "Updated");
+                  run(
+                    () => updateCardControls(selected.id, { international_enabled: v }),
+                    "Updated",
+                    () => patchLocal(selected.id, { international_enabled: !v }),
+                  );
                 }}
               />
               <ToggleRow
@@ -375,7 +618,11 @@ export function MyCards({
                 disabled={pending}
                 onChange={(v) => {
                   patchLocal(selected.id, { contactless_enabled: v });
-                  run(() => updateCardControls(selected.id, { contactless_enabled: v }), "Updated");
+                  run(
+                    () => updateCardControls(selected.id, { contactless_enabled: v }),
+                    "Updated",
+                    () => patchLocal(selected.id, { contactless_enabled: !v }),
+                  );
                 }}
               />
               <ToggleRow
@@ -387,93 +634,332 @@ export function MyCards({
                 disabled={pending}
                 onChange={(v) => {
                   patchLocal(selected.id, { online_enabled: v });
-                  run(() => updateCardControls(selected.id, { online_enabled: v }), "Updated");
+                  run(
+                    () => updateCardControls(selected.id, { online_enabled: v }),
+                    "Updated",
+                    () => patchLocal(selected.id, { online_enabled: !v }),
+                  );
+                }}
+              />
+              <ToggleRow
+                icon={Gauge}
+                title="Daily spending limit"
+                description="Maximum spend per day before transactions are declined."
+                checked={selected.spend_limit_enabled}
+                tone="purple"
+                disabled={pending}
+                onChange={(v) => {
+                  const prev = selected.spend_limit_enabled;
+                  patchLocal(selected.id, { spend_limit_enabled: v });
+                  run(
+                    () => updateCardLimit(selected.id, { enabled: v }),
+                    v ? "Spending limit enabled" : "Spending limit disabled",
+                    () => patchLocal(selected.id, { spend_limit_enabled: prev }),
+                  );
                 }}
               />
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 border-t border-white/[0.06] pt-4 sm:flex-row sm:items-center">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-300">
-                <KeyRound className="h-5 w-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-white">Card PIN: {selected.pin_hint || "••••"}</p>
-                <p className="text-sm text-surface-400">Update your 4-digit ATM card PIN.</p>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  placeholder="••••"
-                  inputMode="numeric"
-                  className="w-24 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-center font-mono text-white outline-none focus:border-brand-500/40"
-                />
+            {selected.spend_limit_enabled && (
+              <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/15 bg-surface-900 p-4 sm:flex-row sm:items-center">
+                <div className="relative min-w-0 flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-surface-400">$</span>
+                  <input
+                    value={limitDraft}
+                    onChange={(e) => setLimitDraft(e.target.value.replace(/[^\d.]/g, ""))}
+                    inputMode="decimal"
+                    aria-label="Daily spending limit amount"
+                    className="w-full rounded-xl border border-white/15 bg-surface-950 py-2.5 pl-7 pr-3 text-sm text-white outline-none focus:border-brand-500/40"
+                  />
+                </div>
                 <Button
-                  variant="outline"
-                  className="rounded-full"
-                  disabled={pending || pin.length !== 4}
-                  onClick={() =>
-                    run(async () => {
-                      const r = await updateCardPin(selected.id, pin);
-                      if (!r.error) setPin("");
-                      return r;
-                    }, "PIN updated")
-                  }
+                  className="shrink-0 rounded-xl bg-gradient-to-r from-brand-500 to-brand-700 font-semibold text-white shadow-lg shadow-brand-600/30 hover:brightness-110"
+                  disabled={pending}
+                  onClick={() => {
+                    const amt = Number(limitDraft);
+                    if (!Number.isFinite(amt) || amt < 1 || amt > 50000) {
+                      toast.error("Limit must be between $1 and $50,000");
+                      return;
+                    }
+                    const prev = selected.daily_limit_usdc;
+                    patchLocal(selected.id, { daily_limit_usdc: amt });
+                    run(
+                      () => updateCardLimit(selected.id, { dailyLimit: amt }),
+                      "Daily limit updated",
+                      () => {
+                        patchLocal(selected.id, { daily_limit_usdc: prev });
+                        setLimitDraft(String(prev));
+                      },
+                    );
+                  }}
                 >
-                  Update PIN
+                  {pending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  Save limit
                 </Button>
               </div>
-            </div>
+            )}
+
+              <div className="mt-4 border-t border-white/[0.12] pt-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-300">
+                    <KeyRound className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-white">Card PIN</p>
+                    <p className="text-sm text-surface-400">Set or update your 4-digit ATM PIN.</p>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-white/15 bg-surface-900 px-3 py-1.5 font-mono text-sm tracking-[0.3em] text-white">
+                    {selected.pin_hint || "••••"}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    placeholder="New 4-digit PIN"
+                    inputMode="numeric"
+                    maxLength={4}
+                    aria-label="New card PIN"
+                    className="w-full rounded-xl border border-white/15 bg-surface-950 px-3 py-2.5 text-center font-mono text-sm tracking-[0.3em] text-white outline-none focus:border-brand-500/40 sm:max-w-[180px]"
+                  />
+                  <Button
+                    className="shrink-0 rounded-xl bg-gradient-to-r from-brand-500 to-brand-700 font-semibold text-white shadow-lg shadow-brand-600/30 hover:brightness-110"
+                    disabled={pending}
+                    onClick={() => {
+                      if (!/^\d{4}$/.test(pin)) {
+                        toast.error("Enter a 4-digit PIN first");
+                        return;
+                      }
+                      run(async () => {
+                        const r = await updateCardPin(selected.id, pin);
+                        if (!r.error) setPin("");
+                        return r;
+                      }, "PIN updated");
+                    }}
+                  >
+                    {pending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <KeyRound className="h-4 w-4" />
+                    )}
+                    Update PIN
+                  </Button>
+                </div>
+                <p className="mt-2 text-[11px] text-surface-500">
+                  {pin.length === 4
+                    ? "Ready — tap Update PIN to save."
+                    : "Enter a new 4-digit PIN, then tap Update PIN."}
+                </p>
+              </div>
           </div>
 
-          <div className="rounded-3xl border border-white/[0.07] bg-[#0b1220]/90 p-5 sm:p-6">
+          <div className="rounded-3xl border border-white/15 bg-[#0b1220] p-5 sm:p-6">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/15 text-brand-300">
                 <Wallet className="h-5 w-5" />
               </div>
               <div>
                 <h3 className="font-semibold text-white">Fund with crypto</h3>
-                <p className="text-sm text-surface-400">Top up USDC balance for spend & ATM.</p>
+                <p className="text-sm text-surface-400">
+                  Send USDC on-chain — verified in real time, balance updates instantly.
+                </p>
               </div>
             </div>
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-surface-500">$</span>
-                <input
-                  value={fundAmount}
-                  onChange={(e) => setFundAmount(e.target.value.replace(/[^\d.]/g, ""))}
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-7 pr-16 text-white outline-none focus:border-brand-500/40"
-                  placeholder="50.00"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-surface-500">USDC</span>
+
+            {!fundNetwork || !fundWallet ? (
+              <div className="mt-4 rounded-xl border border-amber-500/25 bg-[#1a1508] p-4 text-sm text-amber-200">
+                No receiving wallet configured for funding yet. Contact support.
               </div>
-              <Button
-                className="rounded-xl"
-                disabled={pending}
-                onClick={() => {
-                  const amt = Number(fundAmount);
-                  run(() => fundCard(selected.id, amt), `Funded $${amt.toFixed(2)} USDC`);
-                }}
-              >
-                {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                Add funds
-              </Button>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {["25", "50", "100", "250"].map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  onClick={() => setFundAmount(q)}
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs text-surface-400 hover:border-brand-500/30 hover:text-white"
-                >
-                  ${q}
-                </button>
-              ))}
-            </div>
+            ) : (
+              <>
+                <div className="mt-4">
+                  <p className="mb-2 text-xs text-surface-400">Network</p>
+                  <div className="flex flex-wrap gap-2">
+                    {funding?.networks.map((n) => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={() => setFundNetworkId(n.id)}
+                        className={cn(
+                          "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                          n.id === fundNetwork.id
+                            ? "border-brand-500/40 bg-brand-500/15 text-brand-200"
+                            : "border-white/15 bg-white/[0.03] text-surface-300 hover:text-white",
+                        )}
+                      >
+                        {n.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row">
+                  <div className="w-full shrink-0 rounded-xl border border-white/15 bg-surface-900 p-2 sm:w-auto">
+                    <AddressQR value={fundWallet.address} size={96} label="" />
+                  </div>
+                  <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/15 bg-surface-900 px-3 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-surface-400">
+                        Receive on {fundNetwork.name} · {fundToken?.symbol ?? "USDC"}
+                      </p>
+                      <p className="truncate font-mono text-sm text-white">{fundWallet.address}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void copyFundAddress()}
+                      aria-label="Copy receiving address"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/[0.06] text-surface-300 transition hover:border-brand-500/40 hover:text-brand-300"
+                    >
+                      {copiedAddr ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-brand-500/25 bg-brand-500/[0.08] p-4 text-sm">
+                  <p className="font-semibold text-white">How to fund — 3 steps</p>
+                  <ol className="mt-2 space-y-1.5 text-xs leading-relaxed text-surface-300">
+                    <li>
+                      <span className="text-brand-300">1.</span> Send{" "}
+                      <strong className="text-white">{fundToken?.symbol ?? "USDC"}</strong> on{" "}
+                      <strong className="text-white">{fundNetwork.name}</strong> (network ID{" "}
+                      {fundNetwork.chain_id}) to the address above — scan the QR or copy it.
+                    </li>
+                    <li>
+                      <span className="text-brand-300">2.</span> Minimum top-up is{" "}
+                      <strong className="text-white">$5 USDC</strong>. Your balance is verified
+                      on-chain in real time after confirmation.
+                    </li>
+                    <li>
+                      <span className="text-brand-300">3.</span> Sending from another wallet?
+                      Paste the transaction hash below and we verify it instantly — no wallet
+                      connection needed.
+                    </li>
+                  </ol>
+                </div>
+
+                {!isConnected && (
+                  <div className="mt-4 flex flex-col items-center gap-2 rounded-xl border border-white/15 bg-surface-900 p-4 text-center">
+                    <p className="text-sm font-medium text-white">Connect your wallet to fund instantly</p>
+                    <p className="text-xs text-surface-400">
+                      Or send from any wallet to the address above, then paste the tx hash below.
+                    </p>
+                    <Button
+                      className="mt-1 rounded-full"
+                      onClick={() => void openWallet()}
+                      disabled={connecting}
+                    >
+                      {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+                      {connecting ? "Connecting…" : "Connect Wallet"}
+                    </Button>
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-surface-400">$</span>
+                    <input
+                      value={fundAmount}
+                      onChange={(e) => setFundAmount(e.target.value.replace(/[^\d.]/g, ""))}
+                      className="w-full rounded-xl border border-white/15 bg-surface-900 py-3 pl-7 pr-16 text-white outline-none focus:border-brand-500/40"
+                      placeholder="50.00"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-surface-400">
+                      {fundToken?.symbol ?? "USDC"}
+                    </span>
+                  </div>
+                  <Button
+                    className="rounded-xl"
+                    disabled={fundStatus === "sending" || fundStatus === "verifying" || pending}
+                    onClick={() => void handleSendFunding()}
+                  >
+                    {fundStatus === "sending" || fundStatus === "verifying" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    {isConnected && !manualTxHash.trim()
+                      ? "Send & fund card"
+                      : "I've sent — verify"}
+                  </Button>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {["5", "25", "50", "100", "250"].map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      onClick={() => setFundAmount(q)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs transition",
+                        fundAmount === q
+                          ? "border-brand-500/40 bg-brand-500/15 text-brand-200"
+                          : "border-white/15 text-surface-300 hover:border-brand-500/30 hover:text-white",
+                      )}
+                    >
+                      ${q}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-[11px] text-surface-500">
+                  Minimum $5 USDC per top-up · balance credited after on-chain verification.
+                </p>
+
+                <div className="mt-3">
+                  <label htmlFor="manual-tx-hash" className="text-xs text-surface-400">
+                    Sent from another wallet? Paste the transaction hash to verify instantly:
+                  </label>
+                  <input
+                    id="manual-tx-hash"
+                    value={manualTxHash}
+                    onChange={(e) => setManualTxHash(e.target.value.trim())}
+                    placeholder="0x… transaction hash"
+                    className="mt-1.5 w-full rounded-xl border border-white/15 bg-surface-950 px-3 py-2.5 font-mono text-xs text-white outline-none focus:border-brand-500/40"
+                  />
+                </div>
+
+                {fundStatus !== "idle" && (
+                  <div
+                    role="status"
+                    className={cn(
+                      "mt-4 flex items-start gap-2 rounded-xl border p-3 text-sm",
+                      fundStatus === "verified" && "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
+                      fundStatus === "failed" && "border-red-500/30 bg-red-500/10 text-red-200",
+                      (fundStatus === "sending" || fundStatus === "submitted" || fundStatus === "verifying") &&
+                        "border-amber-500/30 bg-amber-500/10 text-amber-200",
+                    )}
+                  >
+                    {fundStatus === "verified" ? (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                    ) : fundStatus === "failed" ? (
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    ) : (
+                      <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+                    )}
+                    <div className="min-w-0">
+                      <p>{fundMessage || "Working..."}</p>
+                      {fundTxHash && (
+                        <a
+                          href={`${fundNetwork.explorer_url ?? ""}/tx/${fundTxHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 inline-flex items-center gap-1 break-all font-mono text-[11px] text-brand-300 underline-offset-2 hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          {fundTxHash.slice(0, 18)}...
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-red-500/15 bg-red-500/5 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-red-500/25 bg-[#1a0a0a] p-5">
             <div className="flex items-start gap-3">
               <Trash2 className="mt-0.5 h-5 w-5 text-red-400" />
               <div>

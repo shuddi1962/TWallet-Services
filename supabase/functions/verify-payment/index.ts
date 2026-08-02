@@ -40,6 +40,22 @@ serve(async (req: Request) => {
       return errorResponse(ErrorCodes.UNSUPPORTED_CHAIN, `Chain ${chain_id} is not supported`);
     }
 
+    // Resolve token decimals from the DB (ground truth) so the expected amount
+    // can be compared against on-chain raw units. Falls back to the native
+    // currency decimals when no token is involved.
+    let tokenDecimals = chain.nativeDecimals;
+    if (token_address && typeof token_address === "string") {
+      const { data: token } = await supabase
+        .from("supported_tokens")
+        .select("decimals, active")
+        .eq("contract_address", token_address)
+        .eq("active", true)
+        .maybeSingle();
+      if (token && Number.isFinite(Number(token.decimals))) {
+        tokenDecimals = Number(token.decimals);
+      }
+    }
+
     const { data: existing } = await supabase
       .from("payment_verifications")
       .select("id")
@@ -57,6 +73,7 @@ serve(async (req: Request) => {
         expectedAddress: expected_address,
         chainId: chain_id,
         tokenAddress: token_address,
+        tokenDecimals,
       },
       chain,
     );

@@ -196,6 +196,39 @@ export async function updateCardPin(cardId: string, pin: string) {
   return { success: true };
 }
 
+export async function updateCardLimit(
+  cardId: string,
+  opts: { enabled?: boolean; dailyLimit?: number },
+) {
+  const { supabase, user } = await authed();
+  if (!user) return { error: "Not authenticated" };
+
+  const rl = await checkRateLimit(user.id, "cardLimit", RATE_LIMITS.default);
+  if (!rl.allowed) return { error: `Too many requests. Retry in ${rl.retryAfter}s` };
+
+  const updates: Record<string, unknown> = {};
+  if (typeof opts.enabled === "boolean") {
+    updates.spend_limit_enabled = opts.enabled;
+  }
+  if (typeof opts.dailyLimit === "number") {
+    if (!Number.isFinite(opts.dailyLimit) || opts.dailyLimit < 1 || opts.dailyLimit > 50000) {
+      return { error: "Daily limit must be between $1 and $50,000" };
+    }
+    updates.daily_limit_usdc = opts.dailyLimit;
+  }
+  if (!Object.keys(updates).length) return { error: "Nothing to update" };
+
+  const { error } = await supabase
+    .from("issued_cards")
+    .update(updates)
+    .eq("id", cardId)
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard/cards");
+  return { success: true };
+}
+
 export async function fundCard(cardId: string, amount: number, note?: string) {
   const { supabase, user } = await authed();
   if (!user) return { error: "Not authenticated" };
@@ -203,8 +236,8 @@ export async function fundCard(cardId: string, amount: number, note?: string) {
   const rl = await checkRateLimit(user.id, "fundCard", RATE_LIMITS.createOrder);
   if (!rl.allowed) return { error: `Too many requests. Retry in ${rl.retryAfter}s` };
 
-  if (!Number.isFinite(amount) || amount <= 0 || amount > 50000) {
-    return { error: "Invalid amount (max 50,000 USDC)" };
+  if (!Number.isFinite(amount) || amount < 5 || amount > 50000) {
+    return { error: "Minimum top-up is $5 USDC (max 50,000 USDC)" };
   }
 
   const { data: card, error: fetchErr } = await supabase
@@ -244,6 +277,104 @@ export async function fundCard(cardId: string, amount: number, note?: string) {
 
   revalidatePath("/dashboard/cards");
   return { success: true, balance: next };
+}
+
+/** Funding setup: active networks, tokens and receiving wallets for the Fund UI */
+export async function getCardFundingSetup() {
+  const { supabase, user } = await authed();
+  if (!user) return { error: "Not authenticated", data: null };
+
+  const [{ data: networks }, { data: tokens }, { data: wallets }] = await Promise.all([
+    supabase.from("supported_networks").select("*").eq("active", true),
+    supabase.from("supported_tokens").select("*").eq("active", true),
+    supabase.from("supported_wallet_addresses").select("*").eq("active", true),
+  ]);
+
+  // Only surfaces networks that have a configured receiving wallet AND at least
+  // one active token (e.g. Solana is excluded — on-chain verification is EVM-only).
+  const walletNetworkIds = new Set((wallets ?? []).map((w: { network_id: string }) => w.network_id));
+  const tokenNetworkIds = new Set((tokens ?? []).map((t: { network_id: string }) => t.network_id));
+  const networksWithFunding = (networks ?? []).filter(
+    (n: { id: string }) => walletNetworkIds.has(n.id) && tokenNetworkIds.has(n.id),
+  );
+
+  return {
+    data: {
+      networks: networksWithFunding,
+      tokens: tokens ?? [],
+      wallets: wallets ?? [],
+    },
+    error: null,
+  };
+}
+
+/** Register a pending on-chain funding attempt; the edge function credits after verification */
+export async function submitCardFundingTx(
+  cardId: string,
+  amount: number,
+  networkId: string,
+  tokenId: string,
+  receivingWalletId: string,
+  txHash: string,
+  fromAddress: string,
+) {
+  const { supabase, user } = await authed();
+  if (!user) return { error: "Not authenticated", fundingId: null };
+
+  const rl = await checkRateLimit(user.id, "cardFunding", RATE_LIMITS.paymentVerify);
+  if (!rl.allowed) return { error: `Too many requests. Retry in ${rl.retryAfter}s`, fundingId: null };
+
+  if (!Number.isFinite(amount) || amount < 5 || amount > 50000) {
+    return { error: "Minimum top-up is $5 USDC (max 50,000 USDC)", fundingId: null };
+  }
+  if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+    return { error: "Invalid transaction hash", fundingId: null };
+  }
+  if (fromAddress && !/^0x[a-fA-F0-9]{40}$/.test(fromAddress)) {
+    return { error: "Invalid wallet address", fundingId: null };
+  }
+
+  const { data: card, error: cardErr } = await supabase
+    .from("issued_cards")
+    .select("id, frozen, status")
+    .eq("id", cardId)
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (cardErr || !card) return { error: cardErr?.message ?? "Card not found", fundingId: null };
+  if (card.frozen || card.status === "frozen") return { error: "Unfreeze card before funding", fundingId: null };
+  if (card.status === "cancelled") return { error: "Card is cancelled", fundingId: null };
+
+  const { data: wallet, error: walletErr } = await supabase
+    .from("supported_wallet_addresses")
+    .select("id, address")
+    .eq("id", receivingWalletId)
+    .eq("active", true)
+    .maybeSingle();
+  if (walletErr || !wallet) return { error: "Receiving wallet not found", fundingId: null };
+
+  const { data: funding, error: insertErr } = await supabase
+    .from("card_funding")
+    .insert({
+      card_id: cardId,
+      user_id: user.id,
+      amount_usdc: amount,
+      network_id: networkId,
+      token_id: tokenId,
+      receiving_wallet_id: receivingWalletId,
+      tx_hash: txHash,
+      status: "pending",
+      from_address: fromAddress,
+      to_address: wallet.address,
+    })
+    .select("id")
+    .single();
+
+  if (insertErr) return { error: insertErr.message, fundingId: null };
+  if (!funding) return { error: "Could not create funding request", fundingId: null };
+
+  revalidatePath("/dashboard/cards");
+  return { success: true, fundingId: funding.id };
 }
 
 export async function getCardLedger(cardId: string) {

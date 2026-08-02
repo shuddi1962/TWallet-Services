@@ -170,13 +170,23 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Security** — 30m idle session timeout + 5m warning; rate limits for saveWallet; migration `202607290001_hardening.sql` (archived column, analytics RLS, security settings, realtime publication)
 - **Apply migration on Supabase** before relying on archive/realtime publication changes
 
+### Session 12 — Aug 02, 2026 (My Cards: details, controls, PIN, real-time crypto funding)
+- **Full card details reveal** — "Show full number & CVV" panel with copy buttons (card number, CVV, expiry, cardholder); dark amber panel, works on any network; backfill migration `202608020001_card_details.sql` (pan_full/pan_formatted + holder_name from profiles + updated issue trigger)
+- **Card settings functional** — Freeze / International / Contactless / Online toggles wired to `updateCardControls`; daily spending limit toggle + `updateCardLimit`; optimistic UI with rollback on error
+- **PIN update functional** — `updateCardPin` (4-digit validation, `pin_set`/`pin_hint`); prominent gradient Update PIN button always visible, validates on click
+- **Fund with crypto (real-time)** — QR + copyable receiving address from `supported_wallet_addresses` (already configured: `0x50c4...281B` on 5 EVM networks), network selector, $5/$25/$50/$100/$250 chips, **$5 minimum enforced client + server + edge fn**, manual tx-hash path for non-connected wallets
+- **`verify-card-funding` edge function (deployed)** — DB-record ground truth (amount/address/chain/token from `card_funding` + config tables, never client values), exactly-once credit via `credited` flag + unique tx_hash index, ledger entry, `card_funding` table + RLS + realtime publication (migration `202608020003_card_funding.sql`)
+- **Amount precision fix** — verification now converts human amounts to raw token units using token decimals (previously compared "50" vs "50000000" → always WRONG_AMOUNT); same fix applied to `verify-payment` (order payments) with decimals resolved from `supported_tokens`
+- **Migrations pushed to remote** — `202608020001`, `202608020003`, `202608020004` (spend_limit_enabled) applied to `smkckhsvzyjttzqhpzhv` via `supabase db push`; `ALCHEMY_API_KEY` secret set; functions deployed via CLI (no Docker needed for deploy/secrets)
+- **Funding UI** — networks filtered to those with a configured wallet + token (Solana excluded — EVM-only verification); manual hash input always visible; auto-selects wallet's network
+
 ### Remaining (v1.1 — manual/UI tasks)
 - **Uptime monitoring + alerting** — Config generated; manual setup in Better Uptime / UptimeRobot needed (no API keys available)
 - **Database PITR + daily backup** — CI backup dump configured; Supabase project on **Free plan** (no automated backups). Upgrade to **Pro ($25/mo)** for daily backups or **Team ($599/mo)** for PITR
 - **Production dashboards** — Setup guide created; manual creation in Sentry + PostHog UI needed (no API keys available)
 - **Penetration test** — Plan documented; schedule externally
 - **npm install** may fail on paths with spaces (esbuild spawn) — install from a path without spaces or fix esbuild binary if local build fails
-- **Apply** `supabase/migrations/202607290001_hardening.sql` to linked project
+- **Edge functions** need Docker running only for local dev (`supabase start`); `functions deploy` + `secrets set` work without Docker
 
 ### Known Issues
 - `@wagmi/connectors` has warnings about missing optional deps (safe-sdk, porto, metamask-connect, coinbase-sdk, base-org/account) — non-blocking, webpack resolves to false
