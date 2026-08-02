@@ -1,19 +1,31 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 /**
  * Returns the ISO 3166-1 alpha-2 country code for the current request, as
- * detected by Vercel's edge geo-IP (captured into a cookie in middleware).
+ * detected by Vercel's edge geo-IP. First tries the `tw-country` cookie set by
+ * middleware, then falls back to the request geo headers directly so even the
+ * very first request (no cookie yet) resolves the correct country.
  * Returns undefined when no geo signal is available (e.g. local dev).
  */
 export async function detectCountry(): Promise<string | undefined> {
   try {
     const store = await cookies();
-    const c = store.get("tw-country")?.value;
-    return c && c.length === 2 ? c.toUpperCase() : undefined;
+    const cookieCountry = store.get("tw-country")?.value;
+    if (cookieCountry && cookieCountry.length === 2) return cookieCountry.toUpperCase();
   } catch {
-    return undefined;
+    /* cookie store unavailable */
   }
+
+  try {
+    const h = await headers();
+    const headerCountry = geoCountryFromHeaders(h);
+    if (headerCountry) return headerCountry;
+  } catch {
+    /* headers unavailable */
+  }
+
+  return undefined;
 }
 
 /** Vercel geo headers that may be present even beyond the cookie. */
