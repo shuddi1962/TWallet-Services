@@ -47,7 +47,7 @@ export default async function CardsPage() {
   }
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#0b1220] p-4 shadow-xl shadow-black/20 sm:p-6 lg:p-8">
+    <div className="rounded-3xl border border-surface-200 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
       {notice && (
         <div className="mb-6 rounded-2xl border border-amber-500/30 bg-[#1a1508] px-4 py-3 text-sm text-amber-200">
           {notice}

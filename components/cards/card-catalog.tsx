@@ -66,24 +66,24 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
 
   if (!products.length) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-surface-900/60 px-6 py-16 text-center">
-        <p className="text-lg font-medium text-white">No cards available</p>
-        <p className="mt-2 text-sm text-surface-400">Check back soon or contact support.</p>
+      <div className="rounded-3xl border border-surface-200 bg-white px-6 py-16 text-center">
+        <p className="text-lg font-medium text-surface-900">No cards available</p>
+        <p className="mt-2 text-sm text-surface-500">Check back soon or contact support.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-surface-900 via-surface-900 to-brand-950/50 p-8">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-brand-950/60 p-8">
         <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-brand-500/20 blur-3xl" />
         <div className="relative">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-xs font-medium text-brand-300">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-400/40 bg-brand-500/15 px-3 py-1 text-xs font-medium text-brand-200">
             <Sparkles className="h-3.5 w-3.5" />
             Order catalog
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Choose Your Card</h2>
-          <p className="mt-3 max-w-xl text-surface-400">
+          <p className="mt-3 max-w-xl text-slate-300">
             Real Trust debit designs. Pay with crypto on-chain — virtual cards activate after payment verification.
           </p>
         </div>
@@ -103,8 +103,8 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
             <div
               key={product.id}
               className={cn(
-                "group relative flex flex-col overflow-hidden rounded-3xl border bg-surface-900/70 transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-500/10",
-                isPopular ? "border-brand-500/40 ring-1 ring-brand-500/20" : "border-white/10",
+                "group relative flex flex-col overflow-hidden rounded-3xl border bg-white transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-500/20",
+                isPopular ? "border-brand-500 ring-1 ring-brand-500/20" : "border-surface-200",
               )}
             >
               {isPopular && (
@@ -129,15 +129,15 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
 
               <div className="flex flex-1 flex-col px-5 pb-5 pt-2">
                 <div className="mb-1 flex items-center gap-2">
-                  <h3 className="text-lg font-semibold text-white">{product.name}</h3>
+                  <h3 className="text-lg font-semibold text-surface-900">{product.name}</h3>
                   <Badge variant="outline" className="capitalize text-[10px]">
                     {product.type}
                   </Badge>
                 </div>
-                <p className="line-clamp-2 text-sm text-surface-400">{product.description}</p>
+                <p className="line-clamp-2 text-sm text-surface-500">{product.description}</p>
 
                 <div className="mt-4 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-white">
+                  <span className="text-3xl font-bold text-surface-900">
                     ${Number(product.price_usdc).toFixed(2)}
                   </span>
                   <span className="text-xs text-surface-500">USDC one-time</span>
@@ -149,10 +149,10 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
                 <ul className="mt-5 flex-1 space-y-2.5">
                   {features.slice(0, 5).map((feature) => (
                     <li key={feature} className="flex items-start gap-2.5">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
-                        <Check className="h-3 w-3 text-emerald-400" />
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                        <Check className="h-3 w-3 text-emerald-600" />
                       </span>
-                      <span className="text-sm text-surface-300">{feature}</span>
+                      <span className="text-sm text-surface-600">{feature}</span>
                     </li>
                   ))}
                 </ul>

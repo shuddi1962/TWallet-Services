@@ -34,13 +34,13 @@ export function CardsPageClient({
       <MyCards cards={myCards} funding={funding} onOrderAnother={openCatalog} />
 
       {!showCatalog && catalog.length > 0 && (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-white/15 bg-surface-900/40 px-6 py-14 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/25 to-accent-500/20 ring-1 ring-brand-400/30">
-            <Sparkles className="h-7 w-7 text-brand-300" aria-hidden="true" />
+        <div className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-surface-300 bg-white px-6 py-14 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100 ring-1 ring-brand-300/50">
+            <Sparkles className="h-7 w-7 text-brand-600" aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white sm:text-2xl">Want another card?</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-surface-400">
+            <h2 className="text-xl font-bold text-surface-900 sm:text-2xl">Want another card?</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-surface-500">
               Browse the full catalog of virtual &amp; metal cards and order in minutes — pay with
               crypto on-chain, activation is automatic after verification.
             </p>

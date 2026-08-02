@@ -67,6 +67,7 @@ export type IssuedCardRow = {
   online_enabled: boolean;
   spend_limit_enabled: boolean;
   daily_limit_usdc: number;
+  pin_set: boolean;
   pin_hint: string;
   card_products?: { slug?: string; name?: string; type?: string } | null;
 };
@@ -83,10 +84,10 @@ function CopyValue({ label, value, mono = true }: { label: string; value: string
     }
   };
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-surface-900 px-3 py-2">
+    <div className="flex items-center gap-2 rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] uppercase tracking-[0.14em] text-surface-400">{label}</p>
-        <p className={cn("truncate text-sm font-semibold text-white", mono && "font-mono tracking-wider")}>
+        <p className="text-[10px] uppercase tracking-[0.14em] text-surface-500">{label}</p>
+        <p className={cn("truncate text-sm font-semibold text-surface-900", mono && "font-mono tracking-wider")}>
           {value}
         </p>
       </div>
@@ -95,9 +96,9 @@ function CopyValue({ label, value, mono = true }: { label: string; value: string
         onClick={() => void copy()}
         aria-label={`Copy ${label}`}
         title={`Copy ${label}`}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/[0.06] text-surface-300 transition hover:border-brand-500/40 hover:text-brand-300"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-surface-200 bg-white text-surface-500 transition hover:border-brand-400 hover:text-brand-600"
       >
-        {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+        {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
       </button>
     </div>
   );
@@ -121,20 +122,20 @@ function ToggleRow({
   disabled?: boolean;
 }) {
   const toneMap = {
-    blue: "bg-sky-500/15 text-sky-300",
-    green: "bg-emerald-500/15 text-emerald-300",
-    yellow: "bg-amber-500/15 text-amber-300",
-    cyan: "bg-cyan-500/15 text-cyan-300",
-    purple: "bg-purple-500/15 text-purple-300",
+    blue: "bg-sky-100 text-sky-700",
+    green: "bg-emerald-100 text-emerald-700",
+    yellow: "bg-amber-100 text-amber-700",
+    cyan: "bg-cyan-100 text-cyan-700",
+    purple: "bg-purple-100 text-purple-700",
   };
   return (
-    <div className="flex items-center gap-4 border-b border-white/[0.12] py-4 last:border-0">
+    <div className="flex items-center gap-4 border-b border-surface-200 py-4 last:border-0">
       <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", toneMap[tone])}>
         <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-white">{title}</p>
-        <p className="text-sm text-surface-400">{description}</p>
+        <p className="font-semibold text-surface-900">{title}</p>
+        <p className="text-sm text-surface-500">{description}</p>
       </div>
       <button
         type="button"
@@ -144,7 +145,7 @@ function ToggleRow({
         onClick={() => onChange(!checked)}
         className={cn(
           "relative h-7 w-12 shrink-0 rounded-full transition",
-          checked ? "bg-brand-500" : "bg-surface-700",
+          checked ? "bg-brand-500" : "bg-surface-300",
           disabled && "opacity-50",
         )}
       >
@@ -173,6 +174,7 @@ export function MyCards({
   const [fundAmount, setFundAmount] = useState("50");
   const [fundNetworkId, setFundNetworkId] = useState<string>(funding?.networks[0]?.id ?? "");
   const [pin, setPin] = useState("");
+  const [showPin, setShowPin] = useState(false);
   const [limitDraft, setLimitDraft] = useState("");
   const [pending, startTransition] = useTransition();
   const [revealed, setRevealed] = useState<{ pan: string; cvv: string; holder: string | null } | null>(null);
@@ -239,10 +241,10 @@ export function MyCards({
 
   if (!cards.length) {
     return (
-      <div className="rounded-3xl border border-dashed border-white/15 bg-surface-900/40 px-6 py-16 text-center">
-        <Shield className="mx-auto h-10 w-10 text-surface-500" />
-        <p className="mt-4 text-lg font-semibold text-white">No cards issued yet</p>
-        <p className="mt-2 text-sm text-surface-400">
+      <div className="rounded-3xl border border-dashed border-surface-300 bg-white px-6 py-16 text-center">
+        <Shield className="mx-auto h-10 w-10 text-surface-400" />
+        <p className="mt-4 text-lg font-semibold text-surface-900">No cards issued yet</p>
+        <p className="mt-2 text-sm text-surface-500">
           Order a card and complete crypto payment — virtual cards activate instantly after on-chain verification.
         </p>
         <Button className="mt-6 rounded-full" onClick={onOrderAnother}>
@@ -461,9 +463,9 @@ export function MyCards({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-400">My cards</p>
-          <h2 className="mt-1 text-2xl font-bold text-white">Cards & balance</h2>
-          <p className="mt-1 text-sm text-surface-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">My cards</p>
+          <h2 className="mt-1 text-2xl font-bold text-surface-900">Cards & balance</h2>
+          <p className="mt-1 text-sm text-surface-500">
             Real debit design · fund with crypto · freeze & security controls
           </p>
         </div>
@@ -485,8 +487,8 @@ export function MyCards({
             className={cn(
               "shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
               c.id === selected.id
-                ? "border-brand-500/40 bg-brand-500/15 text-brand-200"
-                : "border-white/10 bg-white/[0.03] text-surface-400 hover:text-white",
+                ? "border-brand-500 bg-brand-50 text-brand-700"
+                : "border-surface-200 bg-white text-surface-500 hover:text-surface-900",
             )}
           >
             {c.label} ···{c.pan_last4}
@@ -523,15 +525,15 @@ export function MyCards({
             {revealed ? "Hide full number & CVV" : "Show full number & CVV"}
           </Button>
           {revealed && (
-            <div className="space-y-2 rounded-2xl border border-amber-500/30 bg-[#1a1508] p-4 shadow-lg shadow-black/30">
+            <div className="space-y-2 rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-800">
                   Card details
                 </p>
                 <button
                   type="button"
                   onClick={() => void toggleReveal()}
-                  className="text-[11px] font-medium text-surface-300 transition hover:text-white"
+                  className="text-[11px] font-medium text-surface-500 transition hover:text-surface-900"
                 >
                   Hide
                 </button>
@@ -545,24 +547,24 @@ export function MyCards({
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-white/15 bg-surface-900 p-4">
-              <p className="text-xs text-surface-400">Available balance</p>
-              <p className="mt-1 text-xl font-bold text-white">{balanceLabel}</p>
-              <p className="mt-0.5 text-[11px] text-surface-400">USDC spendable</p>
+            <div className="rounded-2xl border border-surface-200 bg-white p-4">
+              <p className="text-xs text-surface-500">Available balance</p>
+              <p className="mt-1 text-xl font-bold text-surface-900">{balanceLabel}</p>
+              <p className="mt-0.5 text-[11px] text-surface-500">USDC spendable</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-surface-900 p-4">
-              <p className="text-xs text-surface-400">Status</p>
+            <div className="rounded-2xl border border-surface-200 bg-white p-4">
+              <p className="text-xs text-surface-500">Status</p>
               <Badge
                 className={cn(
                   "mt-2 capitalize",
                   selected.frozen || selected.status === "frozen"
-                    ? "bg-sky-500/15 text-sky-300"
-                    : "bg-emerald-500/15 text-emerald-300",
+                    ? "bg-sky-100 text-sky-700"
+                    : "bg-emerald-100 text-emerald-700",
                 )}
               >
                 {selected.frozen ? "Frozen" : selected.status.replace("_", " ")}
               </Badge>
-              <p className="mt-2 text-[11px] text-surface-400">
+              <p className="mt-2 text-[11px] text-surface-500">
                 {selected.card_type === "virtual" ? "Instant virtual" : "Physical metal"} · {network}
               </p>
             </div>
@@ -570,9 +572,9 @@ export function MyCards({
         </div>
 
         <div className="space-y-4 xl:col-span-3">
-          <div className="rounded-3xl border border-white/15 bg-[#0b1220] p-5 sm:p-6">
-            <h3 className="text-lg font-semibold text-white">Card settings & security</h3>
-            <p className="mt-1 text-sm text-surface-400">
+          <div className="rounded-3xl border border-surface-200 bg-white p-5 sm:p-6">
+            <h3 className="text-lg font-semibold text-surface-900">Card settings & security</h3>
+            <p className="mt-1 text-sm text-surface-500">
               Managing: {selected.label} (···{selected.pan_last4})
             </p>
 
@@ -661,15 +663,15 @@ export function MyCards({
             </div>
 
             {selected.spend_limit_enabled && (
-              <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/15 bg-surface-900 p-4 sm:flex-row sm:items-center">
+              <div className="mt-4 flex flex-col gap-3 rounded-xl border border-surface-200 bg-white p-4 sm:flex-row sm:items-center">
                 <div className="relative min-w-0 flex-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-surface-400">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-surface-500">$</span>
                   <input
                     value={limitDraft}
                     onChange={(e) => setLimitDraft(e.target.value.replace(/[^\d.]/g, ""))}
                     inputMode="decimal"
                     aria-label="Daily spending limit amount"
-                    className="w-full rounded-xl border border-white/15 bg-surface-950 py-2.5 pl-7 pr-3 text-sm text-white outline-none focus:border-brand-500/40"
+                    className="w-full rounded-xl border border-surface-200 bg-surface-100 py-2.5 pl-7 pr-3 text-sm text-surface-900 outline-none focus:border-brand-400"
                   />
                 </div>
                 <Button
@@ -703,18 +705,29 @@ export function MyCards({
               </div>
             )}
 
-              <div className="mt-4 border-t border-white/[0.12] pt-4">
+              <div className="mt-4 border-t border-surface-200 pt-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-300">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700">
                     <KeyRound className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-white">Card PIN</p>
-                    <p className="text-sm text-surface-400">Set or update your 4-digit ATM PIN.</p>
+                    <p className="font-semibold text-surface-900">Card PIN</p>
+                    <p className="text-sm text-surface-500">Set or update your 4-digit ATM PIN.</p>
                   </div>
-                  <span className="shrink-0 rounded-full border border-white/15 bg-surface-900 px-3 py-1.5 font-mono text-sm tracking-[0.3em] text-white">
-                    {selected.pin_hint || "••••"}
+                  <span className="shrink-0 rounded-full border border-surface-200 bg-surface-100 px-3 py-1.5 font-mono text-sm tracking-[0.3em] text-surface-900">
+                    {showPin && selected.pin_hint && selected.pin_hint !== "••••"
+                      ? selected.pin_hint
+                      : "••••"}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowPin((v) => !v)}
+                    aria-label={showPin ? "Hide PIN" : "Show PIN"}
+                    title={showPin ? "Hide PIN" : "Show PIN"}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-surface-200 bg-white text-surface-500 transition hover:border-brand-400 hover:text-brand-600"
+                  >
+                    {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
                   <input
@@ -724,7 +737,7 @@ export function MyCards({
                     inputMode="numeric"
                     maxLength={4}
                     aria-label="New card PIN"
-                    className="w-full rounded-xl border border-white/15 bg-surface-950 px-3 py-2.5 text-center font-mono text-sm tracking-[0.3em] text-white outline-none focus:border-brand-500/40 sm:max-w-[180px]"
+                    className="w-full rounded-xl border border-surface-200 bg-surface-100 px-3 py-2.5 text-center font-mono text-sm tracking-[0.3em] text-surface-900 outline-none focus:border-brand-400 sm:max-w-[180px]"
                   />
                   <Button
                     className="shrink-0 rounded-xl bg-gradient-to-r from-brand-500 to-brand-700 font-semibold text-white shadow-lg shadow-brand-600/30 hover:brightness-110"
@@ -736,7 +749,11 @@ export function MyCards({
                       }
                       run(async () => {
                         const r = await updateCardPin(selected.id, pin);
-                        if (!r.error) setPin("");
+                        if (!r.error) {
+                          patchLocal(selected.id, { pin_hint: pin, pin_set: true });
+                          setPin("");
+                          setShowPin(true);
+                        }
                         return r;
                       }, "PIN updated");
                     }}
@@ -749,7 +766,7 @@ export function MyCards({
                     Update PIN
                   </Button>
                 </div>
-                <p className="mt-2 text-[11px] text-surface-500">
+                <p className="mt-2 text-[11px] text-surface-400">
                   {pin.length === 4
                     ? "Ready — tap Update PIN to save."
                     : "Enter a new 4-digit PIN, then tap Update PIN."}
@@ -757,27 +774,27 @@ export function MyCards({
               </div>
           </div>
 
-          <div className="rounded-3xl border border-white/15 bg-[#0b1220] p-5 sm:p-6">
+          <div className="rounded-3xl border border-surface-200 bg-white p-5 sm:p-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/15 text-brand-300">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
                 <Wallet className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Fund with crypto</h3>
-                <p className="text-sm text-surface-400">
+                <h3 className="font-semibold text-surface-900">Fund with crypto</h3>
+                <p className="text-sm text-surface-500">
                   Send USDC on-chain — verified in real time, balance updates instantly.
                 </p>
               </div>
             </div>
 
             {!fundNetwork || !fundWallet ? (
-              <div className="mt-4 rounded-xl border border-amber-500/25 bg-[#1a1508] p-4 text-sm text-amber-200">
+              <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
                 No receiving wallet configured for funding yet. Contact support.
               </div>
             ) : (
               <>
                 <div className="mt-4">
-                  <p className="mb-2 text-xs text-surface-400">Network</p>
+                  <p className="mb-2 text-xs text-surface-500">Network</p>
                   <div className="flex flex-wrap gap-2">
                     {funding?.networks.map((n) => (
                       <button
@@ -787,8 +804,8 @@ export function MyCards({
                         className={cn(
                           "rounded-full border px-3 py-1.5 text-xs font-medium transition",
                           n.id === fundNetwork.id
-                            ? "border-brand-500/40 bg-brand-500/15 text-brand-200"
-                            : "border-white/15 bg-white/[0.03] text-surface-300 hover:text-white",
+                            ? "border-brand-500 bg-brand-50 text-brand-700"
+                            : "border-surface-200 bg-white text-surface-500 hover:text-surface-900",
                         )}
                       >
                         {n.name}
@@ -798,43 +815,43 @@ export function MyCards({
                 </div>
 
                 <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row">
-                  <div className="w-full shrink-0 rounded-xl border border-white/15 bg-surface-900 p-2 sm:w-auto">
+                  <div className="w-full shrink-0 rounded-xl border border-surface-200 bg-white p-2 sm:w-auto">
                     <AddressQR value={fundWallet.address} size={96} label="" />
                   </div>
-                  <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/15 bg-surface-900 px-3 py-2.5">
+                  <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-surface-200 bg-white px-3 py-2.5">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-surface-400">
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-surface-500">
                         Receive on {fundNetwork.name} · {fundToken?.symbol ?? "USDC"}
                       </p>
-                      <p className="truncate font-mono text-sm text-white">{fundWallet.address}</p>
+                      <p className="truncate font-mono text-sm text-surface-900">{fundWallet.address}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => void copyFundAddress()}
                       aria-label="Copy receiving address"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/[0.06] text-surface-300 transition hover:border-brand-500/40 hover:text-brand-300"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-surface-200 bg-white text-surface-500 transition hover:border-brand-400 hover:text-brand-600"
                     >
-                      {copiedAddr ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                      {copiedAddr ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl border border-brand-500/25 bg-brand-500/[0.08] p-4 text-sm">
-                  <p className="font-semibold text-white">How to fund — 3 steps</p>
-                  <ol className="mt-2 space-y-1.5 text-xs leading-relaxed text-surface-300">
+                <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm">
+                  <p className="font-semibold text-blue-900">How to fund — 3 steps</p>
+                  <ol className="mt-2 space-y-1.5 text-xs leading-relaxed text-surface-600">
                     <li>
-                      <span className="text-brand-300">1.</span> Send{" "}
-                      <strong className="text-white">{fundToken?.symbol ?? "USDC"}</strong> on{" "}
-                      <strong className="text-white">{fundNetwork.name}</strong> (network ID{" "}
+                      <span className="text-brand-600">1.</span> Send{" "}
+                      <strong className="text-surface-900">{fundToken?.symbol ?? "USDC"}</strong> on{" "}
+                      <strong className="text-surface-900">{fundNetwork.name}</strong> (network ID{" "}
                       {fundNetwork.chain_id}) to the address above — scan the QR or copy it.
                     </li>
                     <li>
-                      <span className="text-brand-300">2.</span> Minimum top-up is{" "}
-                      <strong className="text-white">$5 USDC</strong>. Your balance is verified
+                      <span className="text-brand-600">2.</span> Minimum top-up is{" "}
+                      <strong className="text-surface-900">$5 USDC</strong>. Your balance is verified
                       on-chain in real time after confirmation.
                     </li>
                     <li>
-                      <span className="text-brand-300">3.</span> Sending from another wallet?
+                      <span className="text-brand-600">3.</span> Sending from another wallet?
                       Paste the transaction hash below and we verify it instantly — no wallet
                       connection needed.
                     </li>
@@ -842,9 +859,9 @@ export function MyCards({
                 </div>
 
                 {!isConnected && (
-                  <div className="mt-4 flex flex-col items-center gap-2 rounded-xl border border-white/15 bg-surface-900 p-4 text-center">
-                    <p className="text-sm font-medium text-white">Connect your wallet to fund instantly</p>
-                    <p className="text-xs text-surface-400">
+                  <div className="mt-4 flex flex-col items-center gap-2 rounded-xl border border-surface-200 bg-white p-4 text-center">
+                    <p className="text-sm font-medium text-surface-900">Connect your wallet to fund instantly</p>
+                    <p className="text-xs text-surface-500">
                       Or send from any wallet to the address above, then paste the tx hash below.
                     </p>
                     <Button
@@ -860,14 +877,14 @@ export function MyCards({
 
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-surface-400">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-surface-500">$</span>
                     <input
                       value={fundAmount}
                       onChange={(e) => setFundAmount(e.target.value.replace(/[^\d.]/g, ""))}
-                      className="w-full rounded-xl border border-white/15 bg-surface-900 py-3 pl-7 pr-16 text-white outline-none focus:border-brand-500/40"
+                      className="w-full rounded-xl border border-surface-200 bg-surface-100 py-3 pl-7 pr-16 text-surface-900 outline-none focus:border-brand-400"
                       placeholder="50.00"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-surface-400">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-surface-500">
                       {fundToken?.symbol ?? "USDC"}
                     </span>
                   </div>
@@ -896,20 +913,20 @@ export function MyCards({
                       className={cn(
                         "rounded-full border px-3 py-1 text-xs transition",
                         fundAmount === q
-                          ? "border-brand-500/40 bg-brand-500/15 text-brand-200"
-                          : "border-white/15 text-surface-300 hover:border-brand-500/30 hover:text-white",
+                          ? "border-brand-500 bg-brand-50 text-brand-700"
+                          : "border-surface-200 text-surface-500 hover:border-brand-400 hover:text-brand-700",
                       )}
                     >
                       ${q}
                     </button>
                   ))}
                 </div>
-                <p className="mt-1 text-[11px] text-surface-500">
+                <p className="mt-1 text-[11px] text-surface-400">
                   Minimum $5 USDC per top-up · balance credited after on-chain verification.
                 </p>
 
                 <div className="mt-3">
-                  <label htmlFor="manual-tx-hash" className="text-xs text-surface-400">
+                  <label htmlFor="manual-tx-hash" className="text-xs text-surface-500">
                     Sent from another wallet? Paste the transaction hash to verify instantly:
                   </label>
                   <input
@@ -917,7 +934,7 @@ export function MyCards({
                     value={manualTxHash}
                     onChange={(e) => setManualTxHash(e.target.value.trim())}
                     placeholder="0x… transaction hash"
-                    className="mt-1.5 w-full rounded-xl border border-white/15 bg-surface-950 px-3 py-2.5 font-mono text-xs text-white outline-none focus:border-brand-500/40"
+                    className="mt-1.5 w-full rounded-xl border border-surface-200 bg-surface-100 px-3 py-2.5 font-mono text-xs text-surface-900 outline-none focus:border-brand-400"
                   />
                 </div>
 
@@ -926,10 +943,10 @@ export function MyCards({
                     role="status"
                     className={cn(
                       "mt-4 flex items-start gap-2 rounded-xl border p-3 text-sm",
-                      fundStatus === "verified" && "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
-                      fundStatus === "failed" && "border-red-500/30 bg-red-500/10 text-red-200",
+                      fundStatus === "verified" && "border-emerald-300 bg-emerald-50 text-emerald-700",
+                      fundStatus === "failed" && "border-red-300 bg-red-50 text-red-700",
                       (fundStatus === "sending" || fundStatus === "submitted" || fundStatus === "verifying") &&
-                        "border-amber-500/30 bg-amber-500/10 text-amber-200",
+                        "border-amber-300 bg-amber-50 text-amber-700",
                     )}
                   >
                     {fundStatus === "verified" ? (
@@ -946,7 +963,7 @@ export function MyCards({
                           href={`${fundNetwork.explorer_url ?? ""}/tx/${fundTxHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-1 inline-flex items-center gap-1 break-all font-mono text-[11px] text-brand-300 underline-offset-2 hover:underline"
+                          className="mt-1 inline-flex items-center gap-1 break-all font-mono text-[11px] text-brand-600 underline-offset-2 hover:underline"
                         >
                           <ExternalLink className="h-3 w-3" />
                           {fundTxHash.slice(0, 18)}...
@@ -959,12 +976,12 @@ export function MyCards({
             )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-red-500/25 bg-[#1a0a0a] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-red-200 bg-red-50 p-5">
             <div className="flex items-start gap-3">
-              <Trash2 className="mt-0.5 h-5 w-5 text-red-400" />
+              <Trash2 className="mt-0.5 h-5 w-5 text-red-500" />
               <div>
-                <p className="font-semibold text-red-300">Cancel card</p>
-                <p className="text-sm text-surface-400">Permanently deactivate this card.</p>
+                <p className="font-semibold text-red-700">Cancel card</p>
+                <p className="text-sm text-surface-500">Permanently deactivate this card.</p>
               </div>
             </div>
             <Button
@@ -987,12 +1004,12 @@ export function MyCards({
             </Button>
           </div>
 
-          <p className="text-center text-xs text-surface-500">
+          <p className="text-center text-xs text-surface-400">
             Need a new product?{" "}
             <button
               type="button"
               onClick={onOrderAnother}
-              className="font-medium text-brand-400 transition hover:text-brand-300 hover:underline"
+              className="font-medium text-brand-600 transition hover:text-brand-700 hover:underline"
             >
               Order from catalog
             </button>

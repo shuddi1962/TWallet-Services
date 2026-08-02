@@ -185,9 +185,12 @@ export async function updateCardPin(cardId: string, pin: string) {
   if (!user) return { error: "Not authenticated" };
   if (!/^\d{4}$/.test(pin)) return { error: "PIN must be 4 digits" };
 
+  // The PIN value is stored in pin_hint (like cvv_hint stores the real CVV) so
+  // the card owner can show/hide it in the dashboard. Never displayed masked
+  // by default; the UI renders "••••" until the owner reveals it.
   const { error } = await supabase
     .from("issued_cards")
-    .update({ pin_set: true, pin_hint: "••••" })
+    .update({ pin_set: true, pin_hint: pin })
     .eq("id", cardId)
     .eq("user_id", user.id);
 
