@@ -474,71 +474,55 @@ export function MyCards({
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {cards.map((c) => {
-          const cFinish = (c.finish as CardFinish) || finishForSlug(c.card_products?.slug);
-          const cNetwork = c.network || networkForSlug(c.card_products?.slug);
-          const cExpiry = `${String(c.expiry_month).padStart(2, "0")}/${String(c.expiry_year).padStart(2, "0")}`;
-          const cBalance = `$${Number(c.balance_usdc).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-          const isSelected = c.id === selected.id;
-          return (
-            <div
-              key={c.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => {
-                setSelectedId(c.id);
-                setRevealed(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
+      <div className="rounded-3xl border border-surface-200 bg-white p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          {cards.map((c) => {
+            const cNetwork = c.network || networkForSlug(c.card_products?.slug);
+            const isSelected = c.id === selected.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => {
                   setSelectedId(c.id);
                   setRevealed(null);
-                }
-              }}
-              aria-pressed={isSelected}
-              aria-label={`Select card ${c.label} ending ${c.pan_last4}`}
-              className={cn(
-                "group relative flex cursor-pointer flex-col rounded-3xl border bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40",
-                isSelected
-                  ? "border-brand-500 ring-2 ring-brand-500/30 shadow-lg shadow-brand-500/10"
-                  : "border-surface-200 hover:border-surface-300",
-              )}
-            >
-              <div className={cn("pointer-events-none", isSelected && "opacity-90")}>
-                <TwalletCard
-                  finish={cFinish}
-                  holderName={c.holder_name}
-                  panDisplay={c.pan_display}
-                  expiry={cExpiry}
-                  cvv="•••"
-                  network={cNetwork}
-                  isVirtual={c.card_type === "virtual"}
-                  balanceLabel={cBalance}
-                  interactive={false}
-                  className="max-w-none"
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-2 px-1">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-surface-900">{c.label}</p>
-                  <p className="text-[11px] text-surface-500">
-                    {c.card_type === "virtual" ? "Virtual" : "Physical"} ···· {c.pan_last4}
-                  </p>
-                </div>
-                <Badge
+                  setShowPin(false);
+                }}
+                aria-pressed={isSelected}
+                aria-label={`Select card ${c.label} ending ${c.pan_last4}`}
+                className={cn(
+                  "flex min-w-0 flex-1 items-center gap-2.5 rounded-2xl border p-2.5 text-left transition-all sm:flex-initial sm:min-w-[168px]",
+                  isSelected
+                    ? "border-brand-500 bg-brand-50/60 ring-2 ring-brand-500/25 shadow-sm shadow-brand-500/10"
+                    : "border-surface-200 bg-surface-50 hover:border-surface-300 hover:bg-white",
+                )}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-900 to-slate-700 text-[10px] font-bold uppercase tracking-wider text-white">
+                  {c.card_type === "virtual" ? "V" : "P"}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-surface-900">
+                    {c.label}
+                  </span>
+                  <span className="block text-[11px] text-surface-500">
+                    {cNetwork} ···· {c.pan_last4}
+                  </span>
+                </span>
+                <span
                   className={cn(
-                    "shrink-0 capitalize",
-                    isSelected ? "bg-brand-600 text-white" : "bg-surface-100 text-surface-600",
+                    "h-2 w-2 shrink-0 rounded-full",
+                    c.frozen || c.status === "frozen"
+                      ? "bg-sky-500"
+                      : c.status === "active"
+                        ? "bg-emerald-500"
+                        : "bg-amber-400",
                   )}
-                >
-                  {c.frozen || c.status === "frozen" ? "Frozen" : c.status.replace("_", " ")}
-                </Badge>
-              </div>
-            </div>
-          );
-        })}
+                  aria-hidden="true"
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-5">
