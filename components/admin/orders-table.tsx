@@ -53,6 +53,8 @@ interface OrderRow {
   amount?: number | null;
   tx_hash?: string | null;
   tracking_number?: string | null;
+  carrier?: string | null;
+  admin_note?: string | null;
   created_at: string;
   profiles?: Order["profiles"] | null;
   card_products?: Order["card_products"] | null;
@@ -170,7 +172,14 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
     );
     setDetail((prevDetail) =>
       prevDetail && prevDetail.id === incoming.id
-        ? { ...prevDetail, status: incoming.status, tx_hash: incoming.tx_hash ?? prevDetail.tx_hash, tracking_number: incoming.tracking_number ?? prevDetail.tracking_number }
+        ? {
+            ...prevDetail,
+            status: incoming.status,
+            tx_hash: (incoming.tx_hash ?? undefined) as string | undefined,
+            tracking_number: (incoming.tracking_number ?? undefined) as string | undefined,
+            carrier: (incoming.carrier ?? undefined) as string | undefined,
+            admin_note: (incoming.admin_note ?? undefined) as string | undefined,
+          }
         : prevDetail,
     );
 
@@ -217,16 +226,16 @@ export function AdminOrdersTable({ orders: initialOrders }: { orders: Order[]; c
     }
   };
 
-  // Keep draft inputs in sync whenever detail data changes (load, realtime).
+  // Keep draft inputs in sync whenever shipping values change from the server.
   useEffect(() => {
     if (!detail) return;
-    const d = detail as Pick<OrderDetail, "tracking_number" | "carrier" | "admin_note">;
     setShippingDraft({
-      tracking_number: String(d.tracking_number ?? ""),
-      carrier: String(d.carrier ?? ""),
-      admin_note: String(d.admin_note ?? ""),
+      tracking_number: String(detail.tracking_number ?? ""),
+      carrier: String(detail.carrier ?? ""),
+      admin_note: String(detail.admin_note ?? ""),
     });
-  }, [detail?.tracking_number, detail?.carrier, detail?.admin_note, detail]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detail?.tracking_number, detail?.carrier, detail?.admin_note, selected?.id]);
 
   const saveShipping = async () => {
     if (!selected) return;

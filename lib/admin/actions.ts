@@ -308,6 +308,13 @@ export async function updateOrderShipping(
   if (fields.admin_note !== undefined) patch.admin_note = fields.admin_note ?? null;
   if (Object.keys(patch).length === 0) return { success: false, error: "No fields to update" };
 
+  // Grab customer + order context before updating so we can notify them.
+  const { data: order }: any = await supabase
+    .from("card_orders")
+    .select("*, profiles!inner(full_name, email)")
+    .eq("id", orderId)
+    .single();
+
   const { error }: any = await supabase.from("card_orders").update(patch as any).eq("id", orderId);
   if (error) return { success: false, error: error.message as string };
 
@@ -317,6 +324,38 @@ export async function updateOrderShipping(
     target_id: orderId,
     details: { fields: Object.keys(patch), performed_by: user?.id ?? null },
   });
+
+  // Notify the customer when shipping info is set (tracking or carrier present).
+  const hasTracking = Boolean(fields.tracking_number?.trim());
+  const hasCarrier = Boolean(fields.carrier?.trim());
+  if (hasTracking || hasCarrier) {
+    const orderNumber = order?.order_number ?? "Order";
+    const userId = order?.user_id ?? order?.profiles?.id;
+
+    if (userId) {
+      await supabase.from("notifications").insert({
+        user_id: userId,
+        type: "shipping_update",
+        title: `Your order ${orderNumber} has shipping details`,
+        message: fields.tracking_number?.trim()
+          ? `Tracking: ${fields.tracking_number.trim()}${fields.carrier?.trim() ? ` via ${fields.carrier.trim()}` : ""}`
+          : `Carrier: ${fields.carrier?.trim() ?? "set"}`,
+      });
+    }
+
+    if (order?.profiles?.email) {
+      const origin = (await headers()).get("origin") ?? "https://twallet.com";
+      sendEmail({
+        to: order.profiles.email,
+        subject: `Shipping Update - ${orderNumber}`,
+        html: buildShippingUpdateEmail({
+          orderNumber,
+          status: "shipped",
+          dashboardUrl: `${origin}/dashboard/orders/${orderId}/tracking`,
+        }),
+      });
+    }
+  }
 
   revalidatePath("/admin/orders");
   return { success: true };
