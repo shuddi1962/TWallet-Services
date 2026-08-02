@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { ShoppingCart, Search, X, ChevronRight, Clock, CheckCircle2, AlertCircle, Truck } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -10,6 +11,7 @@ import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
 import { getOrders } from "@/features/orders/server/actions";
+import { useRealtime } from "@/lib/hooks/use-realtime";
 
 const STATUS_TABS = [
   { label: "All Orders", value: "all" },
@@ -53,6 +55,17 @@ interface Order {
   card_products: { name: string; type: string } | null;
 }
 
+type OrderPayload = {
+  eventType: "INSERT" | "UPDATE" | "DELETE";
+  new?: Order | null;
+  old?: Order | null;
+};
+
+const sortOrders = (list: Order[]) =>
+  [...list].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+
+const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +75,7 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [page, setPage] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
+  const prevStatusesRef = useRef<Record<string, string>>({});
   const perPage = 9;
 
   useEffect(() => {
@@ -69,11 +83,46 @@ export default function OrdersPage() {
       if (result.error) {
         setError(result.error);
       } else {
-        setOrders(result.data ?? []);
+        const list = result.data ?? [];
+        setOrders(sortOrders(list));
+        for (const o of list) prevStatusesRef.current[o.id] = o.status;
       }
       setLoading(false);
     });
   }, []);
+
+  // Live updates: order status changes (pending → paid → processing → shipped
+  // → delivered) appear instantly without a page refresh.
+  useRealtime<OrderPayload>("my-orders-live", "*", "card_orders", (payload) => {
+    const incoming = payload.new;
+    if (payload.eventType === "UPDATE" && incoming) {
+      const prevStatus = prevStatusesRef.current[incoming.id];
+      if (prevStatus && prevStatus !== incoming.status) {
+        toast.success(`${incoming.order_number} is now ${capitalize(incoming.status)}`);
+      }
+    }
+    if (payload.eventType === "INSERT" && incoming) {
+      toast.success(`New order ${incoming.order_number} created`);
+    }
+
+    setOrders((prev) => {
+      if (!prev) return prev;
+      if (payload.eventType === "DELETE") {
+        return prev.filter((o) => o.id !== payload.old?.id);
+      }
+      if (!incoming) return prev;
+      const exists = prev.some((o) => o.id === incoming.id);
+      const next = exists
+        ? prev.map((o) =>
+            o.id === incoming.id
+              ? { ...o, ...incoming, card_products: incoming.card_products ?? o.card_products }
+              : o,
+          )
+        : [...prev, { ...incoming, card_products: incoming.card_products ?? null }];
+      if (incoming.id) prevStatusesRef.current[incoming.id] = incoming.status;
+      return sortOrders(next).slice(0, 200);
+    });
+  });
 
   const filtered = useMemo(() => {
     if (!orders) return [];
@@ -97,6 +146,12 @@ export default function OrdersPage() {
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice(page * perPage, (page + 1) * perPage);
+
+  // Keep the open drawer in sync when the order changes in real time
+  const liveOrder = useMemo(
+    () => orders?.find((o) => o.id === selectedOrder?.id) ?? selectedOrder,
+    [orders, selectedOrder],
+  );
 
   const statusCounts = useMemo(() => {
     if (!orders) return {} as Record<string, number>;
@@ -134,7 +189,19 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">My Orders</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-900">My Orders</h1>
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-600"
+            title="Orders update in real time"
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </span>
+            Live
+          </span>
+        </div>
         <p className="mt-1 text-sm text-slate-500">Track your card orders from payment to delivery.</p>
       </div>
 
@@ -250,20 +317,20 @@ export default function OrdersPage() {
         </>
       )}
 
-      {selectedOrder && (
+      {liveOrder && (
         <div
           className="fixed inset-0 z-50 flex justify-end"
           role="dialog"
           aria-modal="true"
-          aria-label={`Order details: ${selectedOrder.order_number}`}
+          aria-label={`Order details: ${liveOrder.order_number}`}
         >
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedOrder(null)} />
           <div className="relative z-10 flex h-full w-full max-w-lg flex-col overflow-y-auto border-l border-slate-200 bg-white shadow-xl animate-in slide-in-from-right">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <div>
-                <p className="font-mono text-sm font-semibold text-slate-900">{selectedOrder.order_number}</p>
-                <span className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium mt-1", STATUS_STYLES[selectedOrder.status] || "")}>
-                  {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                <p className="font-mono text-sm font-semibold text-slate-900">{liveOrder.order_number}</p>
+                <span className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium mt-1", STATUS_STYLES[liveOrder.status] || "")}>
+                  {capitalize(liveOrder.status)}
                 </span>
               </div>
               <button onClick={() => setSelectedOrder(null)} className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900">
@@ -275,19 +342,19 @@ export default function OrdersPage() {
               <section aria-label="Order Information">
                 <h3 className="mb-3 text-sm font-medium text-slate-400 uppercase tracking-wider">Order Information</h3>
                 <dl className="space-y-3 text-sm">
-                  <div className="flex justify-between"><dt className="text-slate-500">Product</dt><dd className="text-slate-900">{selectedOrder.card_products?.name || "—"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-slate-500">Amount</dt><dd className="font-mono text-slate-900">{selectedOrder.amount_usdc} {selectedOrder.token}</dd></div>
-                  <div className="flex justify-between"><dt className="text-slate-500">Network</dt><dd className="text-slate-900">{selectedOrder.network}</dd></div>
-                  <div className="flex justify-between"><dt className="text-slate-500">Date</dt><dd className="text-slate-900">{new Date(selectedOrder.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</dd></div>
+                  <div className="flex justify-between"><dt className="text-slate-500">Product</dt><dd className="text-slate-900">{liveOrder.card_products?.name || "—"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-slate-500">Amount</dt><dd className="font-mono text-slate-900">{liveOrder.amount_usdc} {liveOrder.token}</dd></div>
+                  <div className="flex justify-between"><dt className="text-slate-500">Network</dt><dd className="text-slate-900">{liveOrder.network}</dd></div>
+                  <div className="flex justify-between"><dt className="text-slate-500">Date</dt><dd className="text-slate-900">{new Date(liveOrder.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</dd></div>
                 </dl>
               </section>
 
-              {selectedOrder.tx_hash && (
+              {liveOrder.tx_hash && (
                 <section aria-label="Payment Information">
                   <h3 className="mb-3 text-sm font-medium text-slate-400 uppercase tracking-wider">Payment</h3>
                   <div className="rounded-lg bg-slate-50 p-4">
                     <p className="text-xs text-slate-400">Transaction Hash</p>
-                    <p className="mt-1 break-all font-mono text-sm text-slate-700">{selectedOrder.tx_hash}</p>
+                    <p className="mt-1 break-all font-mono text-sm text-slate-700">{liveOrder.tx_hash}</p>
                   </div>
                 </section>
               )}
@@ -297,7 +364,7 @@ export default function OrdersPage() {
                 <div className="space-y-0">
                   {["pending", "paid", "processing", "shipped", "delivered"].map((step, i) => {
                     const statuses = ["pending", "paid", "processing", "shipped", "delivered"];
-                    const currentIdx = statuses.indexOf(selectedOrder.status);
+                    const currentIdx = statuses.indexOf(liveOrder.status);
                     const isCompleted = i < currentIdx;
                     const isCurrent = i === currentIdx;
                     return (
