@@ -9,7 +9,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth/login");
+    redirect("/admin/login");
   }
 
   const { data: admin } = await supabase

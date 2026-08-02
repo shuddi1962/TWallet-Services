@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createServerSupabaseClient } from "@/lib";
-import { sendEmail, buildPaymentReceivedEmail, buildOrderShippedEmail, buildShippingUpdateEmail } from "@/lib/email";
+import { sendEmail, buildPaymentReceivedEmail, buildOrderShippedEmail, buildShippingUpdateEmail, buildPasswordResetEmail } from "@/lib/email";
 import type {
   RecentOrder,
   RecentPayment,
@@ -620,6 +620,94 @@ export async function getAdminRoles(): Promise<{ admins: AdminRoleUser[] }> {
     .select("*, profiles(id, email, full_name, avatar_url, status, created_at)")
     .order("created_at", { ascending: true });
   return { admins: (res.data ?? []) as AdminRoleUser[] };
+}
+
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "twalletservices.admin@gmail.com")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://twalletservices.com";
+
+export async function adminSendPasswordResetEmail(_prev: unknown, formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!email) return { error: "Email is required" };
+  if (!ADMIN_EMAILS.includes(email)) {
+    return { error: "This email is not an authorized admin account." };
+  }
+
+  const admin = await sb();
+  const { error } = await admin.auth.resetPasswordForEmail(email, {
+    redirectTo: `${SITE_URL}/admin/reset-password`,
+  });
+
+  if (error) return { error: error.message };
+
+  sendEmail({
+    to: email,
+    subject: "Reset Your TWallet Admin Password",
+    html: buildPasswordResetEmail({ resetUrl: `${SITE_URL}/admin/reset-password` }),
+  });
+
+  return { success: "If the email is an authorized admin, a reset link has been sent." };
+}
+
+export async function addAdminUser(_prev: unknown, formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const role = String(formData.get("role") ?? "viewer").trim();
+
+  if (!email) return { error: "Email is required" };
+
+  const adminClient = await sb();
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("id, email, status")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (!profile) {
+    return { error: `No TWallet account exists for ${email}. They must sign up first.` };
+  }
+
+  const validRoles = ["super_admin", "operations", "finance", "support", "viewer"];
+  const finalRole = validRoles.includes(role) ? role : "viewer";
+
+  const { data: existing } = await adminClient
+    .from("admins")
+    .select("profile_id")
+    .eq("profile_id", profile.id)
+    .maybeSingle();
+
+  if (existing) {
+    return { error: "This user is already an admin." };
+  }
+
+  const { error: roleError } = await adminClient
+    .from("user_roles")
+    .upsert({ user_id: profile.id, role: "admin" }, { onConflict: "user_id" });
+  if (roleError) return { error: roleError.message };
+
+  const { error: adminError } = await adminClient
+    .from("admins")
+    .insert({ profile_id: profile.id, role: finalRole });
+  if (adminError) return { error: adminError.message };
+
+  revalidatePath("/admin/roles");
+  return { success: `${email} is now an admin with the ${finalRole} role.` };
+}
+
+export async function updateAdminRole(adminId: string, role: string) {
+  const validRoles = ["super_admin", "operations", "finance", "support", "viewer"];
+  if (!validRoles.includes(role)) {
+    return { success: false, error: "Invalid role" } satisfies ActionResult;
+  }
+
+  const adminClient = await sb();
+  const { error } = await adminClient.from("admins").update({ role }).eq("id", adminId);
+  if (error) return { success: false, error: error.message } satisfies ActionResult;
+
+  revalidatePath("/admin/roles");
+  return { success: true } satisfies ActionResult;
 }
 
 export async function getAdminNotifications(options?: {

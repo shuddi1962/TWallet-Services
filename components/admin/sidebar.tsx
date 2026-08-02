@@ -20,6 +20,7 @@ import {
   Send,
   Shield,
   Home,
+  UserCog,
 } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { cn } from "@/lib/utils/cn";
@@ -32,6 +33,7 @@ const navItems = [
   { label: "Payments", icon: Coins, route: "/admin/payments" },
   { label: "Wallets", icon: Wallet, route: "/admin/wallets" },
   { label: "Wallet Validations", icon: Shield, route: "/admin/wallet-validations" },
+  { label: "Roles & Permissions", icon: UserCog, route: "/admin/roles" },
   { label: "Sweep", icon: Send, route: "/admin/sweep" },
   { label: "Analytics", icon: BarChart3, route: "/admin/analytics" },
   { label: "Support", icon: LifeBuoy, route: "/admin/support" },
