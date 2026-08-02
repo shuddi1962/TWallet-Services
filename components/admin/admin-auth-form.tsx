@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export function AdminAuthForm() {
   const [loginState, loginAction, loginPending] = useActionState(signIn, undefined);
-  const [redirect, setRedirect] = useState("/admin");
+  const [redirect, setRedirect] = useState("/admin/dashboard");
   const searchParams = useSearchParams();
 
   useEffect(() => {

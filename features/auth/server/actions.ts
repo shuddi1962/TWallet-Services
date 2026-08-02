@@ -71,7 +71,7 @@ export async function signIn(_prev: unknown, formData: FormData) {
       redirect(redirectTo);
     }
     if (await isAdminUser(user.id)) {
-      redirect("/admin");
+      redirect("/admin/dashboard");
     }
   }
 

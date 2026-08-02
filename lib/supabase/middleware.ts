@@ -23,12 +23,21 @@ export async function updateSession(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isAdminPage = request.nextUrl.pathname.startsWith("/admin");
+  const isAdminAuthPage = request.nextUrl.pathname.startsWith("/admin/login") ||
+    request.nextUrl.pathname.startsWith("/admin/forgot-password") ||
+    request.nextUrl.pathname.startsWith("/admin/reset-password");
   const isDashboardPage = request.nextUrl.pathname.startsWith("/dashboard");
 
-  if (!user && (isDashboardPage || isAdminPage)) {
+  if (!user && isDashboardPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     url.searchParams.set("redirect", request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (!user && isAdminPage && !isAdminAuthPage) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
     return NextResponse.redirect(url);
   }
 
@@ -38,7 +47,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (isAdminPage && user) {
+  if (user && isAdminPage) {
     const { data: admin } = await supabase
       .from("admins")
       .select("profile_id")

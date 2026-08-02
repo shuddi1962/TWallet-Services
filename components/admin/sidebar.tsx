@@ -26,7 +26,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { cn } from "@/lib/utils/cn";
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, route: "/admin" },
+  { label: "Dashboard", icon: LayoutDashboard, route: "/admin/dashboard" },
   { label: "Users", icon: Users, route: "/admin/users" },
   { label: "Orders", icon: ShoppingBag, route: "/admin/orders" },
   { label: "Cards", icon: CreditCard, route: "/admin/cards" },

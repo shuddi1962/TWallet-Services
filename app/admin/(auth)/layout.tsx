@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Shield } from "lucide-react";
-import { AppFooter } from "@/components/layout/app-footer";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -28,9 +27,6 @@ export default function AdminAuthLayout({ children }: { children: React.ReactNod
       </div>
       <div className="relative flex flex-1 items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="w-full max-w-sm">{children}</div>
-      </div>
-      <div className="relative">
-        <AppFooter variant="dark" />
       </div>
       <Link
         href="/"
