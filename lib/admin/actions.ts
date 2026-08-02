@@ -174,11 +174,28 @@ export async function getOrders(options?: { search?: string; status?: string; pa
 export async function getPayments(options?: { search?: string; status?: string; page?: number; pageSize?: number }) {
   const supabase: any = await sb();
   const { search, status, page = 0, pageSize = 50 } = options ?? {};
-  let q: any = supabase.from("payment_transactions").select("*, supported_networks(name)", { count: "exact" });
+  let q: any = supabase.from("payment_transactions").select("*, supported_networks(name), card_orders(order_number)", { count: "exact" });
   if (search) q = q.or(`tx_hash.ilike.%${search}%`);
   if (status && status !== "all") q = q.eq("status", status);
   const res: any = await q.range(page * pageSize, (page + 1) * pageSize - 1).order("created_at", { ascending: false });
   return { payments: (res.data ?? []) as RecentPayment[], count: (res.count ?? 0) as number };
+}
+
+/** Full payment detail for the admin payments drawer. */
+export async function getPaymentDetails(paymentId: string) {
+  const supabase: any = await sb();
+  const res: any = await supabase
+    .from("payment_transactions")
+    .select(
+      `*,
+       supported_networks(name, explorer_url, chain_id),
+       supported_tokens(symbol),
+       supported_wallet_addresses(address),
+       card_orders(order_number, user_id, profiles!card_orders_user_id_fkey(full_name, email))`,
+    )
+    .eq("id", paymentId)
+    .maybeSingle();
+  return (res.data ?? null) as Record<string, unknown> | null;
 }
 
 export async function getCardProducts(): Promise<CardProduct[]> {
@@ -739,6 +756,42 @@ export async function createAdminReceivingWallet(data: {
     active: true,
   });
   if (error) return { success: false, error: error.message as string };
+  revalidatePath("/admin/wallets");
+  return { success: true };
+}
+
+/** Active networks for the Add Wallet form. */
+export async function getSupportedNetworks(): Promise<{ id: string; name: string; chain_id: number }[]> {
+  const supabase: any = await sb();
+  const res: any = await supabase
+    .from("supported_networks")
+    .select("id, name, chain_id")
+    .eq("active", true)
+    .order("name", { ascending: true });
+  return res.data ?? [];
+}
+
+/** Toggle a receiving wallet active/inactive. */
+export async function toggleReceivingWallet(walletId: string, active: boolean): Promise<ActionResult> {
+  const supabase: any = await sb();
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  const { error }: any = await supabase
+    .from("supported_wallet_addresses")
+    .update({ active } as any)
+    .eq("id", walletId);
+  if (error) return { success: false, error: error.message as string };
+
+  await supabase.from("audit_logs").insert({
+    action: active ? "wallet_activated" : "wallet_deactivated",
+    target_type: "supported_wallet_addresses",
+    target_id: walletId,
+    details: { performed_by: user?.id ?? null },
+  });
+
   revalidatePath("/admin/wallets");
   return { success: true };
 }
