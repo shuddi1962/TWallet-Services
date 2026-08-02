@@ -4,6 +4,18 @@ import { type NextRequest, NextResponse } from "next/server";
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  // Capture the country Vercel geo-IP detects, so the auth actions can persist
+  // it into the user profile instead of the hardcoded 'US' default.
+  const country = request.headers.get("x-vercel-ip-country");
+  if (country && country.length === 2) {
+    supabaseResponse.cookies.set("tw-country", country, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

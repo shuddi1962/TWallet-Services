@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from "@/lib";
 import { emailSchema, passwordSchema } from "@/lib/validations";
 import { sendEmail, buildPasswordResetEmail, buildPasswordChangedEmail } from "@/lib/email";
 import { ensureAdminProvisioned, isAdminUser } from "@/lib/admin-provision";
+import { detectCountry } from "@/lib/geo";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -17,6 +18,7 @@ export async function signUp(_prev: unknown, formData: FormData) {
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
   const name = String(formData.get("name") ?? "").trim();
+  const country = await detectCountry();
 
   if (!email.success) return { error: email.error.errors[0]!.message };
   if (!password.success) return { error: password.error.errors[0]!.message };
@@ -28,7 +30,7 @@ export async function signUp(_prev: unknown, formData: FormData) {
     email: email.data,
     password: password.data,
     options: {
-      data: { full_name: name },
+      data: { full_name: name, ...(country ? { country } : {}) },
       emailRedirectTo: `${SITE_URL}/auth/callback`,
     },
   });
@@ -66,6 +68,10 @@ export async function signIn(_prev: unknown, formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
+    const country = await detectCountry();
+    if (country) {
+      await supabase.from("profiles").update({ country }).eq("id", user.id);
+    }
     await ensureAdminProvisioned(user);
     if (redirectTo && redirectTo.startsWith("/")) {
       redirect(redirectTo);

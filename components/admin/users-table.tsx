@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Eye, Ban, CheckCircle, ArrowUpDown } from "lucide-react";
+import { Search, Eye, Ban, CheckCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { createClient } from "@/lib/supabase/client";
 import { suspendUser, reactivateUser, type ActionResult } from "@/lib/admin/actions";
+import { DetailDrawer } from "@/components/admin/detail-drawer";
 import { toast } from "sonner";
 
 interface User {
@@ -19,13 +21,67 @@ interface User {
   wallets?: { address: string }[];
 }
 
-export function AdminUsersTable({ users }: { users: User[]; count: number }) {
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+function countryLabel(code?: string): string {
+  const c = (code ?? "").toUpperCase();
+  if (!c || c.length !== 2) return "—";
+  try {
+    return countryNames.of(c) ?? c;
+  } catch {
+    return c;
+  }
+}
+
+export function AdminUsersTable({ users: initial }: { users: User[]; count: number }) {
   const router = useRouter();
+  const [users, setUsers] = useState(initial);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState<string | null>(null);
+  const [selected, setSelected] = useState<User | null>(null);
+
+  // Keep the local list in sync with DB changes in real time.
+  useEffect(() => {
+    setUsers(initial);
+  }, [initial]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("admin-users-live")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        (payload) => {
+          const next = payload.new as User;
+          if (!next?.id) return;
+          setUsers((prev) =>
+            prev.map((u) => (u.id === next.id ? { ...u, ...next } : u)),
+          );
+          if (selected?.id === next.id) setSelected((s) => (s ? { ...s, ...next } : s));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "profiles" },
+        (payload) => {
+          const next = payload.new as User;
+          if (!next?.id) return;
+          setUsers((prev) => (prev.some((u) => u.id === next.id) ? prev : [next, ...prev]));
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [selected?.id]);
 
   const handleAction = async (userId: string, action: "suspend" | "reactivate") => {
+    const label = action === "suspend" ? "suspend" : "reactivate";
+    if (!confirm(`Are you sure you want to ${label} this user?`)) return;
+
     setLoading(userId);
     const result: ActionResult = action === "suspend"
       ? await suspendUser(userId)
@@ -82,10 +138,10 @@ export function AdminUsersTable({ users }: { users: User[]; count: number }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-body bg-surface-50 border-b border-surface-200">
-                  <th scope="col" className="py-3 px-4 font-medium"><ArrowUpDown className="w-3 h-3 inline mr-1" />User</th>
+                  <th scope="col" className="py-3 px-4 font-medium">User</th>
                   <th scope="col" className="py-3 px-4 font-medium">Status</th>
                   <th scope="col" className="py-3 px-4 font-medium">Role</th>
-                  <th scope="col" className="py-3 px-4 font-medium">Country</th>
+                  <th scope="col" className="py-3 px-4 font-medium">Location</th>
                   <th scope="col" className="py-3 px-4 font-medium">Wallet</th>
                   <th scope="col" className="py-3 px-4 font-medium">Created</th>
                   <th scope="col" className="py-3 px-4 font-medium">Actions</th>
@@ -119,7 +175,12 @@ export function AdminUsersTable({ users }: { users: User[]; count: number }) {
                         {user.user_roles?.[0]?.role ?? "user"}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-body">{user.country}</td>
+                    <td className="py-3 px-4 text-body">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full ${user.country && user.country !== "US" ? "bg-emerald-500" : "bg-surface-300"}`} aria-hidden="true" />
+                        {countryLabel(user.country)}
+                      </span>
+                    </td>
                     <td className="py-3 px-4">
                       {user.wallets?.length ? (
                         <span className="text-xs font-mono text-success">Connected</span>
@@ -136,8 +197,9 @@ export function AdminUsersTable({ users }: { users: User[]; count: number }) {
                           <button
                             onClick={() => handleAction(user.id, "suspend")}
                             disabled={loading === user.id}
-                            className="p-1.5 rounded-lg hover:bg-warning/10 text-warning transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-warning/10 text-warning transition-colors disabled:opacity-50"
                             aria-label="Suspend user"
+                            title="Suspend user"
                           >
                             <Ban className="w-4 h-4" />
                           </button>
@@ -145,13 +207,19 @@ export function AdminUsersTable({ users }: { users: User[]; count: number }) {
                           <button
                             onClick={() => handleAction(user.id, "reactivate")}
                             disabled={loading === user.id}
-                            className="p-1.5 rounded-lg hover:bg-success/10 text-success transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-success/10 text-success transition-colors disabled:opacity-50"
                             aria-label="Reactivate user"
+                            title="Reactivate user"
                           >
                             <CheckCircle className="w-4 h-4" />
                           </button>
                         ) : null}
-                        <button className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors" aria-label="View user">
+                        <button
+                          onClick={() => setSelected(user)}
+                          className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors"
+                          aria-label={`View ${user.full_name}`}
+                          title="View user"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
                       </div>
@@ -163,6 +231,52 @@ export function AdminUsersTable({ users }: { users: User[]; count: number }) {
           </div>
         </div>
       )}
+
+      <DetailDrawer
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected ? selected.full_name : ""}
+        sections={selected
+          ? [
+              {
+                title: "Account",
+                content: (
+                  <div className="space-y-1">
+                    <p><span className="text-slate-500">ID:</span> <span className="font-mono">{selected.id}</span></p>
+                    <p><span className="text-slate-500">Email:</span> {selected.email}</p>
+                    <p><span className="text-slate-500">Status:</span> {selected.status}</p>
+                    <p><span className="text-slate-500">Role:</span> {selected.user_roles?.[0]?.role ?? "user"}</p>
+                  </div>
+                ),
+              },
+              {
+                title: "Location",
+                content: (
+                  <div className="space-y-1">
+                    <p><span className="text-slate-500">Country:</span> {countryLabel(selected.country)}</p>
+                    <p className="text-xs text-slate-400">Detected automatically from the signup/IP location when available.</p>
+                  </div>
+                ),
+              },
+              {
+                title: "Wallet",
+                content: selected.wallets?.length ? (
+                  <div className="space-y-1">
+                    {selected.wallets.map((w, i) => (
+                      <p key={i} className="font-mono text-xs">{w.address}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400">No wallet connected</p>
+                ),
+              },
+              {
+                title: "Activity",
+                content: <p className="text-sm text-slate-400">Joined {new Date(selected.created_at).toLocaleDateString()}</p>,
+              },
+            ]
+          : []}
+      />
     </div>
   );
 }

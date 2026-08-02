@@ -83,11 +83,12 @@ VOLATILE
 SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
-  INSERT INTO profiles (id, email, full_name)
+  INSERT INTO profiles (id, email, full_name, country)
   VALUES (
     NEW.id,
     COALESCE(NEW.email, ''),
-    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email, 'User')
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email, 'User'),
+    COALESCE(NEW.raw_user_meta_data->>'country', 'US')::TEXT
   )
   ON CONFLICT (id) DO NOTHING;
 

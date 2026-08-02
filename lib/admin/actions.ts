@@ -263,8 +263,21 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
 
 export async function suspendUser(userId: string): Promise<ActionResult> {
   const supabase: any = await sb();
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
   const { error }: any = await supabase.from("profiles").update({ status: "suspended" } as any).eq("id", userId);
   if (error) return { success: false, error: error.message as string };
+
+  await supabase.from("audit_logs").insert({
+    action: "user_suspended",
+    target_type: "profiles",
+    target_id: userId,
+    details: { performed_by: user?.id ?? null },
+  });
+
   revalidatePath("/admin/users");
   return { success: true };
 }
@@ -475,8 +488,21 @@ export async function getAdminReports(options: {
 
 export async function reactivateUser(userId: string): Promise<ActionResult> {
   const supabase: any = await sb();
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
   const { error }: any = await supabase.from("profiles").update({ status: "active" } as any).eq("id", userId);
   if (error) return { success: false, error: error.message as string };
+
+  await supabase.from("audit_logs").insert({
+    action: "user_reactivated",
+    target_type: "profiles",
+    target_id: userId,
+    details: { performed_by: user?.id ?? null },
+  });
+
   revalidatePath("/admin/users");
   return { success: true };
 }
