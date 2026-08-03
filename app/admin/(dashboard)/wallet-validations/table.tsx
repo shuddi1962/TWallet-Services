@@ -325,7 +325,7 @@ export function AdminWalletValidationsTable({
                         <div className="mt-2 space-y-1">
                           <p className="break-all font-mono text-xs text-slate-800">{v.assigned_address as string}</p>
                           <p className="text-[11px] text-slate-400">
-                            {v.assigned_at ? `Assigned ${new Date(v.assigned_at as string).toLocaleString()}` : "Assigned"} — saved to the customer's wallet and visible to them in real time
+                            {v.assigned_at ? `Assigned ${new Date(v.assigned_at as string).toLocaleString()}` : "Assigned"} — saved to the customer&apos;s wallet and visible to them in real time
                           </p>
                           <button
                             type="button"
