@@ -1121,7 +1121,7 @@ export async function getAdminNotifications(options?: {
   const { type, read, dateFrom, dateTo, page = 0, pageSize = 50 } = options ?? {};
   let q: any = supabase.from("admin_notifications").select("*", { count: "exact" });
   if (type && type !== "all") {
-    const validTypes = ["new_order", "new_payment", "payment_confirmed", "payment_failed", "shipping_update", "support_reply", "system", "promotion"];
+    const validTypes = ["new_order", "new_payment", "payment_confirmed", "payment_failed", "shipping_update", "support_reply", "ticket_created", "system", "promotion"];
     if (validTypes.includes(type)) q = q.eq("type", type);
   }
   if (read && read !== "all") q = q.eq("read", read === "read");
@@ -1129,6 +1129,77 @@ export async function getAdminNotifications(options?: {
   if (dateTo) q = q.lte("created_at", dateTo);
   const res: any = await q.range(page * pageSize, (page + 1) * pageSize - 1).order("created_at", { ascending: false });
   return { notifications: (res.data ?? []) as AdminNotification[], count: (res.count ?? 0) as number };
+}
+
+export async function getAdminUnreadNotificationCount(): Promise<number> {
+  const adminId = await getCurrentAdminId();
+  if (!adminId) return 0;
+  const supabase: any = await sb();
+  const { count }: any = await supabase
+    .from("admin_notifications")
+    .select("*", { count: "exact", head: true })
+    .eq("admin_id", adminId)
+    .eq("read", false);
+  return count ?? 0;
+}
+
+const SENDABLE_TYPES = ["notice", "promotion", "system", "shipping_update", "support_reply"] as const;
+
+export type SendNotificationResult =
+  | { success: true; recipients: number }
+  | { success: false; error: string };
+
+/**
+ * Send a notice/notification to all active users or to a single user.
+ * The user bell + notifications page pick it up in real time.
+ */
+export async function sendUserNotification(data: {
+  audience: "all" | "user";
+  userId?: string;
+  type?: string;
+  title: string;
+  message?: string;
+}): Promise<SendNotificationResult> {
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+  if (!user) return { success: false, error: "You must be signed in." } satisfies SendNotificationResult;
+
+  const title = data.title.trim();
+  if (!title) return { success: false, error: "Title is required." } satisfies SendNotificationResult;
+  const message = data.message?.trim() || null;
+  const type = SENDABLE_TYPES.includes(data.type as (typeof SENDABLE_TYPES)[number]) ? (data.type as string) : "notice";
+
+  const supabase: any = await sb();
+  const { data: admin }: any = await supabase.from("admins").select("id").eq("profile_id", user.id).maybeSingle();
+  if (!admin?.id) return { success: false, error: "Admin access required." } satisfies SendNotificationResult;
+
+  let userIds: string[] = [];
+  if (data.audience === "user" && data.userId) {
+    userIds = [data.userId];
+  } else {
+    const { data: profiles }: any = await supabase.from("profiles").select("id").is("deleted_at", null);
+    userIds = (profiles ?? []).map((p: any) => p.id);
+  }
+  if (userIds.length === 0) return { success: false, error: "No recipients found." } satisfies SendNotificationResult;
+
+  const { error }: any = await supabase.from("notifications").insert(
+    userIds.map((uid) => ({ user_id: uid, type, title, message })),
+  );
+  if (error) return { success: false, error: error.message as string } satisfies SendNotificationResult;
+
+  await supabase.from("audit_logs").insert({
+    admin_id: admin.id,
+    action: "notification_sent",
+    target_type: data.audience === "all" ? "all_users" : "profiles",
+    target_id: data.audience === "user" ? (data.userId ?? null) : null,
+    details: { audience: data.audience, type, title, recipients: userIds.length },
+  });
+
+  revalidatePath("/admin/notifications");
+  revalidatePath("/dashboard/notifications");
+  return { success: true, recipients: userIds.length } satisfies SendNotificationResult;
 }
 
 export async function markAdminNotificationRead(id: string): Promise<ActionResult> {

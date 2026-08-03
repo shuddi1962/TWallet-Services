@@ -38,6 +38,8 @@ const TYPE_CONFIG: Record<string, { icon: React.ElementType; label: string }> = 
   ticket_resolved: { icon: CheckCircle2, label: "Ticket Resolved" },
   ticket_closed: { icon: CheckCheck, label: "Ticket Closed" },
   system: { icon: Bell, label: "System" },
+  notice: { icon: Bell, label: "Notice" },
+  promotion: { icon: Bell, label: "Promotion" },
 };
 
 interface Notification {

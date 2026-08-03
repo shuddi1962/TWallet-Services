@@ -1,5 +1,6 @@
 import { getAdminNotifications } from "@/lib/admin/actions";
 import { AdminNotificationsTable } from "@/components/admin/notifications-table";
+import { SendNotification } from "@/components/admin/send-notification";
 
 export default async function AdminNotificationsPage(props: {
   searchParams?: Promise<{ type?: string; read?: string; dateFrom?: string; dateTo?: string; page?: string }>;
@@ -21,7 +22,14 @@ export default async function AdminNotificationsPage(props: {
           <p className="text-sm text-body">{count} notification{count === 1 ? "" : "s"}</p>
         </div>
       </div>
-      <AdminNotificationsTable notifications={notifications} count={count} />
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-1">
+          <SendNotification />
+        </div>
+        <div className="xl:col-span-2">
+          <AdminNotificationsTable notifications={notifications} count={count} />
+        </div>
+      </div>
     </div>
   );
 }

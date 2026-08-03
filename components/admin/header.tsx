@@ -1,8 +1,8 @@
 "use client";
 
-import { Menu, Bell } from "lucide-react";
+import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { AdminBell } from "@/components/admin/admin-bell";
 
 function breadcrumbFromPath(pathname: string) {
   const parts = pathname.split("/").filter(Boolean);
@@ -35,14 +35,7 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           Production
         </span>
 
-        <Link
-          href="/admin/notifications"
-          className="relative rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" aria-hidden="true" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-error" />
-        </Link>
+        <AdminBell />
 
         <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">

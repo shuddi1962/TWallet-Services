@@ -22,6 +22,7 @@ import {
   Shield,
   Home,
   UserCog,
+  Bell,
 } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { cn } from "@/lib/utils/cn";
@@ -37,6 +38,7 @@ const navItems = [
   { label: "Roles & Permissions", icon: UserCog, route: "/admin/roles" },
   { label: "Sweep", icon: Send, route: "/admin/sweep" },
   { label: "Analytics", icon: BarChart3, route: "/admin/analytics" },
+  { label: "Notifications", icon: Bell, route: "/admin/notifications" },
   { label: "Support", icon: LifeBuoy, route: "/admin/support" },
   { label: "Settings", icon: Settings, route: "/admin/settings" },
   { label: "Audit Logs", icon: ScrollText, route: "/admin/audit" },

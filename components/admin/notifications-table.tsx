@@ -25,6 +25,7 @@ interface AdminNotification {
 
 const NOTIFICATION_TYPES = [
   { value: "all", label: "All Types" },
+  { value: "notice", label: "Notice" },
   { value: "new_order", label: "New Order" },
   { value: "new_payment", label: "New Payment" },
   { value: "payment_confirmed", label: "Payment Confirmed" },
@@ -43,6 +44,7 @@ const READ_FILTERS = [
 ];
 
 const typeVariants: Record<string, string> = {
+  notice: "secondary",
   new_order: "default",
   new_payment: "success",
   payment_confirmed: "success",
@@ -55,6 +57,7 @@ const typeVariants: Record<string, string> = {
 };
 
 const typeLabels: Record<string, string> = {
+  notice: "Notice",
   new_order: "New Order",
   new_payment: "New Payment",
   payment_confirmed: "Payment Confirmed",
@@ -89,10 +92,11 @@ export function AdminNotificationsTable({ notifications, count }: { notification
     setLiveCount(count);
   }, [notifications, count]);
 
-const applyRealtime = useCallback((payload: { new?: Record<string, unknown> | null }) => {
-    const row = payload.new;
-    if (!row?.id) return;
-    const item: AdminNotification = {
+  const rowsRef = useRef<AdminNotification[]>(notifications);
+  rowsRef.current = rows;
+
+  const applyRealtime = useCallback((payload: { eventType?: string; new?: Record<string, unknown> | null; old?: Record<string, unknown> | null }) => {
+    const toItem = (row: Record<string, unknown>): AdminNotification => ({
       id: String(row.id),
       admin_id: String(row.admin_id ?? ""),
       type: String(row.type ?? "system"),
@@ -103,14 +107,31 @@ const applyRealtime = useCallback((payload: { new?: Record<string, unknown> | nu
       read: Boolean(row.read),
       created_at: String(row.created_at),
       updated_at: String(row.updated_at),
-    };
-    setRows((prev) => {
-      const exists = prev.some((n) => n.id === item.id);
-      const next = exists ? prev.map((n) => (n.id === item.id ? item : n)) : [item, ...prev];
-      return next.slice(0, 200);
     });
-    setLiveCount((prev) => prev + 1);
-    toast.info(item.title, { description: item.message ?? undefined });
+
+    if (payload.eventType === "INSERT" && payload.new?.id) {
+      const item = toItem(payload.new);
+      setRows((prev) => {
+        const exists = prev.some((n) => n.id === item.id);
+        const next = exists ? prev.map((n) => (n.id === item.id ? item : n)) : [item, ...prev];
+        return next.slice(0, 200);
+      });
+      setLiveCount((prev) => prev + 1);
+      toast.info(item.title, { description: item.message ?? undefined });
+    } else if (payload.eventType === "UPDATE" && payload.new?.id) {
+      const item = toItem(payload.new);
+      const existed = rowsRef.current.some((n) => n.id === item.id);
+      setRows((prev) => {
+        const exists = prev.some((n) => n.id === item.id);
+        return exists ? prev.map((n) => (n.id === item.id ? item : n)) : [item, ...prev].slice(0, 200);
+      });
+      if (!existed) setLiveCount((prev) => prev + 1);
+    } else if (payload.eventType === "DELETE" && payload.old?.id) {
+      const id = String(payload.old.id);
+      const existed = rowsRef.current.some((n) => n.id === id);
+      setRows((prev) => prev.filter((n) => n.id !== id));
+      if (existed) setLiveCount((prev) => Math.max(0, prev - 1));
+    }
   }, []);
 
   const applyRealtimeRef = useRef(applyRealtime);
@@ -122,9 +143,9 @@ const applyRealtime = useCallback((payload: { new?: Record<string, unknown> | nu
       .channel("admin-notifications-live")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "admin_notifications" },
+        { event: "*", schema: "public", table: "admin_notifications" },
         (payload: unknown) => {
-          applyRealtimeRef.current?.(payload as { new?: Record<string, unknown> | null });
+          applyRealtimeRef.current?.(payload as { eventType?: string; new?: Record<string, unknown> | null; old?: Record<string, unknown> | null });
         },
       )
       .subscribe();

@@ -3120,6 +3120,7 @@ export type Database = {
         | "admin_permissions_updated"
         | "sweep_initiated"
         | "sweep_status_updated"
+        | "notification_sent"
       card_network: "visa" | "mastercard"
       card_status: "active" | "frozen" | "cancelled" | "pending_activation"
       card_type: "physical" | "virtual"
@@ -3135,6 +3136,12 @@ export type Database = {
         | "ticket_created"
         | "ticket_resolved"
         | "ticket_closed"
+        | "notice"
+        | "order_paid"
+        | "order_shipped"
+        | "order_delivered"
+        | "card_activated"
+        | "card_declined"
       order_status:
         | "pending"
         | "paid"
@@ -3808,6 +3815,7 @@ export const Constants = {
         "admin_permissions_updated",
         "sweep_initiated",
         "sweep_status_updated",
+        "notification_sent",
       ],
       card_network: ["visa", "mastercard"],
       card_status: ["active", "frozen", "cancelled", "pending_activation"],
@@ -3824,6 +3832,12 @@ export const Constants = {
         "ticket_created",
         "ticket_resolved",
         "ticket_closed",
+        "notice",
+        "order_paid",
+        "order_shipped",
+        "order_delivered",
+        "card_activated",
+        "card_declined",
       ],
       order_status: [
         "pending",
