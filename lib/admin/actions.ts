@@ -97,7 +97,7 @@ export async function getAdminStats() {
     supabase.from("profiles").select("*", { count: "exact", head: true }).is("deleted_at", null),
     supabase.from("wallets").select("*", { count: "exact", head: true }).is("deleted_at", null),
     supabase.from("card_orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
-    supabase.from("card_orders").select("*", { count: "exact", head: true }).in("status", ["delivered", "completed"]),
+    supabase.from("card_orders").select("*", { count: "exact", head: true }).eq("status", "delivered"),
     supabase.from("payment_transactions").select("amount").eq("status", "confirmed"),
     supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ["open", "pending"]),
     supabase.from("payment_transactions").select("*", { count: "exact", head: true }).eq("status", "confirmed").gte("created_at", today),
@@ -428,7 +428,7 @@ export async function getAnalyticsChartData() {
     supabase.from("profiles").select("created_at").gte("created_at", thirtyDaysAgo),
     supabase
       .from("card_orders")
-      .select("card_product_id, card_products(name)")
+      .select("product_id, card_products(name)")
       .gte("created_at", thirtyDaysAgo),
   ]);
 
@@ -565,7 +565,7 @@ export async function getAdminReports(options: {
         supabase.from("card_products").select("*"),
         supabase
           .from("card_orders")
-          .select("card_product_id, card_products(name, type)")
+          .select("product_id, card_products(name, type)")
           .gte("created_at", startDate)
           .lte("created_at", endOfDay),
       ]);
