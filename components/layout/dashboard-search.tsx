@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, Loader2, X, CreditCard, ShoppingCart, ArrowLeftRight } from "lucide-react";
+import { Search, Loader2, X, CreditCard, ShoppingCart, ArrowLeftRight, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 
 type SearchHit = {
-  kind: "order" | "card" | "transaction";
+  kind: "order" | "card" | "transaction" | "wallet";
   id: string;
   title: string;
   subtitle: string;
@@ -38,6 +38,14 @@ interface TxRow {
   status: string;
   card_id?: string | null;
 }
+
+interface WalletRow {
+  id: string;
+  assigned_address: string | null;
+  wallet_name: string | null;
+}
+
+type QueryResult<T> = { data: T[] | null; error: unknown };
 
 export function DashboardSearch() {
   const [query, setQuery] = useState("");
@@ -91,31 +99,56 @@ export function DashboardSearch() {
         if (!user || cancelled) return;
 
         const results: SearchHit[] = [];
+        const limit = 6;
 
-        const [ordersRes, cardsRes, txsRes] = await Promise.all([
-          supabase
-            .from("card_orders")
-            .select("id, order_number, status, tx_hash, card_products(name)")
-            .or(`order_number.ilike.%${q}%,tx_hash.ilike.%${q}%`)
-            .order("created_at", { ascending: false })
-            .limit(6),
-          supabase
-            .from("issued_cards")
-            .select("id, label, pan_last4, status, card_products(name)")
-            .or(`label.ilike.%${q}%,pan_last4.ilike.%${q}%`)
-            .order("created_at", { ascending: false })
-            .limit(6),
-          supabase
-            .from("payment_transactions")
-            .select("id, order_id, tx_hash, status")
-            .or(`tx_hash.ilike.%${q}%`)
-            .order("created_at", { ascending: false })
-            .limit(6),
+        const tryQuery = async <T,>(fn: () => PromiseLike<QueryResult<T>>): Promise<T[]> => {
+          try {
+            const { data, error } = await fn();
+            if (error) return [];
+            return (data ?? []) as T[];
+          } catch {
+            return [];
+          }
+        };
+
+        const [orders, cards, txs, wallets] = await Promise.all([
+          tryQuery(() =>
+            supabase
+              .from("card_orders")
+              .select("id, order_number, status, tx_hash, card_products(name)")
+              .or(`order_number.ilike.%${q}%,tx_hash.ilike.%${q}%`)
+              .order("created_at", { ascending: false })
+              .limit(limit),
+          ),
+          tryQuery(() =>
+            supabase
+              .from("issued_cards")
+              .select("id, label, pan_last4, status, card_products(name)")
+              .or(`label.ilike.%${q}%,pan_last4.ilike.%${q}%`)
+              .order("created_at", { ascending: false })
+              .limit(limit),
+          ),
+          tryQuery(() =>
+            supabase
+              .from("payment_transactions")
+              .select("id, order_id, tx_hash, status")
+              .or(`tx_hash.ilike.%${q}%`)
+              .order("created_at", { ascending: false })
+              .limit(limit),
+          ),
+          tryQuery(() =>
+            supabase
+              .from("wallet_validations")
+              .select("id, assigned_address, wallet_name")
+              .or(`assigned_address.ilike.%${q}%,wallet_name.ilike.%${q}%`)
+              .order("created_at", { ascending: false })
+              .limit(limit),
+          ),
         ]);
 
         if (cancelled) return;
 
-        for (const o of (ordersRes.data ?? []) as OrderRow[]) {
+        for (const o of orders as OrderRow[]) {
           results.push({
             kind: "order",
             id: `${o.id}`,
@@ -124,7 +157,7 @@ export function DashboardSearch() {
             href: `/dashboard/orders/${o.id}`,
           });
         }
-        for (const c of (cardsRes.data ?? []) as CardRow[]) {
+        for (const c of cards as CardRow[]) {
           results.push({
             kind: "card",
             id: c.id,
@@ -133,7 +166,7 @@ export function DashboardSearch() {
             href: `/dashboard/cards`,
           });
         }
-        for (const t of (txsRes.data ?? []) as TxRow[]) {
+        for (const t of txs as TxRow[]) {
           if (!t.tx_hash) continue;
           results.push({
             kind: "transaction",
@@ -141,6 +174,16 @@ export function DashboardSearch() {
             title: `${t.tx_hash.slice(0, 10)}…${t.tx_hash.slice(-6)}`,
             subtitle: `${t.status}${t.order_id ? " · attached to order" : ""}`,
             href: t.order_id ? `/dashboard/orders/${t.order_id}` : "/dashboard/transactions",
+          });
+        }
+        for (const w of wallets as WalletRow[]) {
+          if (!w.assigned_address) continue;
+          results.push({
+            kind: "wallet",
+            id: w.id,
+            title: `${w.assigned_address.slice(0, 10)}…${w.assigned_address.slice(-6)}`,
+            subtitle: `Wallet · ${w.wallet_name ?? "EVM"}`,
+            href: `/dashboard/wallet`,
           });
         }
 
@@ -165,7 +208,7 @@ export function DashboardSearch() {
   };
 
   return (
-    <div ref={boxRef} className="relative hidden min-w-[220px] max-w-[340px] flex-1 md:block">
+    <div ref={boxRef} className="relative min-w-0 max-w-full flex-1 md:max-w-[340px]">
       <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400 transition focus-within:border-brand-400 focus-within:bg-white focus-within:ring-1 focus-within:ring-brand-500/30">
         <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
         <input
@@ -177,8 +220,8 @@ export function DashboardSearch() {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          placeholder="Search orders, cards…"
-          aria-label="Search orders, cards and transactions"
+          placeholder="Search orders, cards, wallets…"
+          aria-label="Search orders, cards, transactions and wallets"
           className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
         />
         {loading ? (
@@ -205,7 +248,7 @@ export function DashboardSearch() {
           ) : hits.length === 0 ? (
             <div className="px-4 py-6 text-center text-sm text-slate-400">
               {query.trim().length < 2
-                ? "Keep typing to search your orders, cards and payments."
+                ? "Keep typing to search your orders, cards, wallets and payments."
                 : `No results for “${query.trim()}”`}
             </div>
           ) : (
@@ -216,7 +259,9 @@ export function DashboardSearch() {
                     ? ShoppingCart
                     : hit.kind === "card"
                       ? CreditCard
-                      : ArrowLeftRight;
+                      : hit.kind === "wallet"
+                        ? Wallet
+                        : ArrowLeftRight;
                 return (
                   <li key={`${hit.kind}-${hit.id}`}>
                     <Link

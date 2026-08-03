@@ -1177,6 +1177,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          permissions: string[]
           profile_id: string
           role: Database["public"]["Enums"]["admin_role"]
           updated_at: string
@@ -1184,6 +1185,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          permissions?: string[]
           profile_id: string
           role?: Database["public"]["Enums"]["admin_role"]
           updated_at?: string
@@ -1191,6 +1193,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          permissions?: string[]
           profile_id?: string
           role?: Database["public"]["Enums"]["admin_role"]
           updated_at?: string
@@ -2101,6 +2104,24 @@ export type Database = {
           phone?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          permission: string
+          role: Database["public"]["Enums"]["admin_role"]
+        }
+        Insert: {
+          created_at?: string
+          permission: string
+          role: Database["public"]["Enums"]["admin_role"]
+        }
+        Update: {
+          created_at?: string
+          permission?: string
+          role?: Database["public"]["Enums"]["admin_role"]
         }
         Relationships: []
       }
@@ -3095,6 +3116,8 @@ export type Database = {
         | "logout"
         | "export_generated"
         | "system_setting_changed"
+        | "role_permissions_updated"
+        | "admin_permissions_updated"
       card_network: "visa" | "mastercard"
       card_status: "active" | "frozen" | "cancelled" | "pending_activation"
       card_type: "physical" | "virtual"
@@ -3779,6 +3802,8 @@ export const Constants = {
         "logout",
         "export_generated",
         "system_setting_changed",
+        "role_permissions_updated",
+        "admin_permissions_updated",
       ],
       card_network: ["visa", "mastercard"],
       card_status: ["active", "frozen", "cancelled", "pending_activation"],

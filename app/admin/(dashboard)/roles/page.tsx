@@ -1,8 +1,10 @@
-import { getAdminRoles } from "@/lib/admin/actions";
+import { getAdminRoles, getRolePermissions } from "@/lib/admin/actions";
 import { RolesPanel } from "@/components/admin/roles-panel";
 
-export default async function AdminRolesPage() {
-  const { admins } = await getAdminRoles();
+export const dynamic = "force-dynamic";
 
-  return <RolesPanel admins={admins} />;
+export default async function AdminRolesPage() {
+  const [{ admins }, initialPermissions] = await Promise.all([getAdminRoles(), getRolePermissions()]);
+
+  return <RolesPanel admins={admins} initialPermissions={initialPermissions} />;
 }

@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronLeft,
   Search,
+  X,
   Wallet,
   Send,
   Shield,
@@ -116,6 +117,16 @@ export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search navigation"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Clear search"
+                  className="shrink-0 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           </div>
         )}

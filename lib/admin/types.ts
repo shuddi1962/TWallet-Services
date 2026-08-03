@@ -177,6 +177,7 @@ export interface AdminRoleUser {
   id: string;
   profile_id: string;
   role: string;
+  permissions?: string[] | null;
   created_at: string;
   updated_at: string;
   profiles: {

@@ -120,6 +120,16 @@ export function AdminPaymentsTable({ payments: initial }: { payments: Payment[];
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Search payments"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+              className="shrink-0 rounded-md p-0.5 text-slate-400 hover:bg-surface-100 hover:text-slate-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <select
           className="px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm text-body"

@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createServerSupabaseClient } from "@/lib";
+import { isAdminRoleId, isPermission } from "@/lib/admin/permissions";
 import { sendEmail, buildPaymentReceivedEmail, buildOrderShippedEmail, buildShippingUpdateEmail, buildPasswordResetEmail } from "@/lib/email";
 import type {
   RecentOrder,
@@ -850,6 +851,9 @@ export async function addAdminUser(_prev: unknown, formData: FormData) {
 
   if (!email) return { error: "Email is required" };
 
+  const guard = await requireSuperAdminAction();
+  if (!guard.ok) return { error: guard.error };
+
   const adminClient = await sb();
   const { data: profile } = await adminClient
     .from("profiles")
@@ -894,9 +898,124 @@ export async function updateAdminRole(adminId: string, role: string) {
     return { success: false, error: "Invalid role" } satisfies ActionResult;
   }
 
+  const guard = await requireSuperAdminAction();
+  if (!guard.ok) return { success: false, error: guard.error } satisfies ActionResult;
+
   const adminClient = await sb();
+  const { data: target } = await adminClient
+    .from("admins")
+    .select("id, role")
+    .eq("id", adminId)
+    .maybeSingle();
+  if (!target) return { success: false, error: "Admin not found" } satisfies ActionResult;
+  if (target.role === "super_admin") {
+    return { success: false, error: "Super admin roles cannot be changed." } satisfies ActionResult;
+  }
+
   const { error } = await adminClient.from("admins").update({ role }).eq("id", adminId);
   if (error) return { success: false, error: error.message } satisfies ActionResult;
+
+  await adminClient.from("audit_logs").insert({
+    action: "admin_role_changed",
+    target_type: "admins",
+    target_id: adminId,
+    details: { role },
+  });
+
+  revalidatePath("/admin/roles");
+  return { success: true } satisfies ActionResult;
+}
+
+async function requireSuperAdminAction(): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "You must be signed in." };
+  const { data } = await supabase
+    .from("admins")
+    .select("role")
+    .eq("profile_id", user.id)
+    .maybeSingle();
+  if (data?.role !== "super_admin") {
+    return { ok: false, error: "Only super admins can manage roles and permissions." };
+  }
+  return { ok: true };
+}
+
+export async function getRolePermissions(): Promise<Record<string, string[]>> {
+  const supabase: any = await sb();
+  const res: any = await supabase.from("role_permissions").select("role, permission");
+  const byRole: Record<string, string[]> = {};
+  for (const row of res?.data ?? []) {
+    (byRole[row.role] ??= []).push(row.permission);
+  }
+  return byRole;
+}
+
+export async function updateRolePermissions(role: string, permissions: string[]): Promise<ActionResult> {
+  if (!isAdminRoleId(role)) return { success: false, error: "Invalid role" } satisfies ActionResult;
+  const deduped = [...new Set(permissions)].filter(isPermission);
+
+  if (role === "super_admin") return { success: true } satisfies ActionResult;
+
+  const guard = await requireSuperAdminAction();
+  if (!guard.ok) return { success: false, error: guard.error } satisfies ActionResult;
+
+  const supabase: any = await sb();
+  const { error: deleteError } = await supabase.from("role_permissions").delete().eq("role", role);
+  if (deleteError) return { success: false, error: deleteError.message as string } satisfies ActionResult;
+
+  if (deduped.length) {
+    const { error: insertError } = await supabase
+      .from("role_permissions")
+      .insert(deduped.map((permission) => ({ role, permission })));
+    if (insertError) return { success: false, error: insertError.message as string } satisfies ActionResult;
+  }
+
+  await supabase.from("audit_logs").insert({
+    action: "role_permissions_updated",
+    target_type: "role_permissions",
+    target_id: role,
+    details: { role, permissions: deduped },
+  });
+
+  revalidatePath("/admin/roles");
+  return { success: true } satisfies ActionResult;
+}
+
+export async function updateAdminPermissions(
+  adminId: string,
+  permissions: string[],
+  reset = false,
+): Promise<ActionResult> {
+  const guard = await requireSuperAdminAction();
+  if (!guard.ok) return { success: false, error: guard.error } satisfies ActionResult;
+
+  const adminClient = await sb();
+  const { data: admin } = await adminClient
+    .from("admins")
+    .select("id, role")
+    .eq("id", adminId)
+    .maybeSingle();
+  if (!admin) return { success: false, error: "Admin not found" } satisfies ActionResult;
+  if (admin.role === "super_admin") {
+    return { success: false, error: "Super admins always have full access." } satisfies ActionResult;
+  }
+
+  const deduped = reset ? [] : [...new Set(permissions)].filter(isPermission);
+  const { error } = await adminClient
+    .from("admins")
+    .update({ permissions: deduped })
+    .eq("id", adminId);
+  if (error) return { success: false, error: error.message as string } satisfies ActionResult;
+
+  await adminClient.from("audit_logs").insert({
+    action: "admin_permissions_updated",
+    target_type: "admins",
+    target_id: adminId,
+    details: { permissions: deduped, reset },
+  });
 
   revalidatePath("/admin/roles");
   return { success: true } satisfies ActionResult;

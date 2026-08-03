@@ -71,7 +71,8 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 
 ## Git / Commits
 
-- Do NOT commit unless the user explicitly asks.
+- **Standing instruction (Aug 03, 2026): after every completed task, commit → push → deploy to Vercel.** The user has confirmed this is the default workflow.
+- Do NOT commit unless the user explicitly asks (standing instruction above counts as explicit).
 - Before committing: inspect `git status`, `git diff`, `git log --oneline -10`; stage only intended files; never commit secrets.
 - Commit messages: concise, matching repo style.
 
@@ -195,6 +196,18 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Penetration test** — Plan documented; schedule externally
 - **npm install** may fail on paths with spaces (esbuild spawn) — install from a path without spaces or fix esbuild binary if local build fails
 - **Edge functions** need Docker running only for local dev (`supabase start`); `functions deploy` + `secrets set` work without Docker
+
+### Session 14 — Aug 03, 2026 (General search + working X-cancel + header connect + DB-backed RBAC)
+- **Header ConnectButton** — `components/wallet/connect-button.tsx` rewritten with new `lib/hooks/use-assigned-wallet.ts` hook: when the admin assigned wallet is present it shows a green connected pill (short address + emerald dot) with a dropdown (details → `/dashboard/wallet`, copy address, disconnect via `disconnectMyWallet`); web3-connected branch keeps the brand pill.
+- **General search** — `components/layout/dashboard-search.tsx` now searches orders, issued cards, payment transactions AND wallets (`wallet_validations.assigned_address/wallet_name`), each query isolated (a failing table can't blank all results), and the search bar is visible on mobile (was `hidden md:block`).
+- **X-cancel everywhere** — working clear-X added to every admin search box that lacked one: sidebar nav search, `filter-bar.tsx` (wallets/support/receiving-wallets tables), orders, cards, payments, users, tickets, notifications, audit tables.
+- **Roles & Permissions rebuild (DB-backed RBAC)** — migration `202608030001_role_permissions.sql` (applied to `smkckhsvzyjttzqhpzhv`): new `role_permissions` table seeded with the default matrix + RLS (admins read, super admins manage) + realtime publication; `admins.permissions TEXT[]` per-admin override column; audit enum values `role_permissions_updated` / `admin_permissions_updated`. Types regenerated.
+- **Tickable permissions** — role cards show every permission as a checkbox (grouped: Dashboard/Users/Orders/Payments/Cards/Support/Settings/Audit/Analytics); toggling auto-saves via `updateRolePermissions` (replace rows + audit), spinner while saving, rollback on error; Super Admin card locked (full access).
+- **Per-admin overrides** — Admin Users table has a "N of 15" button per admin opening a popover checklist; "Use role defaults" resets to inherit role; saved via `updateAdminPermissions` into `admins.permissions`.
+- **Realtime roles** — `role_permissions` + `admins` channels keep every open dashboard in sync (permission toggles, promotions, role changes).
+- **Promotion fixed** — roles page is now `force-dynamic` (was statically cached, so new admins never appeared without a hard reload); panel refreshes on success + realtime.
+- **Authorization hardening** — `addAdminUser`, `updateAdminRole`, `updateRolePermissions`, `updateAdminPermissions` all require the caller to be a super admin (`requireSuperAdminAction`); super admin roles/permissions cannot be modified.
+- **Standing instruction** — user confirmed: commit → push → deploy to Vercel after every completed task (see Git / Commits).
 
 ### Known Issues
 - `@wagmi/connectors` has warnings about missing optional deps (safe-sdk, porto, metamask-connect, coinbase-sdk, base-org/account) — non-blocking, webpack resolves to false

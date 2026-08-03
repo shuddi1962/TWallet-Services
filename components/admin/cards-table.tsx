@@ -220,6 +220,16 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Search card products"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+              className="shrink-0 rounded-md p-0.5 text-slate-400 hover:bg-surface-100 hover:text-slate-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <button
           onClick={() => setAddOpen(true)}

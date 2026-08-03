@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 
 interface AuditLog {
@@ -49,6 +49,16 @@ export function AdminAuditTable({ logs }: { logs: AuditLog[]; count: number }) {
           onChange={(e) => setSearch(e.target.value)}
           aria-label="Search audit logs"
         />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            aria-label="Clear search"
+            className="shrink-0 rounded-md p-0.5 text-slate-400 hover:bg-surface-100 hover:text-slate-700"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
