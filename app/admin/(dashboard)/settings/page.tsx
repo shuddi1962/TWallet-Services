@@ -35,11 +35,24 @@ const settingsConfig: Record<string, SettingField[]> = {
     { label: "Rate Limit (req/min)", type: "number", default: 60 },
   ],
   Notifications: [
+    { label: "Welcome Email", type: "toggle", default: true },
     { label: "Order Confirmation Email", type: "toggle", default: true },
     { label: "Payment Confirmation Email", type: "toggle", default: true },
+    { label: "Payment Failed Email", type: "toggle", default: true },
     { label: "Shipping Update Email", type: "toggle", default: true },
+    { label: "Card Delivered Email", type: "toggle", default: true },
+    { label: "Card Declined Email", type: "toggle", default: true },
+    { label: "Password Changed Email", type: "toggle", default: true },
+    { label: "Support Reply Email", type: "toggle", default: true },
+    { label: "Ticket Received Email", type: "toggle", default: true },
+    { label: "Password Reset Email", type: "toggle", default: true },
     { label: "Admin New Order Alert", type: "toggle", default: true },
     { label: "Admin Failed Payment Alert", type: "toggle", default: true },
+    { label: "Admin Support Ticket Alert", type: "toggle", default: true },
+    { label: "Notice Email", type: "toggle", default: true },
+    { label: "Promotion Email", type: "toggle", default: true },
+    { label: "Sweep Alert Email", type: "toggle", default: true },
+    { label: "Newsletter Email", type: "toggle", default: true },
   ],
   KYC: [
     { label: "Require KYC", type: "toggle", default: false },
@@ -121,16 +134,18 @@ export default function AdminSettingsPage() {
               {field.type === "toggle" ? (
                 <button
                   onClick={() => setValues((prev) => ({ ...prev, [field.label]: !prev[field.label] }))}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${
-                    values[field.label] ? "bg-primary" : "bg-surface-200"
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                    values[field.label] ? "border-primary bg-primary" : "border-slate-300 bg-slate-200"
                   }`}
                   role="switch"
                   aria-checked={Boolean(values[field.label])}
                   aria-label={field.label}
                 >
-                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                    values[field.label] ? "translate-x-6" : "translate-x-0.5"
-                  }`} />
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                      values[field.label] ? "translate-x-5" : "translate-x-0.5"
+                    }`}
+                  />
                 </button>
               ) : field.type === "select" ? (
                 <select

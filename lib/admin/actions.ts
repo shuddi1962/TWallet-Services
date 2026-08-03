@@ -1189,6 +1189,14 @@ export async function sendUserNotification(data: {
   );
   if (error) return { success: false, error: error.message as string } satisfies SendNotificationResult;
 
+  // Reflect the action in the sender's own admin notification feed (real-time bell + table)
+  await supabase.from("admin_notifications").insert({
+    admin_id: admin.id,
+    type: "notice",
+    title: data.audience === "all" ? `Notice sent to ${userIds.length} users` : "Notice sent to a user",
+    message: title,
+  });
+
   await supabase.from("audit_logs").insert({
     admin_id: admin.id,
     action: "notification_sent",
