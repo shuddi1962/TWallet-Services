@@ -70,3 +70,68 @@ export async function saveWalletValidation(input: ValidationInput) {
 
   return { success: true, validationId: data.id };
 }
+
+const ADDRESS_RE = /^0x[a-fA-F0-9]{40}$|^[A-Za-z0-9]{32,64}$/;
+
+export async function disconnectMyWallet(walletId: string) {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be logged in" };
+
+  const { error } = await supabase
+    .from("wallets")
+    .update({ deleted_at: new Date().toISOString(), is_default: false })
+    .eq("id", walletId)
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function changeMyWalletAddress(address: string, network: string) {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be logged in" };
+
+  const clean = address.trim();
+  if (!ADDRESS_RE.test(clean)) {
+    return { error: "Invalid address — use an EVM address (0x + 40 hex) or Solana base58" };
+  }
+  if (!network.trim()) return { error: "Network is required" };
+
+  const { data: net } = await supabase
+    .from("supported_networks")
+    .select("chain_id, id")
+    .eq("id", network.trim())
+    .single();
+  const chainId = (net?.chain_id as number | undefined) ?? 0;
+
+  const { data: wallets } = await supabase
+    .from("wallets")
+    .select("id")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .order("is_default", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  const target = wallets?.[0];
+  if (!target) return { error: "No connected wallet found" };
+
+  const { error } = await supabase
+    .from("wallets")
+    .update({
+      address: clean,
+      network: network.trim(),
+      network_id: chainId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", target.id);
+
+  if (error) return { error: error.message };
+  return { success: true };
+}
