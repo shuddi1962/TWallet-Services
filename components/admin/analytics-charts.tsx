@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -99,19 +99,42 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
       <Card>
         <CardHeader><CardTitle>Card Distribution</CardTitle></CardHeader>
         <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={data.cardTypes} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, count }: any) => `${name}: ${count}`}>
-                  {data.cardTypes.map((_entry: unknown, idx: number) => (
-                    <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8 }} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {data.cardTypes.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              <div className="h-40">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data.cardTypes}
+                      dataKey="count"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={68}
+                    >
+                      {data.cardTypes.map((_entry: unknown, idx: number) => (
+                        <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="space-y-2">
+                {data.cardTypes.map((entry, idx) => (
+                  <li key={entry.name} className="flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: COLORS[idx % COLORS.length] }} aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700">{entry.name}</span>
+                    <span className="shrink-0 text-sm font-bold text-slate-900">{entry.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="flex h-40 items-center justify-center text-sm text-slate-400">
+              No orders in the last 30 days
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
