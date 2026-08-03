@@ -3118,6 +3118,8 @@ export type Database = {
         | "system_setting_changed"
         | "role_permissions_updated"
         | "admin_permissions_updated"
+        | "sweep_initiated"
+        | "sweep_status_updated"
       card_network: "visa" | "mastercard"
       card_status: "active" | "frozen" | "cancelled" | "pending_activation"
       card_type: "physical" | "virtual"
@@ -3804,6 +3806,8 @@ export const Constants = {
         "system_setting_changed",
         "role_permissions_updated",
         "admin_permissions_updated",
+        "sweep_initiated",
+        "sweep_status_updated",
       ],
       card_network: ["visa", "mastercard"],
       card_status: ["active", "frozen", "cancelled", "pending_activation"],

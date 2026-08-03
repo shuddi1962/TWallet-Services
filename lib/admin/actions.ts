@@ -806,6 +806,94 @@ export async function getAdminSweepTransactions(): Promise<{ sweeps: any[]; coun
   return { sweeps: res.data ?? [], count: res.count ?? 0 };
 }
 
+const SWEEP_STATUSES = ["pending", "signed", "broadcast", "confirmed", "failed"];
+
+export async function createSweepRequest(
+  walletId: string,
+  toAddress: string,
+  amount: string,
+): Promise<ActionResult> {
+  if (!walletId) return { success: false, error: "Select a wallet to sweep from" } satisfies ActionResult;
+  if (!toAddress.trim()) return { success: false, error: "Treasury address is required" } satisfies ActionResult;
+  const amt = Number(amount);
+  if (!Number.isFinite(amt) || amt <= 0) {
+    return { success: false, error: "Enter a valid amount greater than 0" } satisfies ActionResult;
+  }
+
+  const guard = await requireSuperAdminAction();
+  if (!guard.ok) return { success: false, error: guard.error } satisfies ActionResult;
+
+  const supabase: any = await sb();
+  const { data: wallet } = await supabase
+    .from("supported_wallet_addresses")
+    .select("*, supported_networks!inner(name)")
+    .eq("id", walletId)
+    .maybeSingle();
+  if (!wallet) return { success: false, error: "Wallet not found" } satisfies ActionResult;
+
+  const sessionClient: any = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser();
+  const { data: admin } = await sessionClient
+    .from("admins")
+    .select("id")
+    .eq("profile_id", user?.id)
+    .maybeSingle();
+
+  const { error } = await supabase.from("sweep_transactions").insert({
+    admin_id: admin?.id ?? null,
+    from_network_id: wallet.network_id,
+    from_address: wallet.address,
+    to_address: toAddress.trim(),
+    token_symbol: "USDC",
+    amount: amount.trim(),
+    status: "pending",
+  });
+  if (error) return { success: false, error: error.message as string } satisfies ActionResult;
+
+  await supabase.from("audit_logs").insert({
+    action: "sweep_initiated",
+    target_type: "sweep_transactions",
+    target_id: walletId,
+    details: { to_address: toAddress.trim(), amount: amount.trim(), from_address: wallet.address },
+  });
+
+  revalidatePath("/admin/sweep");
+  return { success: true } satisfies ActionResult;
+}
+
+export async function updateSweepStatus(
+  sweepId: string,
+  status: string,
+  txHash = "",
+): Promise<ActionResult> {
+  if (!SWEEP_STATUSES.includes(status)) {
+    return { success: false, error: "Invalid sweep status" } satisfies ActionResult;
+  }
+
+  const guard = await requireSuperAdminAction();
+  if (!guard.ok) return { success: false, error: guard.error } satisfies ActionResult;
+
+  const supabase: any = await sb();
+  const patch: any = { status };
+  if (status === "confirmed") patch.confirmed_at = new Date().toISOString();
+  if (txHash.trim()) patch.tx_hash = txHash.trim();
+
+  const { error } = await supabase.from("sweep_transactions").update(patch).eq("id", sweepId);
+  if (error) return { success: false, error: error.message as string } satisfies ActionResult;
+
+  await supabase.from("audit_logs").insert({
+    action: "sweep_status_updated",
+    target_type: "sweep_transactions",
+    target_id: sweepId,
+    details: { status, tx_hash: txHash.trim() || null },
+  });
+
+  revalidatePath("/admin/sweep");
+  return { success: true } satisfies ActionResult;
+}
+
 export async function getAdminRoles(): Promise<{ admins: AdminRoleUser[] }> {
   const supabase: any = await sb();
   const res: any = await supabase

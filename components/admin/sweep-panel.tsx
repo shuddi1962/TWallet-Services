@@ -1,17 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import { ExternalLink, Loader2, Send, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createSweepRequest, updateSweepStatus } from "@/lib/admin/actions";
 import type { ReceivingWalletRecord } from "@/lib/admin/actions";
+import { useRealtime } from "@/lib/hooks/use-realtime";
 
 type SweepRecord = {
   id: string;
+  admin_id: string | null;
   from_network_id: string;
   from_address: string;
   to_address: string;
@@ -25,51 +29,96 @@ type SweepRecord = {
   admins?: { profile_id: string; profiles: { full_name: string; email: string } } | null;
 };
 
+type SweepPayload = {
+  eventType: "INSERT" | "UPDATE" | "DELETE";
+  new?: Partial<SweepRecord> | null;
+  old?: Partial<SweepRecord> | null;
+};
+
+const SWEEP_STATUSES = ["pending", "signed", "broadcast", "confirmed", "failed"] as const;
+
 export function AdminSweepPanel({ wallets, recentSweeps }: { wallets: ReceivingWalletRecord[]; recentSweeps: SweepRecord[] }) {
+  const router = useRouter();
   const [selectedWallet, setSelectedWallet] = useState("");
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState("");
-  const [sweeping, setSweeping] = useState(false);
+  const [, startTransition] = useTransition();
+
+  const [sweeps, setSweeps] = useState<SweepRecord[]>(recentSweeps);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [hashDrafts, setHashDrafts] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setSweeps(recentSweeps);
+  }, [recentSweeps]);
+
+  const handleRealtime = useCallback((payload: SweepPayload) => {
+    setSweeps((prev) => {
+      if (payload.eventType === "INSERT" && payload.new?.id) {
+        if (prev.some((s) => s.id === payload.new!.id)) return prev;
+        return [payload.new as SweepRecord, ...prev];
+      }
+      if (payload.eventType === "UPDATE" && payload.new?.id) {
+        return prev.map((s) => (s.id === payload.new!.id ? { ...s, ...payload.new } : s));
+      }
+      if (payload.eventType === "DELETE" && payload.old?.id) {
+        return prev.filter((s) => s.id !== payload.old!.id);
+      }
+      return prev;
+    });
+  }, []);
+
+  useRealtime<SweepPayload>("admin-sweeps-live", "*", "sweep_transactions", handleRealtime);
 
   const activeWallets = wallets.filter((w) => w.active);
 
-  const handleSweep = async () => {
+  const handleSweep = () => {
     if (!selectedWallet || !toAddress || !amount) return;
-    setSweeping(true);
-    try {
-      const formData = new FormData();
-      formData.set("walletId", selectedWallet);
-      formData.set("toAddress", toAddress);
-      formData.set("amount", amount);
-      // Calls server action to record sweep request
-      const res = await fetch("/api/admin/sweep", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletId: selectedWallet, toAddress, amount }),
-      });
-      if (!res.ok) throw new Error("Sweep request failed");
-      setAmount("");
-      setToAddress("");
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSweeping(false);
-    }
+    startTransition(async () => {
+      const res = await createSweepRequest(selectedWallet, toAddress, amount);
+      if (res.success) {
+        toast.success("Sweep request created — sign & broadcast it with your wallet");
+        setAmount("");
+        setToAddress("");
+        setSelectedWallet("");
+        router.refresh();
+      } else {
+        toast.error(res.error);
+      }
+    });
   };
 
-  const statusBadge = (status: string) => {
-    const map: Record<string, { variant: "success" | "warning" | "error" | "info"; label: string }> = {
-      pending: { variant: "info", label: "Pending" },
-      signed: { variant: "warning", label: "Signed" },
-      broadcast: { variant: "warning", label: "Broadcast" },
-      confirmed: { variant: "success", label: "Confirmed" },
-      failed: { variant: "error", label: "Failed" },
-    };
-    const s = map[status] ?? { variant: "info", label: status };
-    return <Badge variant={s.variant} className="text-xs">{s.label}</Badge>;
+  const handleStatusChange = (sweepId: string, status: string) => {
+    setUpdatingId(sweepId);
+    startTransition(async () => {
+      const res = await updateSweepStatus(sweepId, status, hashDrafts[sweepId] ?? "");
+      setUpdatingId(null);
+      if (res.success) {
+        toast.success(`Sweep marked ${status}`);
+        router.refresh();
+      } else {
+        toast.error(res.error);
+      }
+    });
   };
 
-  return (
+  const saveTxHash = (sweep: SweepRecord) => {
+    const hash = (hashDrafts[sweep.id] ?? "").trim();
+    if (!hash) return;
+    setUpdatingId(sweep.id);
+    startTransition(async () => {
+      const res = await updateSweepStatus(sweep.id, sweep.status, hash);
+      setUpdatingId(null);
+      if (res.success) {
+        toast.success("Transaction hash saved");
+        router.refresh();
+      } else {
+        toast.error(res.error);
+      }
+    });
+  };
+
+    return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader>
@@ -120,13 +169,9 @@ export function AdminSweepPanel({ wallets, recentSweeps }: { wallets: ReceivingW
             fullWidth
             className="bg-gradient-to-r from-brand-500 to-brand-700 text-white"
             onClick={handleSweep}
-            disabled={!selectedWallet || !toAddress || !amount || sweeping}
+            disabled={!selectedWallet || !toAddress || !amount}
           >
-            {sweeping ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
-            ) : (
-              <><Send className="h-4 w-4" /> Initiate Sweep</>
-            )}
+            <Send className="h-4 w-4" /> Initiate Sweep
           </Button>
 
           <p className="text-xs text-slate-400">
@@ -138,17 +183,32 @@ export function AdminSweepPanel({ wallets, recentSweeps }: { wallets: ReceivingW
       <Card>
         <CardHeader>
           <CardTitle>Recent Sweeps</CardTitle>
-          <CardDescription>Last {recentSweeps.length} transactions</CardDescription>
+          <CardDescription>
+            Last {sweeps.length} transaction{sweeps.length !== 1 ? "s" : ""} · updates live
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {recentSweeps.length === 0 ? (
+          {sweeps.length === 0 ? (
             <p className="text-sm text-slate-400">No sweep transactions yet.</p>
           ) : (
-            recentSweeps.slice(0, 10).map((s) => (
+            sweeps.slice(0, 10).map((s) => (
               <div key={s.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="flex items-center justify-between mb-1">
+                <div className="mb-1 flex items-center justify-between gap-2">
                   <span className="text-xs font-medium text-slate-700">{s.amount} {s.token_symbol}</span>
-                  {statusBadge(s.status)}
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={s.status}
+                      disabled={updatingId === s.id}
+                      onChange={(e) => handleStatusChange(s.id, e.target.value)}
+                      aria-label={`Update status of sweep ${s.id.slice(0, 8)}`}
+                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none transition focus:border-brand-500 disabled:opacity-50"
+                    >
+                      {SWEEP_STATUSES.map((st) => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+                    {updatingId === s.id && <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-500" aria-hidden="true" />}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Wallet className="h-3 w-3" />
@@ -156,19 +216,45 @@ export function AdminSweepPanel({ wallets, recentSweeps }: { wallets: ReceivingW
                   <span>→</span>
                   <span className="font-mono">{s.to_address.slice(0, 6)}...{s.to_address.slice(-4)}</span>
                 </div>
-                <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
+                <div className="mt-1 flex items-center justify-between gap-2 text-xs text-slate-400">
                   <span>{formatDistanceToNow(new Date(s.created_at), { addSuffix: true })}</span>
-                  {s.tx_hash && (
-                    <button
-                      onClick={() => window.open(`https://etherscan.io/tx/${s.tx_hash}`, "_blank")}
+                  {s.tx_hash ? (
+                    <a
+                      href={`https://etherscan.io/tx/${s.tx_hash}`}
+                      target="_blank"
+                      rel="noreferrer"
                       className="flex items-center gap-1 text-brand-600 hover:text-brand-700"
                     >
                       <ExternalLink className="h-3 w-3" /> View
-                    </button>
-                  )}
+                    </a>
+                  ) : s.status === "confirmed" || s.status === "broadcast" ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={hashDrafts[s.id] ?? ""}
+                        onChange={(e) => setHashDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
+                        placeholder="tx hash"
+                        aria-label={`Transaction hash for sweep ${s.id.slice(0, 8)}`}
+                        className="w-40 rounded-md border border-slate-200 bg-white px-2 py-0.5 font-mono text-[11px] text-slate-700 outline-none focus:border-brand-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => saveTxHash(s)}
+                        disabled={updatingId === s.id || !(hashDrafts[s.id] ?? "").trim()}
+                        className="rounded-md bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-white transition hover:bg-slate-700 disabled:opacity-40"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
                 {s.error_message && (
                   <p className="mt-1 text-xs text-red-600">{s.error_message}</p>
+                )}
+                {s.admins?.profiles?.full_name && (
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    by {s.admins.profiles.full_name}
+                  </p>
                 )}
               </div>
             ))

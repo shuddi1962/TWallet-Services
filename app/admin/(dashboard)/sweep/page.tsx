@@ -1,6 +1,8 @@
 import { getAdminReceivingWallets, getAdminSweepTransactions } from "@/lib/admin/actions";
 import { AdminSweepPanel } from "@/components/admin/sweep-panel";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminSweepPage() {
   const { wallets } = await getAdminReceivingWallets();
   const { sweeps } = await getAdminSweepTransactions();

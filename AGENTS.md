@@ -207,6 +207,7 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Realtime roles** — `role_permissions` + `admins` channels keep every open dashboard in sync (permission toggles, promotions, role changes).
 - **Promotion fixed** — roles page is now `force-dynamic` (was statically cached, so new admins never appeared without a hard reload); panel refreshes on success + realtime.
 - **Authorization hardening** — `addAdminUser`, `updateAdminRole`, `updateRolePermissions`, `updateAdminPermissions` all require the caller to be a super admin (`requireSuperAdminAction`); super admin roles/permissions cannot be modified.
+- **Sweep to Treasury live** — migration `202608030002_sweep_live.sql` (applied): `sweep_transactions` added to realtime publication; audit enum values `sweep_initiated` / `sweep_status_updated`. `createSweepRequest` server action (super-admin guarded, records pending sweep with current admin, audit log) replaces the raw fetch in `sweep-panel.tsx`; `updateSweepStatus` lets admins move a sweep pending → signed → broadcast → confirmed/failed and attach a tx hash (etherscan link appears). Panel subscribes to `sweep_transactions` realtime (new sweeps + status changes appear instantly), toasts success/errors, clears the form, page is `force-dynamic`.
 - **Standing instruction** — user confirmed: commit → push → deploy to Vercel after every completed task (see Git / Commits).
 
 ### Known Issues
