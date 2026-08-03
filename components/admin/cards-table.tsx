@@ -24,6 +24,7 @@ interface CardProduct {
   currency?: string;
   active?: boolean;
   archived?: boolean;
+  color?: string | null;
   created_at: string;
 }
 
@@ -33,7 +34,55 @@ type CardPayload = {
   old?: CardProduct | null;
 };
 
-const emptyForm = { name: "", type: "virtual", price: "", currency: "USD", description: "" };
+const PRESET_COLORS = [
+  "#2563eb",
+  "#0f172a",
+  "#7c3aed",
+  "#b45309",
+  "#6d28d9",
+  "#0891b2",
+  "#dc2626",
+  "#059669",
+  "#db2777",
+  "#1d4ed8",
+];
+
+const emptyForm = { name: "", type: "virtual", price: "", currency: "USD", description: "", color: "#2563eb" };
+
+function ColorPicker({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
+  return (
+    <div>
+      <span className="text-xs text-body">Card color</span>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {PRESET_COLORS.map((hex) => (
+          <button
+            key={hex}
+            type="button"
+            onClick={() => onChange(hex)}
+            aria-label={`Set card color ${hex}`}
+            className={`h-7 w-7 rounded-full border-2 transition-transform hover:scale-110 ${
+              value.toLowerCase() === hex.toLowerCase() ? "border-black scale-110" : "border-transparent"
+            }`}
+            style={{ background: hex }}
+          />
+        ))}
+        <label
+          className="flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-surface-300 text-[10px] font-bold text-body hover:border-primary"
+          title="Custom color"
+        >
+          +
+          <input
+            type="color"
+            value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : "#2563eb"}
+            onChange={(e) => onChange(e.target.value)}
+            className="sr-only"
+          />
+        </label>
+        <span className="font-mono text-[11px] text-body">{value.toUpperCase()}</span>
+      </div>
+    </div>
+  );
+}
 
 export function AdminCardsTable({ products: initial }: { products: CardProduct[] }) {
   const router = useRouter();
@@ -98,6 +147,7 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
       price,
       currency: form.currency || "USD",
       description: form.description.trim() || undefined,
+      color: form.color,
     });
     setSaving(false);
     if (res.success) {
@@ -119,6 +169,7 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
       price: price != null ? String(price) : "",
       currency: product.currency ?? "USD",
       description: "",
+      color: product.color ?? "#2563eb",
     });
     setEditActive(product.active ?? true);
   };
@@ -135,6 +186,7 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
       price,
       currency: editForm.currency || "USD",
       active: editActive,
+      color: editForm.color,
     });
     setEditBusy(false);
     if (res.success) {
@@ -203,7 +255,18 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
                   const active = product.active ?? true;
                   return (
                     <tr key={product.id} className="border-b border-surface-100 hover:bg-surface-50 transition-colors">
-                      <td className="py-3 px-4 font-medium text-heading">{product.name}</td>
+                      <td className="py-3 px-4 font-medium text-heading">
+                        <span className="inline-flex items-center gap-2">
+                          {product.color && (
+                            <span
+                              className="inline-block h-3.5 w-3.5 rounded-full ring-1 ring-black/10"
+                              style={{ background: product.color }}
+                              aria-hidden="true"
+                            />
+                          )}
+                          {product.name}
+                        </span>
+                      </td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                           {product.type}
@@ -345,6 +408,7 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
                   className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </label>
+              <ColorPicker value={form.color} onChange={(color) => setForm((f) => ({ ...f, color }))} />
               <button
                 onClick={() => void handleAdd()}
                 disabled={saving}
@@ -426,6 +490,7 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
                 />
                 Active — visible to users in the order catalog
               </label>
+              <ColorPicker value={editForm.color} onChange={(color) => setEditForm((f) => ({ ...f, color }))} />
               <div className="flex gap-3 pt-1">
                 <button
                   onClick={() => void handleEdit()}

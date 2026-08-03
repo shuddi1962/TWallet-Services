@@ -1580,6 +1580,7 @@ export type Database = {
           annual_fee_usdc: number
           archived: boolean
           card_art_url: string | null
+          color: string | null
           created_at: string
           currency: string
           description: string
@@ -1599,6 +1600,7 @@ export type Database = {
           annual_fee_usdc?: number
           archived?: boolean
           card_art_url?: string | null
+          color?: string | null
           created_at?: string
           currency?: string
           description: string
@@ -1618,6 +1620,7 @@ export type Database = {
           annual_fee_usdc?: number
           archived?: boolean
           card_art_url?: string | null
+          color?: string | null
           created_at?: string
           currency?: string
           description?: string

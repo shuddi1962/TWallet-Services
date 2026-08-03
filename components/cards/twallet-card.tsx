@@ -6,6 +6,7 @@ import type { CardFinish } from "@/lib/cards";
 
 export type CardFaceProps = {
   finish?: CardFinish;
+  customColor?: string;
   holderName?: string;
   panDisplay?: string;
   expiry?: string;
@@ -124,8 +125,40 @@ function Chip({ gradient }: { gradient: string }) {
   );
 }
 
+function hexToRgb(hex: string): [number, number, number] {
+  const clean = hex.replace("#", "");
+  const full =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : clean;
+  const n = parseInt(full.slice(0, 6) || "000000", 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function shade(hex: string, percent: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  const t = percent < 0 ? 0 : 255;
+  const p = Math.abs(percent) / 100;
+  const shift = (c: number) => Math.round((t - c) * p + c);
+  return `rgb(${shift(r)}, ${shift(g)}, ${shift(b)})`;
+}
+
+function themeForColor(hex: string): { front: string; back: string; accent: string; chip: string; label: string } {
+  return {
+    front: `linear-gradient(145deg, ${shade(hex, -45)} 0%, ${hex} 45%, ${shade(hex, 8)} 70%, ${shade(hex, 22)} 100%)`,
+    back: `linear-gradient(145deg, ${shade(hex, -55)} 0%, ${shade(hex, -25)} 100%)`,
+    accent: shade(hex, 55),
+    chip: "linear-gradient(135deg,#fde68a,#d97706)",
+    label: "CUSTOM",
+  };
+}
+
 export function TwalletCard({
   finish = "sapphire",
+  customColor,
   holderName = "CARDHOLDER",
   panDisplay = "•••• •••• •••• 4281",
   expiry = "08/29",
@@ -138,7 +171,10 @@ export function TwalletCard({
   defaultFlipped = false,
 }: CardFaceProps) {
   const [flipped, setFlipped] = useState(defaultFlipped);
-  const theme = FINISH[finish] ?? FINISH.sapphire;
+  const theme =
+    customColor && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(customColor)
+      ? themeForColor(customColor)
+      : FINISH[finish] ?? FINISH.sapphire;
 
   return (
     <div className={cn("w-full max-w-[380px]", className)} style={{ perspective: "1400px" }}>

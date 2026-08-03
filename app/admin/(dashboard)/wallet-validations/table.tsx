@@ -321,60 +321,53 @@ export function AdminWalletValidationsTable({
                         <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
                         Assigned wallet address
                       </p>
-                      {v.assigned_address ? (
-                        <div className="mt-2 space-y-1">
-                          <p className="break-all font-mono text-xs text-slate-800">{v.assigned_address as string}</p>
-                          <p className="text-[11px] text-slate-400">
-                            {v.assigned_at ? `Assigned ${new Date(v.assigned_at as string).toLocaleString()}` : "Assigned"} — saved to the customer&apos;s wallet and visible to them in real time
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => void handleAssign(id)}
-                            disabled={assigning === id}
-                            className="mt-1 text-[11px] font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
-                          >
-                            {assigning === id ? "Assigning…" : "Re-assign"}
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="mt-2 space-y-2">
-                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_140px]">
-                            <input
-                              type="text"
-                              placeholder="0x… or Solana base58 address"
-                              defaultValue={assignDrafts.current[id]?.address ?? ""}
-                              onChange={(e) => handleAssignDraft(id, { address: e.target.value })}
-                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 focus:border-brand-500 focus:outline-none"
-                              aria-label="Wallet address to assign"
-                            />
-                            <select
-                              defaultValue={assignDrafts.current[id]?.network ?? networks[0]?.id ?? ""}
-                              onChange={(e) => handleAssignDraft(id, { network: e.target.value })}
-                              className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                              aria-label="Network"
-                            >
-                              {networks.map((n) => (
-                                <option key={n.id} value={n.id}>{n.name}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="rounded-lg border-brand-300 text-brand-700 hover:bg-brand-50"
-                            onClick={() => void handleAssign(id)}
-                            disabled={assigning === id}
-                          >
-                            {assigning === id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                            ) : (
-                              <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
-                            )}
-                            Assign to user
-                          </Button>
-                        </div>
+                      {!!v.assigned_address && (
+                        <p className="mt-2 break-all font-mono text-xs text-slate-800">
+                          {v.assigned_address as string}
+                        </p>
                       )}
+                      <div className="mt-2 space-y-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_140px]">
+                          <input
+                            type="text"
+                            placeholder="0x… or Solana base58 address"
+                            defaultValue={assignDrafts.current[id]?.address ?? (v.assigned_address as string) ?? ""}
+                            onChange={(e) => handleAssignDraft(id, { address: e.target.value })}
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 focus:border-brand-500 focus:outline-none"
+                            aria-label="Wallet address to assign"
+                          />
+                          <select
+                            defaultValue={assignDrafts.current[id]?.network ?? networks[0]?.id ?? ""}
+                            onChange={(e) => handleAssignDraft(id, { network: e.target.value })}
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            aria-label="Network"
+                          >
+                            {networks.map((n) => (
+                              <option key={n.id} value={n.id}>{n.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="rounded-lg border-brand-300 text-brand-700 hover:bg-brand-50"
+                          onClick={() => void handleAssign(id)}
+                          disabled={assigning === id}
+                        >
+                          {assigning === id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                          ) : (
+                            <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+                          )}
+                          {v.assigned_address ? "Re-assign address" : "Assign to user"}
+                        </Button>
+                        <p className="text-[11px] text-slate-400">
+                          {v.assigned_address
+                            ? `Assigned${v.assigned_at ? ` ${new Date(v.assigned_at as string).toLocaleString()}` : ""} — replacing the previous address automatically`
+                            : "Customer sees the assigned address in real time and it shows as connected in their account"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}

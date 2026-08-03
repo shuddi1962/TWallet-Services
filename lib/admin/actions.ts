@@ -943,9 +943,8 @@ export async function createCardProduct(data: {
   currency?: string;
   description?: string;
   features?: string[];
-  delivery_estimate?: string;
   active?: boolean;
-  image_url?: string;
+  color?: string;
 }): Promise<ActionResult> {
   const name = data.name.trim();
   if (!name) return { success: false, error: "Card name is required" };
@@ -965,9 +964,8 @@ export async function createCardProduct(data: {
     currency: data.currency ?? "USD",
     description: data.description?.trim() ?? "Card product",
     features: data.features ?? [],
-    delivery_estimate: data.delivery_estimate ?? null,
     active: data.active ?? true,
-    image_url: data.image_url ?? null,
+    color: data.color ?? null,
   } as any);
   if (error) return { success: false, error: error.message as string };
   revalidatePath("/admin/cards");
@@ -983,13 +981,22 @@ export async function updateCardProduct(
     currency?: string;
     description?: string;
     features?: string[];
-    delivery_estimate?: string;
     active?: boolean;
-    image_url?: string;
+    color?: string;
   },
 ): Promise<ActionResult> {
+  const update: Record<string, unknown> = {};
+  if (data.name !== undefined) update.name = data.name;
+  if (data.type !== undefined) update.type = data.type;
+  if (data.price !== undefined) update.price_usdc = data.price;
+  if (data.currency !== undefined) update.currency = data.currency;
+  if (data.description !== undefined) update.description = data.description;
+  if (data.features !== undefined) update.features = data.features;
+  if (data.active !== undefined) update.active = data.active;
+  if (data.color !== undefined) update.color = data.color || null;
+
   const supabase: any = await sb();
-  const { error }: any = await supabase.from("card_products").update(data as any).eq("id", id);
+  const { error }: any = await supabase.from("card_products").update(update as any).eq("id", id);
   if (error) return { success: false, error: error.message as string };
   revalidatePath("/admin/cards");
   return { success: true };
@@ -1056,12 +1063,11 @@ export async function duplicateCardProduct(id: string): Promise<ActionResult> {
     name: (orig.name ?? "Card") + " (copy)",
     slug,
     type: orig.type,
-    price_usdc: orig.price_usdc ?? orig.price,
+    price_usdc: Number(orig.price_usdc ?? 0),
     currency: orig.currency,
     description: orig.description ?? "Card product",
     features: orig.features,
-    delivery_estimate: orig.delivery_estimate,
-    image_url: orig.image_url,
+    color: orig.color ?? null,
     active: false,
   } as any);
   if (insertError) return { success: false, error: insertError.message as string };

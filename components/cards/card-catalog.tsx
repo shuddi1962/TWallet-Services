@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createOrder } from "@/features/orders/server/actions";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
+import { useRealtime } from "@/lib/hooks/use-realtime";
 import { TwalletCard, finishForSlug, networkForSlug } from "@/components/cards/twallet-card";
 
 export interface CatalogProduct {
@@ -19,7 +20,15 @@ export interface CatalogProduct {
   price_usdc: number;
   annual_fee_usdc: number | null;
   features: string[] | string | null;
+  active?: boolean;
+  color?: string | null;
 }
+
+type ProductPayload = {
+  eventType: "INSERT" | "UPDATE" | "DELETE";
+  new?: CatalogProduct | null;
+  old?: CatalogProduct | null;
+};
 
 type OrderResult =
   | { error: string }
@@ -39,6 +48,36 @@ function parseFeatures(features: CatalogProduct["features"]): string[] {
 export function CardCatalog({ products }: { products: CatalogProduct[] }) {
   const router = useRouter();
   const [ordering, setOrdering] = useState<string | null>(null);
+  const [liveProducts, setLiveProducts] = useState<CatalogProduct[]>(products);
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    loaded.current = true;
+    setLiveProducts(products);
+  }, [products]);
+
+  // Live: admin edits (color, price, active) and new cards flow into the
+  // catalog immediately without a page refresh.
+  const handleRealtime = useCallback((payload: ProductPayload) => {
+    if (payload.eventType === "DELETE") {
+      setLiveProducts((prev) => prev.filter((p) => p.id !== payload.old?.id));
+      return;
+    }
+    const incoming = payload.new;
+    if (!incoming) return;
+
+    setLiveProducts((prev) => {
+      const idx = prev.findIndex((p) => p.id === incoming.id);
+      if (idx === -1) {
+        if (incoming.active === false) return prev;
+        return [incoming, ...prev];
+      }
+      if (incoming.active === false) return prev.filter((p) => p.id !== incoming.id);
+      return prev.map((p, i) => (i === idx ? { ...p, ...incoming } : p));
+    });
+  }, []);
+
+  useRealtime<ProductPayload>("catalog-products-live", "*", "card_products", handleRealtime);
 
   const handleOrder = async (product: CatalogProduct) => {
     setOrdering(product.id);
@@ -64,7 +103,7 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
     }
   };
 
-  if (!products.length) {
+  if (!liveProducts.length) {
     return (
       <div className="rounded-3xl border border-surface-200 bg-white px-6 py-16 text-center">
         <p className="text-lg font-medium text-surface-900">No cards available</p>
@@ -90,7 +129,7 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {products.map((product, idx) => {
+        {liveProducts.map((product, idx) => {
           const features = parseFeatures(product.features);
           const isPopular = product.slug === "physical-standard" || product.slug === "virtual-premium";
           const finish = finishForSlug(product.slug);
@@ -116,6 +155,7 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
               <div className="p-4 pb-0">
                 <TwalletCard
                   finish={finish}
+                  customColor={product.color ?? undefined}
                   holderName="YOUR NAME"
                   panDisplay={`${first4} •••• •••• ${last4}`}
                   expiry="08/29"
