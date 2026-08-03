@@ -2,7 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, CreditCard, ShoppingBag, Wallet, User } from "lucide-react";
+import { useTransition } from "react";
+import { Home, CreditCard, ShoppingBag, Wallet, User, LogOut, Loader2 } from "lucide-react";
+import { signOut } from "@/features/auth/server/actions";
 import { cn } from "@/lib/utils/cn";
 
 const tabs = [
@@ -15,6 +17,7 @@ const tabs = [
 
 export function BottomTabBar() {
   const pathname = usePathname();
+  const [pending, startTransition] = useTransition();
 
   return (
     <nav
@@ -53,6 +56,19 @@ export function BottomTabBar() {
             </Link>
           );
         })}
+        <button
+          type="button"
+          role="tab"
+          aria-label="Log out"
+          disabled={pending}
+          onClick={() => startTransition(() => void signOut())}
+          className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors text-slate-400 hover:text-slate-600 disabled:opacity-60"
+        >
+          <div className="flex h-8 w-12 items-center justify-center rounded-xl transition-colors">
+            {pending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <LogOut className="h-5 w-5" aria-hidden="true" />}
+          </div>
+          <span className="truncate">{pending ? "Leaving…" : "Log out"}</span>
+        </button>
       </div>
     </nav>
   );

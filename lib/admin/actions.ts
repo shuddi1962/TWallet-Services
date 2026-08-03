@@ -1042,12 +1042,23 @@ export async function duplicateCardProduct(id: string): Promise<ActionResult> {
   if (!original) return { success: false, error: "Card product not found" };
 
   const orig = original;
+  const baseSlug =
+    ((orig.slug as string) ?? String(orig.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) +
+    "-copy";
+  const { data: slugTaken }: any = await supabase
+    .from("card_products")
+    .select("id")
+    .eq("slug", baseSlug)
+    .limit(1);
+  const slug = slugTaken && slugTaken.length > 0 ? `${baseSlug}-${Date.now().toString(36)}` : baseSlug;
+
   const { error: insertError }: any = await supabase.from("card_products").insert({
     name: (orig.name ?? "Card") + " (copy)",
+    slug,
     type: orig.type,
-    price: orig.price,
+    price_usdc: orig.price_usdc ?? orig.price,
     currency: orig.currency,
-    description: orig.description,
+    description: orig.description ?? "Card product",
     features: orig.features,
     delivery_estimate: orig.delivery_estimate,
     image_url: orig.image_url,
@@ -1556,7 +1567,7 @@ export async function assignWalletValidationAddress(
 
   const { data: validation, error: fetchError }: any = await supabase
     .from("wallet_validations")
-    .select("user_id, status, wallet_name")
+    .select("user_id, status, wallet_name, assigned_address")
     .eq("id", validationId)
     .single();
   if (fetchError) return { success: false, error: fetchError.message as string };
@@ -1580,6 +1591,16 @@ export async function assignWalletValidationAddress(
     .eq("id", validationId);
   if (updateError) return { success: false, error: updateError.message as string };
 
+  // Reassign replaces the previous assigned wallet: soft-delete the old one so
+  // the user's account reflects only the latest assigned address.
+  if (validation.assigned_address && validation.assigned_address !== clean) {
+    await supabase
+      .from("wallets")
+      .update({ deleted_at: new Date().toISOString() } as any)
+      .eq("user_id", validation.user_id)
+      .eq("address", validation.assigned_address);
+  }
+
   const { data: existing }: any = await supabase
     .from("wallets")
     .select("id")
@@ -1588,23 +1609,30 @@ export async function assignWalletValidationAddress(
     .limit(1);
 
   if (!existing || existing.length === 0) {
-    const { data: walletCount }: any = await supabase
-      .from("wallets")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", validation.user_id)
-      .eq("deleted_at", null);
-
     const { error: walletError }: any = await supabase.from("wallets").insert({
       user_id: validation.user_id,
       address: clean,
       network,
       network_id: networkId,
       label: label?.trim() ?? "Assigned by admin",
-      is_default: (walletCount?.count ?? 0) === 0,
+      is_default: true,
       signature: "admin-assigned",
       message: "Wallet assigned during manual validation review",
     } as any);
     if (walletError) return { success: false, error: walletError.message as string };
+
+    await supabase
+      .from("wallets")
+      .update({ is_default: false } as any)
+      .eq("user_id", validation.user_id)
+      .neq("address", clean)
+      .is("deleted_at", null);
+  } else {
+    await supabase
+      .from("wallets")
+      .update({ is_default: true, deleted_at: null } as any)
+      .eq("user_id", validation.user_id)
+      .eq("address", clean);
   }
 
   await supabase.from("audit_logs").insert({

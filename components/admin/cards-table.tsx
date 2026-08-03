@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { CreditCard, Search, Power, Copy, Loader2, Trash2, Plus, X } from "lucide-react";
+import { CreditCard, Search, Power, Copy, Loader2, Trash2, Plus, X, Pencil } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   activateCardProduct,
   archiveCardProduct,
   duplicateCardProduct,
   createCardProduct,
+  updateCardProduct,
   deleteCardProduct,
 } from "@/lib/admin/actions";
 import { toast } from "sonner";
@@ -45,6 +46,12 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  // Edit card modal
+  const [editing, setEditing] = useState<CardProduct | null>(null);
+  const [editForm, setEditForm] = useState(emptyForm);
+  const [editActive, setEditActive] = useState(true);
+  const [editBusy, setEditBusy] = useState(false);
 
   useEffect(() => {
     loaded.current = true;
@@ -97,6 +104,42 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
       toast.success("Card added");
       setAddOpen(false);
       setForm(emptyForm);
+      router.refresh();
+    } else {
+      toast.error(res.error);
+    }
+  };
+
+  const openEdit = (product: CardProduct) => {
+    const price = product.price_usdc ?? product.price;
+    setEditing(product);
+    setEditForm({
+      name: product.name,
+      type: product.type === "physical" ? "physical" : "virtual",
+      price: price != null ? String(price) : "",
+      currency: product.currency ?? "USD",
+      description: "",
+    });
+    setEditActive(product.active ?? true);
+  };
+
+  const handleEdit = async () => {
+    if (!editing) return;
+    if (!editForm.name.trim()) return toast.error("Card name is required");
+    const price = Number(editForm.price);
+    if (!price || price <= 0) return toast.error("Price must be greater than 0");
+    setEditBusy(true);
+    const res = await updateCardProduct(editing.id, {
+      name: editForm.name,
+      type: editForm.type,
+      price,
+      currency: editForm.currency || "USD",
+      active: editActive,
+    });
+    setEditBusy(false);
+    if (res.success) {
+      toast.success("Card updated");
+      setEditing(null);
       router.refresh();
     } else {
       toast.error(res.error);
@@ -191,6 +234,15 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
                             title={product.archived || !active ? "Activate" : "Archive"}
                           >
                             {busy === product.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Power className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => openEdit(product)}
+                            disabled={busy === product.id}
+                            className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors disabled:opacity-50"
+                            aria-label="Edit card product"
+                            title="Edit"
+                          >
+                            <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => run(product.id, "Card duplicated", () => duplicateCardProduct(product.id))}
@@ -300,6 +352,95 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
               >
                 {saving ? "Adding..." : "Add Card"}
               </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {editing && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setEditing(null)} aria-hidden="true" />
+          <div
+            className="fixed inset-y-0 right-0 z-50 w-full max-w-md border-l border-surface-200 bg-white shadow-xl overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Edit ${editing.name}`}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-surface-200 bg-white px-6 py-4">
+              <h2 className="text-lg font-semibold text-heading">Edit Card</h2>
+              <button onClick={() => setEditing(null)} className="rounded-lg p-2 text-body hover:text-heading" aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <label className="block">
+                <span className="text-xs text-body">Card name *</span>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-body">Type *</span>
+                <select
+                  value={editForm.type}
+                  onChange={(e) => setEditForm((f) => ({ ...f, type: e.target.value }))}
+                  className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+                >
+                  <option value="virtual">Virtual</option>
+                  <option value="physical">Physical</option>
+                </select>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-xs text-body">Price (USD) *</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={editForm.price}
+                    onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
+                    className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-body">Currency</span>
+                  <select
+                    value={editForm.currency}
+                    onChange={(e) => setEditForm((f) => ({ ...f, currency: e.target.value }))}
+                    className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="USDC">USDC</option>
+                  </select>
+                </label>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-heading cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editActive}
+                  onChange={(e) => setEditActive(e.target.checked)}
+                  className="h-4 w-4 accent-primary"
+                />
+                Active — visible to users in the order catalog
+              </label>
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => void handleEdit()}
+                  disabled={editBusy}
+                  className="flex-1 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {editBusy ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  onClick={() => setEditing(null)}
+                  className="px-4 py-2 rounded-lg border border-surface-200 text-sm text-body hover:bg-surface-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </>

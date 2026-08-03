@@ -1,12 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Wallet, ShieldCheck, AlertTriangle, Loader2, X, ChevronDown, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ManualValidation } from "@/components/wallet/manual-validation";
 import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { createClient } from "@/lib/supabase/client";
+
+type AssignedWallet = {
+  id: string;
+  address: string;
+  network: string;
+  wallet_name: string;
+  assigned_at: string | null;
+};
 
 export default function WalletPage() {
   const { isConnected, address } = useWalletConnect();
@@ -15,6 +24,68 @@ export default function WalletPage() {
   const [mode, setMode] = useState<"choose" | "web3" | "manual">("choose");
   const [showWeb3Details, setShowWeb3Details] = useState(false);
   const [web3Busy, setWeb3Busy] = useState(false);
+  const [assigned, setAssigned] = useState<AssignedWallet | null>(null);
+  const assignedLoaded = useRef(false);
+
+  // Auto-connect: when an admin assigns a wallet address after manual
+  // validation, the wallet is written to this account and reflects here in
+  // real time (the admin-assigned row is marked default).
+  const loadAssigned = useCallback(async () => {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("wallets")
+      .select("id, address, network, label, message")
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      setAssigned({
+        id: data.id as string,
+        address: data.address as string,
+        network: (data.network as string) ?? "",
+        wallet_name: ((data.label as string) ?? "Wallet") as string,
+        assigned_at: null,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (assignedLoaded.current) return;
+    assignedLoaded.current = true;
+    void loadAssigned();
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("my-assigned-wallet-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wallet_validations" },
+        () => {
+          void loadAssigned();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wallets" },
+        () => {
+          void loadAssigned();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [loadAssigned]);
 
   useEffect(() => {
     if (searchParams.get("connect") === "1") {
@@ -37,21 +108,33 @@ export default function WalletPage() {
         </p>
       </div>
 
-      {isConnected && address && (
+      {(isConnected && address) || assigned ? (
         <Card className="border-emerald-200 bg-emerald-50/60">
           <CardContent className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.7)]" />
               <div>
                 <p className="text-sm font-semibold text-emerald-800">Wallet connected</p>
-                <p className="font-mono text-xs text-emerald-700">
-                  {address.slice(0, 6)}…{address.slice(-4)}
-                </p>
+                {assigned ? (
+                  <>
+                    <p className="font-mono text-xs text-emerald-700">
+                      {assigned.address.slice(0, 6)}…{assigned.address.slice(-4)}
+                    </p>
+                    <p className="text-[11px] text-emerald-600">
+                      {assigned.wallet_name}
+                      {assigned.network ? ` · ${assigned.network}` : ""} · verified by TWallet
+                    </p>
+                  </>
+                ) : (
+                  <p className="font-mono text-xs text-emerald-700">
+                    {address?.slice(0, 6)}…{address?.slice(-4)}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {!open ? (
         <Card className="border-slate-200 bg-white">
