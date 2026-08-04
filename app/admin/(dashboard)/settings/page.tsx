@@ -1,12 +1,21 @@
 "use client";
 
-import { useState, useActionState } from "react";
-import { Save, KeyRound, Check, Eye, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useActionState } from "react";
+import { Save, KeyRound, Check, Eye, Loader2, CloudUpload } from "lucide-react";
 import { toast } from "sonner";
-import { updateSettings } from "@/lib/admin/actions";
+import { updateSettings, getSettings } from "@/lib/admin/actions";
 import { changePassword } from "@/features/auth/server/actions";
+import { createClient } from "@/lib/supabase/client";
 
 const sections = ["General", "Payments", "Security", "Notifications", "KYC"] as const;
+
+const CATEGORY_MAP: Record<string, string> = {
+  General: "general",
+  Payments: "payment",
+  Security: "security",
+  Notifications: "notifications",
+  KYC: "kyc",
+};
 
 type SettingValue = string | number | boolean;
 type SettingField = { label: string; type: "text" | "number" | "toggle" | "select"; options?: string[]; default?: SettingValue };
@@ -61,18 +70,30 @@ const settingsConfig: Record<string, SettingField[]> = {
   ],
 };
 
+function buildDefaults(): Record<string, SettingValue> {
+  const initial: Record<string, SettingValue> = {};
+  for (const [, fields] of Object.entries(settingsConfig)) {
+    for (const field of fields) {
+      initial[field.label] = field.default ?? "";
+    }
+  }
+  return initial;
+}
+
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<(typeof sections)[number]>(sections[0]);
+  const [values, setValues] = useState<Record<string, SettingValue>>(buildDefaults);
   const [saving, setSaving] = useState(false);
-  const [values, setValues] = useState<Record<string, SettingValue>>(() => {
-    const initial: Record<string, SettingValue> = {};
-    for (const [, fields] of Object.entries(settingsConfig)) {
-      for (const field of fields) {
-        initial[field.label] = field.default ?? "";
-      }
-    }
-    return initial;
-  });
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInFlight = useRef(false);
+
+  const valuesRef = useRef(values);
+  valuesRef.current = values;
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
 
   const [pwdState, pwdAction, pwdPending] = useActionState(changePassword, undefined);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -80,18 +101,123 @@ export default function AdminSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
 
-  const handleSave = async () => {
-    setSaving(true);
-    const result = await updateSettings(activeTab.toLowerCase(), Object.fromEntries(
-      settingsConfig[activeTab]?.map((f) => [f.label, values[f.label]]) ?? [],
-    ));
-    setSaving(false);
+  // Load saved values from the DB on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await getSettings();
+      if (cancelled) return;
+      if (!res.success) {
+        toast.error(res.error ?? "Failed to load settings");
+        setLoaded(true);
+        return;
+      }
+      setValues((prev) => {
+        const next = { ...prev };
+        for (const row of res.data) {
+          const tab = Object.entries(CATEGORY_MAP).find(([, v]) => v === row.category)?.[0];
+          if (!tab) continue;
+          const fields = settingsConfig[tab];
+          if (!fields || !row.settings || typeof row.settings !== "object") continue;
+          for (const f of fields) {
+            if (f.label in row.settings) {
+              next[f.label] = row.settings[f.label] as SettingValue;
+            }
+          }
+        }
+        return next;
+      });
+      setLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const persist = useCallback(async (tab: string, snapshot: Record<string, SettingValue>) => {
+    const cat = CATEGORY_MAP[tab] ?? tab.toLowerCase();
+    const payload = Object.fromEntries(
+      settingsConfig[tab]?.map((f) => [f.label, snapshot[f.label]]) ?? [],
+    );
+    saveInFlight.current = true;
+    setAutoSaving(true);
+    const result = await updateSettings(cat, payload);
+    saveInFlight.current = false;
+    setAutoSaving(false);
     if (result.success) {
-      toast.success("Settings saved");
+      setSavedAt(new Date().toLocaleTimeString());
     } else {
       toast.error(result.error ?? "Failed to save settings");
     }
+    return result;
+  }, []);
+
+  // Debounced auto-save on any change.
+  const scheduleSave = useCallback(
+    (tab: string, snapshot: Record<string, SettingValue>) => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        void persist(tab, snapshot);
+      }, 600);
+    },
+    [persist],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, []);
+
+  const handleChange = (label: string, value: SettingValue) => {
+    setValues((prev) => ({ ...prev, [label]: value }));
+    scheduleSave(activeTabRef.current, { ...valuesRef.current, [label]: value });
   };
+
+  const handleSave = async () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setSaving(true);
+    const result = await persist(activeTabRef.current, valuesRef.current);
+    setSaving(false);
+    if (result.success) toast.success("Settings saved");
+  };
+
+  // Real-time sync: reflect changes made in other admin sessions.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("admin-settings-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "system_settings" },
+        (payload: unknown) => {
+          const p = payload as { eventType?: string; new?: Record<string, unknown> | null };
+          const row = p.new ?? {};
+          const category = String(row.category ?? "");
+          if (!category) return;
+          // Skip our own in-flight save for the tab currently being edited.
+          if (CATEGORY_MAP[activeTabRef.current] === category && saveInFlight.current) return;
+          const tab = Object.entries(CATEGORY_MAP).find(([, v]) => v === category)?.[0];
+          if (!tab) return;
+          const fields = settingsConfig[tab];
+          if (!fields || !row.settings || typeof row.settings !== "object") return;
+          const settings = row.settings as Record<string, unknown>;
+          const next = { ...valuesRef.current };
+          let changed = false;
+          for (const f of fields) {
+            if (f.label in settings) {
+              next[f.label] = settings[f.label] as SettingValue;
+              changed = true;
+            }
+          }
+          if (changed) setValues(next);
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleChangePassword = (formData: FormData) => {
     if (newPassword !== confirmPassword) {
@@ -106,22 +232,38 @@ export default function AdminSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-heading">System Settings</h1>
-          <p className="text-sm text-body">Super Admin only</p>
+          <p className="text-sm text-body">Super Admin only — changes save automatically</p>
         </div>
       </div>
 
-      <div className="flex gap-1 bg-surface-100 rounded-lg p-1 w-fit">
-        {sections.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === tab ? "bg-white text-heading shadow-sm" : "text-body hover:text-heading"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-1 bg-surface-100 rounded-lg p-1 w-fit">
+          {sections.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === tab ? "bg-white text-heading shadow-sm" : "text-body hover:text-heading"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 text-xs" aria-live="polite">
+          {autoSaving ? (
+            <span className="inline-flex items-center gap-1.5 text-primary">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Saving…
+            </span>
+          ) : savedAt ? (
+            <span className="inline-flex items-center gap-1.5 text-success">
+              <CloudUpload className="h-3.5 w-3.5" aria-hidden="true" /> Saved · {savedAt}
+            </span>
+          ) : (
+            <span className="text-body">{loaded ? "Changes save automatically" : "Loading…"}</span>
+          )}
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-md p-6">
@@ -133,7 +275,7 @@ export default function AdminSettingsPage() {
               </div>
               {field.type === "toggle" ? (
                 <button
-                  onClick={() => setValues((prev) => ({ ...prev, [field.label]: !prev[field.label] }))}
+                  onClick={() => handleChange(field.label, !values[field.label])}
                   className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                     values[field.label] ? "border-primary bg-primary" : "border-slate-300 bg-slate-200"
                   }`}
@@ -151,7 +293,7 @@ export default function AdminSettingsPage() {
                 <select
                   className="px-3 py-1.5 bg-white border border-surface-200 rounded-lg text-sm text-body"
                   value={String(values[field.label] ?? "")}
-                  onChange={(e) => setValues((prev) => ({ ...prev, [field.label]: e.target.value }))}
+                  onChange={(e) => handleChange(field.label, e.target.value)}
                 >
                   {field.options?.map((opt: string) => (
                     <option key={opt} value={opt}>{opt}</option>
@@ -162,7 +304,7 @@ export default function AdminSettingsPage() {
                   type={field.type}
                   className="px-3 py-1.5 bg-white border border-surface-200 rounded-lg text-sm text-body w-48 text-right"
                   value={String(values[field.label] ?? "")}
-                  onChange={(e) => setValues((prev) => ({ ...prev, [field.label]: e.target.value }))}
+                  onChange={(e) => handleChange(field.label, field.type === "number" ? e.target.value : e.target.value)}
                 />
               )}
             </div>
@@ -172,7 +314,7 @@ export default function AdminSettingsPage() {
         <div className="mt-6 pt-4 border-t border-surface-200 flex justify-end">
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || autoSaving}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />

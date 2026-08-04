@@ -5,9 +5,22 @@ vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("@/lib", () => ({
+  createServerSupabaseClient: vi.fn(),
+}));
+
+vi.mock("@/lib/email", () => ({
+  sendEmail: vi.fn(),
+  buildPaymentReceivedEmail: vi.fn(),
+  buildOrderShippedEmail: vi.fn(),
+  buildShippingUpdateEmail: vi.fn(),
+  buildPasswordResetEmail: vi.fn(),
+}));
+
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { createClient } from "@supabase/supabase-js";
+import { createServerSupabaseClient } from "@/lib";
 import {
   getAdminStats, getRecentOrders, getRecentPayments, getUsers,
   getOrders, getPayments, getCardProducts, getAuditLogs,
@@ -36,6 +49,14 @@ function makeMock() {
 beforeEach(() => {
   vi.clearAllMocks();
   (createClient as any).mockReturnValue(makeMock());
+  (createServerSupabaseClient as any).mockResolvedValue({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: "admin-1", email: "admin@test.com" } },
+        error: null,
+      }),
+    },
+  });
 });
 
 describe("getAdminStats", () => {

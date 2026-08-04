@@ -603,11 +603,46 @@ export async function reactivateUser(userId: string): Promise<ActionResult> {
     data: { user },
   } = await authClient.auth.getUser();
 
-  const { error }: any = await supabase.from("profiles").update({ status: "active" } as any).eq("id", userId);
+  const { error }: any = await supabase
+    .from("profiles")
+    .update({ status: "active", deleted_at: null } as any)
+    .eq("id", userId);
   if (error) return { success: false, error: error.message as string };
 
   await supabase.from("audit_logs").insert({
     action: "user_reactivated",
+    target_type: "profiles",
+    target_id: userId,
+    details: { performed_by: user?.id ?? null },
+  });
+
+  revalidatePath("/admin/users");
+  return { success: true };
+}
+
+/**
+ * Soft-delete a user: marks the profile deleted (status + deleted_at) so the
+ * account is hidden from the default list but all financial records (orders,
+ * payments, cards) are preserved for audit/regulatory purposes. Real-time
+ * UPDATE event keeps the admin users table in sync.
+ */
+export async function deleteUser(userId: string): Promise<ActionResult> {
+  const supabase: any = await sb();
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  if (user?.id === userId) return { success: false, error: "You cannot delete your own account." };
+
+  const { error }: any = await supabase
+    .from("profiles")
+    .update({ status: "deleted", deleted_at: new Date().toISOString() } as any)
+    .eq("id", userId);
+  if (error) return { success: false, error: error.message as string };
+
+  await supabase.from("audit_logs").insert({
+    action: "user_deleted",
     target_type: "profiles",
     target_id: userId,
     details: { performed_by: user?.id ?? null },
@@ -1747,11 +1782,20 @@ export async function updateSettings(
   settings: Record<string, unknown>,
 ): Promise<ActionResult> {
   const supabase: any = await sb();
+  const adminId = await getCurrentAdminId();
   const { error } = await supabase.from("system_settings").upsert(
-    { category, settings },
+    { category, settings, updated_by: adminId ?? null, updated_at: new Date().toISOString() },
     { onConflict: "category" },
   );
   if (error) return { success: false, error: error.message as string };
+
+  await supabase.from("audit_logs").insert({
+    action: "system_setting_changed",
+    target_type: "system_settings",
+    target_id: category,
+    details: { category, updated_by: adminId ?? null },
+  });
+
   revalidatePath("/admin/settings");
   return { success: true };
 }

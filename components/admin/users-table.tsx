@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Eye, Ban, CheckCircle, X } from "lucide-react";
+import { Search, Eye, Ban, CheckCircle, X, Trash2, RotateCcw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
-import { suspendUser, reactivateUser, type ActionResult } from "@/lib/admin/actions";
+import { suspendUser, reactivateUser, deleteUser, type ActionResult } from "@/lib/admin/actions";
 import { DetailDrawer } from "@/components/admin/detail-drawer";
 import { toast } from "sonner";
 
@@ -17,6 +17,7 @@ interface User {
   status: string;
   country: string;
   created_at: string;
+  deleted_at?: string | null;
   user_roles?: { role: string }[];
   wallets?: { address: string }[];
 }
@@ -89,6 +90,20 @@ export function AdminUsersTable({ users: initial }: { users: User[]; count: numb
     setLoading(null);
     if (result.success) {
       toast.success(`User ${action === "suspend" ? "suspended" : "reactivated"}`);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  };
+
+  const handleDelete = async (user: User) => {
+    if (!confirm(`Delete ${user.full_name || user.email}? This hides their account and all associated data from the admin list (records are preserved). You can restore them later.`)) return;
+
+    setLoading(user.id);
+    const result: ActionResult = await deleteUser(user.id);
+    setLoading(null);
+    if (result.success) {
+      toast.success("User deleted");
       router.refresh();
     } else {
       toast.error(result.error);
@@ -224,6 +239,27 @@ export function AdminUsersTable({ users: initial }: { users: User[]; count: numb
                             <CheckCircle className="w-4 h-4" />
                           </button>
                         ) : null}
+                        {user.status === "deleted" ? (
+                          <button
+                            onClick={() => handleAction(user.id, "reactivate")}
+                            disabled={loading === user.id}
+                            className="p-1.5 rounded-lg hover:bg-success/10 text-success transition-colors disabled:opacity-50"
+                            aria-label="Restore user"
+                            title="Restore user"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDelete(user)}
+                            disabled={loading === user.id}
+                            className="p-1.5 rounded-lg hover:bg-error/10 text-error transition-colors disabled:opacity-50"
+                            aria-label="Delete user"
+                            title="Delete user"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelected(user)}
                           className="p-1.5 rounded-lg hover:bg-surface-100 text-body transition-colors"
