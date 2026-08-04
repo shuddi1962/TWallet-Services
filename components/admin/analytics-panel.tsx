@@ -8,7 +8,52 @@ import { useRealtime } from "@/lib/hooks/use-realtime";
 import { AnalyticsCharts } from "./analytics-charts";
 
 type Stats = Awaited<ReturnType<typeof getAdminStats>>;
-type ChartData = Awaited<ReturnType<typeof getAnalyticsChartData>>;
+type ChartRaw = Awaited<ReturnType<typeof getAnalyticsChartData>>;
+type ChartReady = {
+  revenueData: { date: string; revenue: number }[];
+  orderData: { date: string; orders: number }[];
+  userSignups: { date: string; signups: number }[];
+  cardTypes: { name: string; count: number }[];
+};
+
+function localDateKey(d: Date) {
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+function bucketByLocalDay<T extends { created_at?: string }>(
+  records: T[],
+  valueOf?: (r: T) => number
+) {
+  const map = new Map<string, number>();
+  for (const r of records) {
+    if (!r.created_at) continue;
+    const key = localDateKey(new Date(r.created_at));
+    map.set(key, (map.get(key) ?? 0) + (valueOf ? valueOf(r) : 1));
+  }
+  const out: { date: string; value: number }[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const key = localDateKey(d);
+    out.push({ date: key, value: map.get(key) ?? 0 });
+  }
+  return out;
+}
+
+function toChartReady(raw: ChartRaw): ChartReady {
+  return {
+    revenueData: bucketByLocalDay(
+      raw.revenueData as { created_at?: string; amount?: number }[],
+      (r) => r.amount ?? 0
+    ).map((d) => ({ date: d.date, revenue: d.value })),
+    orderData: bucketByLocalDay(raw.orderData).map((d) => ({ date: d.date, orders: d.value })),
+    userSignups: bucketByLocalDay(raw.userSignups).map((d) => ({ date: d.date, signups: d.value })),
+    cardTypes: raw.cardTypes,
+  };
+}
 
 function StatCard({
   icon,
@@ -41,10 +86,10 @@ export function AnalyticsPanel({
   initialChartData,
 }: {
   initialStats: Stats;
-  initialChartData: ChartData;
+  initialChartData: ChartRaw;
 }) {
   const [stats, setStats] = useState<Stats>(initialStats);
-  const [chartData, setChartData] = useState<ChartData>(initialChartData);
+  const [chartData, setChartData] = useState<ChartReady>(() => toChartReady(initialChartData));
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(() => new Date());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,7 +97,7 @@ export function AnalyticsPanel({
   const refresh = useCallback(async () => {
     const [s, c] = await Promise.all([getAdminStats(), getAnalyticsChartData()]);
     setStats(s);
-    setChartData(c);
+    setChartData(toChartReady(c));
     setLastUpdated(new Date());
   }, []);
 

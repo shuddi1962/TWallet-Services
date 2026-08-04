@@ -432,32 +432,11 @@ export async function getAnalyticsChartData() {
       .gte("created_at", thirtyDaysAgo),
   ]);
 
-  // Helper: aggregate records by calendar date using plain JS
-  function aggregateByDate(records: any[], dateField: string, valueField?: string) {
-    const map: Record<string, number> = {};
-    for (const r of records) {
-      const date: string = (r[dateField] as string)?.split("T")[0] ?? "unknown";
-      map[date] = (map[date] ?? 0) + (valueField ? (r[valueField] as number) : 1);
-    }
-    return Object.entries(map)
-      .map(([date, value]) => ({ date, value }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }
-
-  const revenueData = aggregateByDate(revenueRes.data ?? [], "created_at", "amount").map((d) => ({
-    date: d.date,
-    revenue: d.value,
-  }));
-
-  const orderData = aggregateByDate(ordersRes.data ?? [], "created_at").map((d) => ({
-    date: d.date,
-    orders: d.value,
-  }));
-
-  const userSignups = aggregateByDate(signupsRes.data ?? [], "created_at").map((d) => ({
-    date: d.date,
-    signups: d.value,
-  }));
+  // Raw records; the client re-buckets by LOCAL calendar day so charts
+  // match the admin's timezone (avoids UTC day-boundary skew).
+  const revenueData = revenueRes.data ?? [];
+  const orderData = ordersRes.data ?? [];
+  const userSignups = signupsRes.data ?? [];
 
   // Group card orders by product name
   const cardTypeMap: Record<string, number> = {};
