@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils/cn";
+import { Eye, EyeOff } from "lucide-react";
 
 type Mode = "login" | "register";
 
@@ -22,6 +23,7 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
   const [loginState, loginAction, loginPending] = useActionState(signIn, undefined);
   const [registerState, registerAction, registerPending] = useActionState(signUp, undefined);
   const [redirect, setRedirect] = useState("/dashboard");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -89,15 +91,25 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-surface-200">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  placeholder="••••••••"
-                  className="border-surface-300 bg-white text-surface-900 placeholder:text-surface-400"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    placeholder="••••••••"
+                    className="border-surface-300 bg-white pr-10 text-surface-900 placeholder:text-surface-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-900"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center justify-between text-sm">
@@ -134,13 +146,59 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="country" className="text-surface-200">Country</Label>
+                <select
+                  id="country"
+                  name="country"
+                  required
+                  defaultValue="US"
+                  className="w-full rounded-md border border-surface-300 bg-white px-3 py-2 text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="US">United States</option>
+                  <option value="GB">United Kingdom</option>
+                  <option value="CA">Canada</option>
+                  <option value="AU">Australia</option>
+                  <option value="NG">Nigeria</option>
+                  <option value="GH">Ghana</option>
+                  <option value="ZA">South Africa</option>
+                  <option value="KE">Kenya</option>
+                  <option value="IN">India</option>
+                  <option value="AE">United Arab Emirates</option>
+                  <option value="DE">Germany</option>
+                  <option value="FR">France</option>
+                  <option value="ES">Spain</option>
+                  <option value="IT">Italy</option>
+                  <option value="NL">Netherlands</option>
+                  <option value="PT">Portugal</option>
+                  <option value="TR">Turkey</option>
+                  <option value="BR">Brazil</option>
+                  <option value="MX">Mexico</option>
+                  <option value="JP">Japan</option>
+                  <option value="ID">Indonesia</option>
+                  <option value="SG">Singapore</option>
+                  <option value="PH">Philippines</option>
+                  <option value="AR">Argentina</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="email" className="text-surface-200">Email</Label>
                 <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" className="border-surface-300 bg-white text-surface-900 placeholder:text-surface-400" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-surface-200">Password</Label>
-                <Input id="password" name="password" type="password" autoComplete="new-password" required placeholder="••••••••" aria-describedby="password-hint" className="border-surface-300 bg-white text-surface-900 placeholder:text-surface-400" />
+                <div className="relative">
+                  <Input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="new-password" required placeholder="••••••••" aria-describedby="password-hint" className="border-surface-300 bg-white pr-10 text-surface-900 placeholder:text-surface-400" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-900"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                  </button>
+                </div>
                 <p id="password-hint" className="text-xs text-surface-400">
                   Min 8 chars, 1 uppercase, 1 lowercase, 1 number
                 </p>

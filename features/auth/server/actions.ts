@@ -18,7 +18,8 @@ export async function signUp(_prev: unknown, formData: FormData) {
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
   const name = String(formData.get("name") ?? "").trim();
-  const country = await detectCountry();
+  const countryRaw = String(formData.get("country") ?? "").trim().toUpperCase();
+  const country = /^[A-Z]{2}$/.test(countryRaw) ? countryRaw : await detectCountry();
 
   if (!email.success) return { error: email.error.errors[0]!.message };
   if (!password.success) return { error: password.error.errors[0]!.message };
