@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Check, CheckCheck, ExternalLink, X } from "lucide-react";
+import { Search, Check, CheckCheck, ExternalLink, X, Mail, MailOpen } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
-import { markAdminNotificationRead, type ActionResult } from "@/lib/admin/actions";
+import { markAdminNotificationRead, markAdminNotificationUnread, type ActionResult } from "@/lib/admin/actions";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -173,6 +173,18 @@ export function AdminNotificationsTable({ notifications, count }: { notification
     setUpdating(null);
     if (result.success) {
       toast.success("Notification marked as read");
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  };
+
+  const handleMarkUnread = async (id: string) => {
+    setUpdating(id);
+    const result: ActionResult = await markAdminNotificationUnread(id);
+    setUpdating(null);
+    if (result.success) {
+      toast.success("Notification marked as unread");
       router.refresh();
     } else {
       toast.error(result.error);
@@ -376,15 +388,33 @@ export function AdminNotificationsTable({ notifications, count }: { notification
 
                     {/* Actions */}
                     <td className="py-3 px-4">
-                      {!notification.read && (
+                      {notification.read ? (
+                        <button
+                          onClick={() => handleMarkUnread(notification.id)}
+                          disabled={updating === notification.id}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-100 text-slate-600 hover:bg-surface-200 transition-colors disabled:opacity-50"
+                          aria-label="Mark as unread"
+                          title="Mark as unread"
+                        >
+                          <MailOpen className="w-3.5 h-3.5" aria-hidden="true" />
+                          {updating === notification.id ? "..." : "Unread"}
+                        </button>
+                      ) : (
                         <button
                           onClick={() => handleMarkRead(notification.id)}
                           disabled={updating === notification.id}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
                           aria-label="Mark as read"
+                          title="Mark as read"
                         >
-                          <Check className="w-3 h-3" aria-hidden="true" />
-                          {updating === notification.id ? "..." : "Mark Read"}
+                          {updating === notification.id ? (
+                            "..."
+                          ) : (
+                            <>
+                              <Mail className="w-3.5 h-3.5" aria-hidden="true" />
+                              Read
+                            </>
+                          )}
                         </button>
                       )}
                     </td>

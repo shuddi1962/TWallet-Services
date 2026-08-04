@@ -1,6 +1,7 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import Link from "next/link";
+import { Menu, ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { AdminBell } from "@/components/admin/admin-bell";
 
@@ -37,7 +38,12 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
 
         <AdminBell />
 
-        <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
+        <Link
+          href="/dashboard/profile"
+          className="flex items-center gap-2 border-l border-slate-200 pl-3 transition hover:opacity-80"
+          aria-label="Go to your account"
+          title="Go to your account"
+        >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
             A
           </div>
@@ -45,7 +51,8 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
             <p className="text-sm font-medium leading-tight text-slate-900">Admin</p>
             <p className="text-xs text-slate-500">Super Admin</p>
           </div>
-        </div>
+          <ChevronDown className="hidden h-3.5 w-3.5 text-slate-400 sm:block" aria-hidden="true" />
+        </Link>
       </div>
     </header>
   );

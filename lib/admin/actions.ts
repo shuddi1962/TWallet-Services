@@ -1197,6 +1197,14 @@ export async function markAdminNotificationRead(id: string): Promise<ActionResul
   return { success: true };
 }
 
+export async function markAdminNotificationUnread(id: string): Promise<ActionResult> {
+  const supabase: any = await sb();
+  const { error }: any = await supabase.from("admin_notifications").update({ read: false } as any).eq("id", id);
+  if (error) return { success: false, error: error.message as string };
+  revalidatePath("/admin/notifications");
+  return { success: true };
+}
+
 /* ------------------------------------------------------------------ */
 /*  Card Products CRUD                                                 */
 /* ------------------------------------------------------------------ */
