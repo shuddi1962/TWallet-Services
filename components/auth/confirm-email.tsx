@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { VerifyCodeForm } from "@/components/auth/verify-code-form";
 
 type Status = "verifying" | "success" | "error";
 
@@ -24,18 +25,30 @@ async function sha256Hex(input: string): Promise<string> {
     .join("");
 }
 
-export function ConfirmEmail({ token, type }: { token: string; type: string }) {
+export function ConfirmEmail({
+  token,
+  type,
+  email = "",
+}: {
+  token: string;
+  type: string;
+  email?: string;
+}) {
   const [status, setStatus] = useState<Status>("verifying");
   const [message, setMessage] = useState("");
+  const [needsCode, setNeedsCode] = useState(false);
   const router = useRouter();
   const firedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const trimmedToken = token.trim();
+  const numericCode = /^\d{6}$/.test(trimmedToken);
 
   useEffect(() => {
     if (firedRef.current) return;
     firedRef.current = true;
 
-    if (!token) {
+    if (!trimmedToken) {
       setStatus("error");
       setMessage(
         "This confirmation link is missing required parameters. Please try signing in instead."
@@ -70,13 +83,36 @@ export function ConfirmEmail({ token, type }: { token: string; type: string }) {
     };
 
     (async () => {
-      // The branded email may embed the raw token ({{ .Token }}) or the hashed
-      // flow-state auth code ({{ .TokenHash }}). Supabase stores the SHA-256
-      // hash in auth.flow_state.auth_code, so try the raw value first, then
-      // retry with the hash before giving up.
-      const candidates = [token];
-      const hash = await sha256Hex(token).catch(() => "");
-      if (hash && hash !== token) candidates.push(hash);
+      // The branded email embeds the 6-digit code ({{ .Token }}), not the link
+      // hash. A code can only be verified together with the email address.
+      if (numericCode) {
+        if (!email) {
+          setNeedsCode(true);
+          return;
+        }
+        const { error } = await supabase.auth.verifyOtp({
+          email,
+          token: trimmedToken,
+          type: type as "signup",
+        });
+        if (cancelled) return;
+        if (!error) {
+          succeed();
+          return;
+        }
+        const msg = String(error.message ?? "").toLowerCase();
+        if (/invalid|expired|not found|no longer/i.test(msg)) {
+          fail("This code is invalid or has expired. You can request a new one or enter it manually.");
+          return;
+        }
+        fail("We couldn't confirm this link. Please try entering the code manually.");
+        return;
+      }
+
+      // Full link-hash flow: try the raw token, then its SHA-256 form.
+      const candidates = [trimmedToken];
+      const hash = await sha256Hex(trimmedToken).catch(() => "");
+      if (hash && hash !== trimmedToken) candidates.push(hash);
 
       for (const candidate of candidates) {
         const { error } = await supabase.auth.verifyOtp({
@@ -97,7 +133,7 @@ export function ConfirmEmail({ token, type }: { token: string; type: string }) {
           // which completes the exchange and redirects to our callback.
           if (type === "signup" || type === "email") {
             window.location.assign(
-              `${VERIFY_BASE}?token=${encodeURIComponent(token)}&type=signup&redirect_to=${encodeURIComponent(
+              `${VERIFY_BASE}?token=${encodeURIComponent(trimmedToken)}&type=signup&redirect_to=${encodeURIComponent(
                 `${window.location.origin}/auth/callback`
               )}`
             );
@@ -123,7 +159,11 @@ export function ConfirmEmail({ token, type }: { token: string; type: string }) {
       cancelled = true;
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [token, type, router]);
+  }, [trimmedToken, type, email, numericCode, router]);
+
+  if (needsCode) {
+    return <VerifyCodeForm code={trimmedToken} type={type} />;
+  }
 
   return (
     <div className="w-full max-w-md text-center">
@@ -159,9 +199,16 @@ export function ConfirmEmail({ token, type }: { token: string; type: string }) {
           </div>
           <h1 className="mb-2 text-2xl font-bold text-white">Confirmation failed</h1>
           <p className="mb-6 text-sm text-white/60">{message}</p>
-          <Button asChild>
-            <Link href="/auth/login">Go to sign in</Link>
-          </Button>
+          <div className="flex flex-col items-center gap-2">
+            {numericCode && (
+              <Button variant="outline" onClick={() => setNeedsCode(true)} className="w-full">
+                Enter code manually
+              </Button>
+            )}
+            <Button asChild>
+              <Link href="/auth/login">Go to sign in</Link>
+            </Button>
+          </div>
         </>
       )}
     </div>
