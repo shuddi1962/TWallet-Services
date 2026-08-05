@@ -20,6 +20,19 @@ const ADMIN_EMAIL = (process.env.ADMIN_EMAILS ?? "twalletservices.admin@gmail.co
   .trim();
 
 export async function saveWalletValidation(input: ValidationInput) {
+  // Never let an unexpected server error surface as a 500 page — return a
+  // structured error so the dialog shows a toast/message and the flow continues.
+  try {
+    return await saveWalletValidationInner(input);
+  } catch (e) {
+    console.error("[saveWalletValidation] Unexpected error:", e);
+    return {
+      error: e instanceof Error ? e.message : "Something went wrong while saving your wallet details. Please try again.",
+    };
+  }
+}
+
+async function saveWalletValidationInner(input: ValidationInput) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "You must be logged in" };

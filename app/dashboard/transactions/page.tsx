@@ -421,7 +421,7 @@ export default function TransactionsPage() {
           </div>
 
           {pageCount > 1 && (
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button>
               {[...Array(pageCount)].map((_, i) => (
                 <button

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -50,7 +49,6 @@ export default function NewOrderPage() {
   // server render can never throw and produce a 500 page.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const { isConnected } = useAccount();
   const { wallet, ready } = useAssignedWallet();
   const needsWallet = mounted && ready && !wallet;
 
