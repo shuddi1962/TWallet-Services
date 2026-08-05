@@ -6,6 +6,18 @@ import { getSystemSettings } from "@/lib/settings";
 import { headers } from "next/headers";
 
 export async function getPaymentDetails(orderId: string) {
+  try {
+    return await getPaymentDetailsInner(orderId);
+  } catch (e) {
+    console.error("[getPaymentDetails] Unexpected error:", e);
+    return {
+      error: e instanceof Error ? e.message : "Could not load payment details",
+      data: null,
+    };
+  }
+}
+
+async function getPaymentDetailsInner(orderId: string) {
   const supabase = await createServerSupabaseClient() as any;
 
   const {
@@ -73,9 +85,31 @@ export async function getPaymentDetails(orderId: string) {
 }
 
 export async function submitPaymentTx(_prev: unknown, formData: FormData) {
-  const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = await checkRateLimit(ip, "paymentVerify", RATE_LIMITS.paymentVerify);
-  if (!allowed) return { error: "Too many requests. Please try again later." };
+  // Never let an unexpected server error surface as a 500 page — always
+  // return a structured error the client renders inline.
+  try {
+    return await submitPaymentTxInner(formData);
+  } catch (e) {
+    console.error("[submitPaymentTx] Unexpected error:", e);
+    return {
+      error: e instanceof Error ? e.message : "Something went wrong while submitting your payment. Please try again.",
+    };
+  }
+}
+
+async function submitPaymentTxInner(formData: FormData) {
+  let ip = "unknown";
+  try {
+    ip = (await headers()).get("x-forwarded-for") ?? "unknown";
+  } catch {
+    // headers unavailable — proceed without rate limiting
+  }
+  try {
+    const { allowed } = await checkRateLimit(ip, "paymentVerify", RATE_LIMITS.paymentVerify);
+    if (!allowed) return { error: "Too many requests. Please try again later." };
+  } catch {
+    // rate limiter unavailable — fail open, never block payments
+  }
 
   const orderId = String(formData.get("orderId") ?? "");
   const txHash = String(formData.get("txHash") ?? "");

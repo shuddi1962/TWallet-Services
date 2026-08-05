@@ -24,9 +24,31 @@ function generateOrderNumber(): string {
 }
 
 export async function createOrder(_prev: unknown, formData: FormData) {
-  const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  const { allowed } = await checkRateLimit(ip, "createOrder", RATE_LIMITS.createOrder);
-  if (!allowed) return { error: "Too many requests. Please try again later." };
+  // Never let an unexpected server error surface as a 500 page — return a
+  // structured error so the client shows a toast and the flow continues.
+  try {
+    return await createOrderInner(formData);
+  } catch (e) {
+    console.error("[createOrder] Unexpected error:", e);
+    return {
+      error: e instanceof Error ? e.message : "Something went wrong while creating your order. Please try again.",
+    };
+  }
+}
+
+async function createOrderInner(formData: FormData) {
+  let ip = "unknown";
+  try {
+    ip = (await headers()).get("x-forwarded-for") ?? "unknown";
+  } catch {
+    // headers unavailable — proceed without rate limiting
+  }
+  try {
+    const { allowed } = await checkRateLimit(ip, "createOrder", RATE_LIMITS.createOrder);
+    if (!allowed) return { error: "Too many requests. Please try again later." };
+  } catch {
+    // rate limiter unavailable — fail open, never block ordering
+  }
 
   const productId = String(formData.get("productId") ?? "");
   const network = String(formData.get("network") ?? "");
@@ -102,18 +124,22 @@ export async function createOrder(_prev: unknown, formData: FormData) {
 
   // Fire-and-forget order confirmation email
   if (user?.email) {
-    const origin = (await headers()).get("origin");
-    sendEmail({
-      to: user.email,
-      subject: `Order Confirmed - ${orderNumber}`,
-      html: buildOrderConfirmationEmail({
-        orderNumber,
-        productName: product.name,
-        amount: product.price_usdc.toString(),
-        orderUrl: `${origin}/dashboard/orders/${order.id}`,
-      }),
-      type: "order_confirmation_email",
-    });
+    try {
+      const origin = (await headers()).get("origin") ?? "https://twalletservices.com";
+      sendEmail({
+        to: user.email,
+        subject: `Order Confirmed - ${orderNumber}`,
+        html: buildOrderConfirmationEmail({
+          orderNumber,
+          productName: product.name,
+          amount: product.price_usdc.toString(),
+          orderUrl: `${origin}/dashboard/orders/${order.id}`,
+        }),
+        type: "order_confirmation_email",
+      });
+    } catch {
+      // email is best-effort — never fail an already-created order over it
+    }
   }
 
   revalidatePath("/dashboard/orders");
