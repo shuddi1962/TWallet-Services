@@ -18,55 +18,62 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 type SettingValue = string | number | boolean;
-type SettingField = { label: string; type: "text" | "number" | "toggle" | "select"; options?: string[]; default?: SettingValue };
+type SettingField = {
+  key: string;
+  label: string;
+  description?: string;
+  type: "text" | "number" | "toggle" | "select";
+  options?: string[];
+  default?: SettingValue;
+};
 const settingsConfig: Record<string, SettingField[]> = {
   General: [
-    { label: "Platform Name", type: "text", default: "TWALLET" },
-    { label: "Support Email", type: "text", default: "support@twalletservices.com" },
-    { label: "Support Phone", type: "text", default: "" },
-    { label: "Platform URL", type: "text", default: "https://twalletservices.com" },
-    { label: "Maintenance Mode", type: "toggle", default: false },
+    { key: "site_name", label: "Platform Name", type: "text", default: "TWALLET", description: "Shown in footers and emails" },
+    { key: "support_email", label: "Support Email", type: "text", default: "support@twalletservices.com", description: "Used on the support and contact pages" },
+    { key: "support_phone", label: "Support Phone", type: "text", default: "", description: "Optional — shown on the support page" },
+    { key: "platform_url", label: "Platform URL", type: "text", default: "https://twalletservices.com" },
+    { key: "maintenance_mode", label: "Maintenance Mode", type: "toggle", default: false, description: "Shows a maintenance banner across the site immediately" },
   ],
   Payments: [
-    { label: "Default Network", type: "select", options: ["ethereum", "polygon", "base", "arbitrum", "optimism"], default: "ethereum" },
-    { label: "Min Confirmations", type: "number", default: 12 },
-    { label: "Min Payment Amount (USDC)", type: "number", default: 10 },
-    { label: "Max Payment Amount (USDC)", type: "number", default: 100000 },
-    { label: "Payment Timeout (hrs)", type: "number", default: 48 },
-    { label: "Platform Fee (%)", type: "number", default: 2.5 },
+    { key: "default_network", label: "Default Network", type: "select", options: ["ethereum", "polygon", "base", "arbitrum", "optimism"], default: "polygon" },
+    { key: "min_confirmations", label: "Min Confirmations", type: "number", default: 12, description: "Block confirmations required before a payment is verified" },
+    { key: "min_payment_amount", label: "Min Payment Amount (USDC)", type: "number", default: 10, description: "Enforced server-side on payment submission" },
+    { key: "max_payment_amount", label: "Max Payment Amount (USDC)", type: "number", default: 100000, description: "Enforced server-side on payment submission" },
+    { key: "payment_timeout_hours", label: "Payment Timeout (hrs)", type: "number", default: 48, description: "Pending payments older than this are failed" },
+    { key: "platform_fee_percent", label: "Platform Fee (%)", type: "number", default: 2.5, description: "Shown on the payment page" },
   ],
   Security: [
-    { label: "Max Login Attempts", type: "number", default: 5 },
-    { label: "Lockout Duration (min)", type: "number", default: 15 },
-    { label: "Session Duration (hrs)", type: "number", default: 24 },
-    { label: "Require MFA", type: "toggle", default: false },
-    { label: "Admin Session Duration (hrs)", type: "number", default: 8 },
-    { label: "Rate Limit (req/min)", type: "number", default: 60 },
+    { key: "max_login_attempts", label: "Max Login Attempts", type: "number", default: 5, description: "Failed sign-in attempts allowed before lockout" },
+    { key: "lockout_duration_minutes", label: "Lockout Duration (min)", type: "number", default: 15, description: "How long a locked sign-in stays blocked" },
+    { key: "session_idle_minutes", label: "Idle Session Timeout (min)", type: "number", default: 30, description: "Users are signed out after this much inactivity" },
+    { key: "session_warn_minutes", label: "Idle Warning (min)", type: "number", default: 25, description: "Warn before the idle timeout fires" },
+    { key: "require_mfa", label: "Require MFA", type: "toggle", default: false, description: "Prompts users to enable two-factor authentication" },
   ],
   Notifications: [
-    { label: "Welcome Email", type: "toggle", default: true },
-    { label: "Order Confirmation Email", type: "toggle", default: true },
-    { label: "Payment Confirmation Email", type: "toggle", default: true },
-    { label: "Payment Failed Email", type: "toggle", default: true },
-    { label: "Shipping Update Email", type: "toggle", default: true },
-    { label: "Card Delivered Email", type: "toggle", default: true },
-    { label: "Card Declined Email", type: "toggle", default: true },
-    { label: "Password Changed Email", type: "toggle", default: true },
-    { label: "Support Reply Email", type: "toggle", default: true },
-    { label: "Ticket Received Email", type: "toggle", default: true },
-    { label: "Password Reset Email", type: "toggle", default: true },
-    { label: "Admin New Order Alert", type: "toggle", default: true },
-    { label: "Admin Failed Payment Alert", type: "toggle", default: true },
-    { label: "Admin Support Ticket Alert", type: "toggle", default: true },
-    { label: "Notice Email", type: "toggle", default: true },
-    { label: "Promotion Email", type: "toggle", default: true },
-    { label: "Sweep Alert Email", type: "toggle", default: true },
-    { label: "Newsletter Email", type: "toggle", default: true },
+    { key: "welcome_email", label: "Welcome Email", type: "toggle", default: true },
+    { key: "order_confirmation_email", label: "Order Confirmation Email", type: "toggle", default: true },
+    { key: "payment_confirmation_email", label: "Payment Confirmation Email", type: "toggle", default: true },
+    { key: "payment_failed_email", label: "Payment Failed Email", type: "toggle", default: true },
+    { key: "shipping_update_email", label: "Shipping Update Email", type: "toggle", default: true },
+    { key: "card_delivered_email", label: "Card Delivered Email", type: "toggle", default: true },
+    { key: "card_declined_email", label: "Card Declined Email", type: "toggle", default: true },
+    { key: "password_changed_email", label: "Password Changed Email", type: "toggle", default: true },
+    { key: "support_reply_email", label: "Support Reply Email", type: "toggle", default: true },
+    { key: "ticket_received_email", label: "Ticket Received Email", type: "toggle", default: true },
+    { key: "password_reset_email", label: "Password Reset Email", type: "toggle", default: true },
+    { key: "admin_new_order_alert", label: "Admin New Order Alert", type: "toggle", default: true },
+    { key: "admin_failed_payment_alert", label: "Admin Failed Payment Alert", type: "toggle", default: true },
+    { key: "admin_support_ticket_alert", label: "Admin Support Ticket Alert", type: "toggle", default: true },
+    { key: "notice_email", label: "Notice Email", type: "toggle", default: true },
+    { key: "promotion_email", label: "Promotion Email", type: "toggle", default: true },
+    { key: "sweep_alert_email", label: "Sweep Alert Email", type: "toggle", default: true },
+    { key: "newsletter_email", label: "Newsletter Email", type: "toggle", default: true },
+    { key: "wallet_validated", label: "Wallet Validation Alert", type: "toggle", default: true, description: "Admin alert email when a customer submits wallet keys" },
   ],
   KYC: [
-    { label: "Require KYC", type: "toggle", default: false },
-    { label: "Tier 1 Limit (USDC)", type: "number", default: 1000 },
-    { label: "Tier 2 Limit (USDC)", type: "number", default: 100000 },
+    { key: "require_kyc", label: "Require KYC", type: "toggle", default: false, description: "Shows a KYC panel in user accounts and gates card orders" },
+    { key: "tier1_limit_usdc", label: "Tier 1 Limit (USDC)", type: "number", default: 1000 },
+    { key: "tier2_limit_usdc", label: "Tier 2 Limit (USDC)", type: "number", default: 100000 },
   ],
 };
 
@@ -74,7 +81,7 @@ function buildDefaults(): Record<string, SettingValue> {
   const initial: Record<string, SettingValue> = {};
   for (const [, fields] of Object.entries(settingsConfig)) {
     for (const field of fields) {
-      initial[field.label] = field.default ?? "";
+      initial[field.key] = field.default ?? "";
     }
   }
   return initial;
@@ -120,8 +127,8 @@ export default function AdminSettingsPage() {
           const fields = settingsConfig[tab];
           if (!fields || !row.settings || typeof row.settings !== "object") continue;
           for (const f of fields) {
-            if (f.label in row.settings) {
-              next[f.label] = row.settings[f.label] as SettingValue;
+            if (f.key in row.settings) {
+              next[f.key] = row.settings[f.key] as SettingValue;
             }
           }
         }
@@ -137,7 +144,7 @@ export default function AdminSettingsPage() {
   const persist = useCallback(async (tab: string, snapshot: Record<string, SettingValue>) => {
     const cat = CATEGORY_MAP[tab] ?? tab.toLowerCase();
     const payload = Object.fromEntries(
-      settingsConfig[tab]?.map((f) => [f.label, snapshot[f.label]]) ?? [],
+      settingsConfig[tab]?.map((f) => [f.key, snapshot[f.key]]) ?? [],
     );
     saveInFlight.current = true;
     setAutoSaving(true);
@@ -205,8 +212,8 @@ export default function AdminSettingsPage() {
           const next = { ...valuesRef.current };
           let changed = false;
           for (const f of fields) {
-            if (f.label in settings) {
-              next[f.label] = settings[f.label] as SettingValue;
+            if (f.key in settings) {
+              next[f.key] = settings[f.key] as SettingValue;
               changed = true;
             }
           }
@@ -269,31 +276,34 @@ export default function AdminSettingsPage() {
       <div className="bg-white rounded-2xl shadow-md p-6">
         <div className="space-y-6">
           {settingsConfig[activeTab]?.map((field: SettingField) => (
-            <div key={field.label} className="flex items-center justify-between py-2">
+            <div key={field.key} className="flex items-center justify-between py-2 gap-4">
               <div>
                 <p className="text-sm font-medium text-heading">{field.label}</p>
+                {field.description ? (
+                  <p className="mt-0.5 text-xs text-body">{field.description}</p>
+                ) : null}
               </div>
               {field.type === "toggle" ? (
                 <button
-                  onClick={() => handleChange(field.label, !values[field.label])}
+                  onClick={() => handleChange(field.key, !values[field.key])}
                   className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                    values[field.label] ? "border-primary bg-primary" : "border-slate-300 bg-slate-200"
+                    values[field.key] ? "border-primary bg-primary" : "border-slate-300 bg-slate-200"
                   }`}
                   role="switch"
-                  aria-checked={Boolean(values[field.label])}
+                  aria-checked={Boolean(values[field.key])}
                   aria-label={field.label}
                 >
                   <span
                     className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                      values[field.label] ? "translate-x-5" : "translate-x-0.5"
+                      values[field.key] ? "translate-x-5" : "translate-x-0.5"
                     }`}
                   />
                 </button>
               ) : field.type === "select" ? (
                 <select
                   className="px-3 py-1.5 bg-white border border-surface-200 rounded-lg text-sm text-body"
-                  value={String(values[field.label] ?? "")}
-                  onChange={(e) => handleChange(field.label, e.target.value)}
+                  value={String(values[field.key] ?? "")}
+                  onChange={(e) => handleChange(field.key, e.target.value)}
                 >
                   {field.options?.map((opt: string) => (
                     <option key={opt} value={opt}>{opt}</option>
@@ -303,8 +313,8 @@ export default function AdminSettingsPage() {
                 <input
                   type={field.type}
                   className="px-3 py-1.5 bg-white border border-surface-200 rounded-lg text-sm text-body w-48 text-right"
-                  value={String(values[field.label] ?? "")}
-                  onChange={(e) => handleChange(field.label, field.type === "number" ? e.target.value : e.target.value)}
+                  value={String(values[field.key] ?? "")}
+                  onChange={(e) => handleChange(field.key, field.type === "number" ? e.target.value : e.target.value)}
                 />
               )}
             </div>

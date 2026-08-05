@@ -26,6 +26,7 @@ export default async function PaymentPage(props: {
       receivingWallets={data.receivingWallets}
       tokens={data.tokens}
       existingTx={data.paymentTx}
+      settings={data.settings}
     />
   );
 }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TrustLogo } from "@/components/brand/trust-logo";
 import { subscribeNewsletter } from "@/features/newsletter/server/actions";
+import { useSystemSettings } from "@/lib/hooks/use-system-settings";
 
 const footerLinks = {
   Company: [
@@ -44,6 +45,7 @@ const securityBadges = [
 
 export function Footer() {
   const [state, formAction, pending] = useActionState(subscribeNewsletter, undefined);
+  const settings = useSystemSettings();
 
   return (
     <footer className="border-t border-surface-200 bg-surface-50">
@@ -145,7 +147,7 @@ export function Footer() {
           <div className="mt-10 border-t border-surface-200 pt-6">
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <p className="text-xs text-surface-500">
-                &copy; {new Date().getFullYear()} TWallet. All rights reserved.
+                &copy; {new Date().getFullYear()} {String(settings.general?.site_name ?? "TWallet")}. All rights reserved.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 {securityBadges.map((badge) => (

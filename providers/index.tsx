@@ -9,6 +9,7 @@ import { mainnet, polygon, base, arbitrum, optimism, sepolia } from "@reown/appk
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WalletLinker } from "@/components/wallet/wallet-linker";
 import { SessionTimeout } from "@/components/session-timeout";
+import { MaintenanceBanner } from "@/components/maintenance-banner";
 import { config, projectId, wagmiAdapter } from "@/lib/wagmi-config";
 
 function decodeCookieValue(value: string): string {
@@ -70,6 +71,7 @@ export function Providers({ children, cookies }: { children: ReactNode; cookies:
   return (
     <WagmiProvider config={config as Config} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
+        <MaintenanceBanner />
         {children}
         <WalletLinker />
         <SessionTimeout />

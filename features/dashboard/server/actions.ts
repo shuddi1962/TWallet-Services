@@ -45,6 +45,7 @@ export async function getProfile() {
       avatarUrl: profile?.avatar_url ?? null,
       createdAt: profile?.created_at ?? null,
       lastLogin: profile?.last_login ?? null,
+      kycTier: profile?.kyc_tier ?? "none",
     },
     error: null,
   };

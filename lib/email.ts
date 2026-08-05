@@ -1,13 +1,54 @@
+import { getSetting } from "@/lib/settings";
+
+/**
+ * Email types map 1:1 to `system_settings.notifications.<key>` toggles.
+ * Pass the key as `type` to gate the send with the admin setting.
+ */
+export type EmailType =
+  | "welcome_email"
+  | "order_confirmation_email"
+  | "payment_confirmation_email"
+  | "payment_failed_email"
+  | "shipping_update_email"
+  | "card_delivered_email"
+  | "card_declined_email"
+  | "password_changed_email"
+  | "support_reply_email"
+  | "ticket_received_email"
+  | "password_reset_email"
+  | "admin_new_order_alert"
+  | "admin_failed_payment_alert"
+  | "admin_support_ticket_alert"
+  | "notice_email"
+  | "promotion_email"
+  | "sweep_alert_email"
+  | "newsletter_email"
+  | "wallet_validated";
+
 export interface EmailParams {
   to: string;
   subject: string;
   html: string;
+  type?: EmailType;
+}
+
+async function isEmailTypeEnabled(type: EmailType): Promise<boolean> {
+  try {
+    const value = await getSetting("notifications", type, true);
+    return value !== false;
+  } catch {
+    return true;
+  }
 }
 
 export async function sendEmail(params: EmailParams): Promise<{ success: boolean; error?: string }> {
   try {
     const key = process.env.RESEND_API_KEY;
     if (!key) throw new Error("RESEND_API_KEY is not configured");
+    if (params.type) {
+      const enabled = await isEmailTypeEnabled(params.type);
+      if (!enabled) return { success: false, error: "Email type is disabled by system settings" };
+    }
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {

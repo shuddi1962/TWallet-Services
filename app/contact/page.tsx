@@ -6,16 +6,21 @@ import { Footer } from "@/components/layout/footer";
 import { PageHero } from "@/components/layout/page-hero";
 import { submitContact } from "@/features/contact/server/actions";
 import { Button } from "@/components/ui/button";
+import { useSystemSettings } from "@/lib/hooks/use-system-settings";
 import { Mail, Clock, ShieldCheck, MessageSquare, Send } from "lucide-react";
-
-const infoCards = [
-  { icon: Mail, title: "Email us", value: "support@twalletservices.com" },
-  { icon: Clock, title: "Response time", value: "Under 24 hours" },
-  { icon: ShieldCheck, title: "Priority", value: "Existing orders answered first" },
-];
 
 export default function ContactPage() {
   const [state, formAction, pending] = useActionState(submitContact, undefined);
+  const settings = useSystemSettings();
+  const supportEmail = String(settings.general?.support_email ?? "support@twalletservices.com");
+  const supportPhone = String(settings.general?.support_phone ?? "");
+
+  const infoCards = [
+    { icon: Mail, title: "Email us", value: supportEmail },
+    ...(supportPhone ? [{ icon: Mail, title: "Call us", value: supportPhone }] : []),
+    { icon: Clock, title: "Response time", value: "Under 24 hours" },
+    { icon: ShieldCheck, title: "Priority", value: "Existing orders answered first" },
+  ];
 
   return (
     <>

@@ -6,6 +6,7 @@ import { emailSchema, passwordSchema } from "@/lib/validations";
 import { sendEmail, buildPasswordResetEmail, buildPasswordChangedEmail } from "@/lib/email";
 import { ensureAdminProvisioned, isAdminUser } from "@/lib/admin-provision";
 import { detectCountry } from "@/lib/geo";
+import { getSystemSettings } from "@/lib/settings";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -42,8 +43,14 @@ export async function signUp(_prev: unknown, formData: FormData) {
 }
 
 export async function signIn(_prev: unknown, formData: FormData) {
-  const { allowed } = await checkRateLimit("signin", "login", RATE_LIMITS.login);
-  if (!allowed) return { error: "Too many requests. Please try again later." };
+  const settings = await getSystemSettings();
+  const maxAttempts = Number(settings.security?.max_login_attempts ?? 5);
+  const lockoutMinutes = Number(settings.security?.lockout_duration_minutes ?? 15);
+  const { allowed } = await checkRateLimit("signin", "login", {
+    window: lockoutMinutes * 60 * 1000,
+    max: maxAttempts,
+  });
+  if (!allowed) return { error: "Too many failed attempts. Please try again later." };
 
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
@@ -110,6 +117,7 @@ export async function sendPasswordResetEmail(_prev: unknown, formData: FormData)
     to: email.data,
     subject: "Reset Your TWallet Password",
     html: buildPasswordResetEmail({ resetUrl: `${SITE_URL}/auth/reset-password` }),
+    type: "password_reset_email",
   });
 
   return { success: "Check your email for a reset link" };
@@ -131,6 +139,7 @@ export async function updatePassword(_prev: unknown, formData: FormData) {
       to: user.email,
       subject: "Password Changed - TWallet",
       html: buildPasswordChangedEmail(),
+      type: "password_changed_email",
     });
   }
 
@@ -186,6 +195,7 @@ export async function changePassword(_prev: unknown, formData: FormData) {
       to: user.email,
       subject: "Password Changed - TWallet",
       html: buildPasswordChangedEmail(),
+      type: "password_changed_email",
     });
   }
 

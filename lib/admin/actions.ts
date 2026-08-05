@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createServerSupabaseClient } from "@/lib";
 import { isAdminRoleId, isPermission } from "@/lib/admin/permissions";
+import { refreshSystemSettingsCache } from "@/lib/settings";
 import { sendEmail, buildPaymentReceivedEmail, buildOrderShippedEmail, buildShippingUpdateEmail, buildPasswordResetEmail } from "@/lib/email";
 import type {
   RecentOrder,
@@ -271,6 +272,7 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
           amount: (order.amount_usdc ?? 0).toString(),
           dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
         }),
+        type: "payment_confirmation_email",
       });
     } else if (status === "shipped") {
       sendEmail({
@@ -281,6 +283,7 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
           trackingNumber: order.tracking_number ?? undefined,
           dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
         }),
+        type: "shipping_update_email",
       });
     } else if (status === "delivered") {
       sendEmail({
@@ -291,6 +294,7 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
           status: "delivered",
           dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
         }),
+        type: "card_delivered_email",
       });
     } else if (status === "cancelled") {
       sendEmail({
@@ -301,6 +305,7 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
           status: "cancelled",
           dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
         }),
+        type: "shipping_update_email",
       });
     }
   }
@@ -384,6 +389,7 @@ export async function updateOrderShipping(
           status: "shipped",
           dashboardUrl: `${origin}/dashboard/orders/${orderId}/tracking`,
         }),
+        type: "shipping_update_email",
       });
     }
   }
@@ -942,6 +948,7 @@ export async function adminSendPasswordResetEmail(_prev: unknown, formData: Form
     to: email,
     subject: "Reset Your TWallet Admin Password",
     html: buildPasswordResetEmail({ resetUrl: `${SITE_URL}/admin/reset-password` }),
+    type: "password_reset_email",
   });
 
   return { success: "If the email is an authorized admin, a reset link has been sent." };
@@ -1797,6 +1804,7 @@ export async function updateSettings(
   });
 
   revalidatePath("/admin/settings");
+  refreshSystemSettingsCache();
   return { success: true };
 }
 

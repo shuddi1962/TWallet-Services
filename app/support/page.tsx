@@ -2,13 +2,8 @@ import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { PageHero } from "@/components/layout/page-hero";
-import { MessageSquare, BookOpen, Mail, Truck, Search, ArrowRight, Headphones } from "lucide-react";
-const channels = [
-  { icon: MessageSquare, title: "Contact Us", description: "Send us a message and we'll respond within 24 hours.", href: "/contact", accent: "from-brand-500 to-brand-700" },
-  { icon: BookOpen, title: "Browse FAQ", description: "Quick answers to the most common questions.", href: "/faq", accent: "from-accent-500 to-accent-700" },
-  { icon: Truck, title: "Track Order", description: "Follow your card from production to your door.", href: "/dashboard/orders", accent: "from-indigo-500 to-indigo-700" },
-  { icon: Mail, title: "Email Us", description: "support@twalletservices.com for detailed inquiries.", href: "mailto:support@twalletservices.com", accent: "from-emerald-500 to-emerald-700" },
-];
+import { getSystemSettings } from "@/lib/settings";
+import { MessageSquare, BookOpen, Mail, Truck, Search, ArrowRight, Headphones, Phone } from "lucide-react";
 
 const quickFaqs = [
   { q: "How do I order a card?", a: "Connect Trust Wallet (or any WalletConnect-compatible wallet), choose a card type, enter your shipping address, and pay with crypto." },
@@ -19,7 +14,20 @@ const quickFaqs = [
   { q: "Can I cancel my order?", a: "Orders can be cancelled while in 'pending' status. Contact support for assistance." },
 ];
 
-export default function SupportPage() {
+export default async function SupportPage() {
+  const settings = await getSystemSettings();
+  const supportEmail = String(settings.general?.support_email ?? "support@twalletservices.com");
+  const supportPhone = String(settings.general?.support_phone ?? "");
+  const channels = [
+    { icon: MessageSquare, title: "Contact Us", description: "Send us a message and we'll respond within 24 hours.", href: "/contact", accent: "from-brand-500 to-brand-700" },
+    { icon: BookOpen, title: "Browse FAQ", description: "Quick answers to the most common questions.", href: "/faq", accent: "from-accent-500 to-accent-700" },
+    { icon: Truck, title: "Track Order", description: "Follow your card from production to your door.", href: "/dashboard/orders", accent: "from-indigo-500 to-indigo-700" },
+    { icon: Mail, title: "Email Us", description: `${supportEmail} for detailed inquiries.`, href: `mailto:${supportEmail}`, accent: "from-emerald-500 to-emerald-700" },
+    ...(supportPhone
+      ? [{ icon: Phone, title: "Call Us", description: `${supportPhone} during business hours.`, href: `tel:${supportPhone.replace(/[^+\d]/g, "")}`, accent: "from-cyan-500 to-teal-700" }]
+      : []),
+  ];
+
   return (
     <>
       <Header />

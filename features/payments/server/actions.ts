@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from "@/lib";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { getSystemSettings } from "@/lib/settings";
 import { headers } from "next/headers";
 
 export async function getPaymentDetails(orderId: string) {
@@ -46,6 +47,10 @@ export async function getPaymentDetails(orderId: string) {
     .limit(1)
     .single();
 
+  const settings = await getSystemSettings();
+  const payment = settings.payment ?? {};
+  const kyc = settings.kyc ?? {};
+
   return {
     data: {
       order,
@@ -53,6 +58,15 @@ export async function getPaymentDetails(orderId: string) {
       receivingWallets: receivingWallets ?? [],
       tokens: tokens ?? [],
       paymentTx: paymentTx ?? null,
+      settings: {
+        minAmount: Number(payment.min_payment_amount ?? 10),
+        maxAmount: Number(payment.max_payment_amount ?? 100000),
+        feePercent: Number(payment.platform_fee_percent ?? 2.5),
+        defaultNetwork: String(payment.default_network ?? "polygon"),
+        requireKyc: Boolean(kyc.require_kyc),
+        tier1Limit: Number(kyc.tier1_limit_usdc ?? 1000),
+        tier2Limit: Number(kyc.tier2_limit_usdc ?? 100000),
+      },
     },
     error: null,
   };
@@ -85,6 +99,20 @@ export async function submitPaymentTx(_prev: unknown, formData: FormData) {
     .single();
 
   if (!order) return { error: "Order not found" };
+
+  // Enforce admin-configured payment bounds server-side (ground truth from
+  // system_settings, never from the client).
+  const settings = await getSystemSettings();
+  const payment = settings.payment ?? {};
+  const minAmount = Number(payment.min_payment_amount ?? 10);
+  const maxAmount = Number(payment.max_payment_amount ?? 100000);
+  const amount = Number(order.amount_usdc);
+  if (!Number.isFinite(amount) || amount < minAmount) {
+    return { error: `This order is below the minimum payment amount (${minAmount} USDC).` };
+  }
+  if (amount > maxAmount) {
+    return { error: `This order exceeds the maximum payment amount (${maxAmount} USDC).` };
+  }
 
   // Resolve the payment configuration (network, token, receiving wallet) so
   // the transaction record is complete for real-time tracking and on-chain

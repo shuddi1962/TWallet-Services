@@ -3,15 +3,15 @@
 import { useEffect, useCallback, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useSystemSettings } from "@/lib/hooks/use-system-settings";
 import { toast } from "sonner";
 
-const IDLE_MS = 30 * 60 * 1000;
-const WARN_MS = 25 * 60 * 1000;
 const PROTECTED = ["/dashboard", "/admin"];
 
 export function SessionTimeout() {
   const pathname = usePathname();
   const router = useRouter();
+  const settings = useSystemSettings();
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const warnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const warned = useRef(false);
@@ -25,6 +25,9 @@ export function SessionTimeout() {
     router.push("/auth/login");
   }, [router]);
 
+  const idleMs = Math.max(1, Number(settings.security?.session_idle_minutes ?? 30)) * 60 * 1000;
+  const warnMs = Math.max(1, Number(settings.security?.session_warn_minutes ?? 25)) * 60 * 1000;
+
   const resetTimers = useCallback(() => {
     if (!isProtected) return;
     warned.current = false;
@@ -34,16 +37,16 @@ export function SessionTimeout() {
     warnTimer.current = setTimeout(() => {
       if (!warned.current) {
         warned.current = true;
-        toast.warning("You will be signed out in 5 minutes due to inactivity.", {
+        toast.warning(`You will be signed out in ${Math.round((idleMs - warnMs) / 60000)} minutes due to inactivity.`, {
           duration: 10_000,
         });
       }
-    }, WARN_MS);
+    }, warnMs);
 
     idleTimer.current = setTimeout(() => {
       void logout();
-    }, IDLE_MS);
-  }, [isProtected, logout]);
+    }, idleMs);
+  }, [isProtected, logout, idleMs, warnMs]);
 
   useEffect(() => {
     if (!isProtected) return;

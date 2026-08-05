@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { getProfile, getSecurityInfo, updateProfile, getUserAddresses, upsertUserAddress, deleteUserAddress, uploadAvatar, removeAvatar } from "@/features/dashboard/server/actions";
+import { useSystemSettings } from "@/lib/hooks/use-system-settings";
 import { Loader2 } from "lucide-react";
 
 type Address = {
@@ -40,8 +41,14 @@ export default function ProfilePage() {
   const [lastLogin, setLastLogin] = useState<Date | null>(null);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [walletCount, setWalletCount] = useState(0);
+  const [kycTier, setKycTier] = useState("none");
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const settings = useSystemSettings();
+  const kycRequired = Boolean(settings.kyc?.require_kyc);
+  const tier1Limit = Number(settings.kyc?.tier1_limit_usdc ?? 1000);
+  const tier2Limit = Number(settings.kyc?.tier2_limit_usdc ?? 100000);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -60,6 +67,7 @@ export default function ProfilePage() {
         setAvatarUrl(profileRes.data.avatarUrl ?? "");
         setMemberSince(profileRes.data.createdAt ? new Date(profileRes.data.createdAt) : null);
         setLastLogin(profileRes.data.lastLogin ? new Date(profileRes.data.lastLogin) : null);
+        setKycTier(profileRes.data.kycTier ?? "none");
       }
       if (securityRes.error === null && securityRes.data) {
         setEmailConfirmed(securityRes.data.emailConfirmed);
@@ -376,6 +384,35 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {kycRequired && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" aria-hidden="true" />KYC Verification</CardTitle>
+            <CardDescription>Verification is required to order cards on this platform</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div>
+                <p className="text-sm font-medium text-slate-900">
+                  {kycTier !== "none" ? "You are verified" : "Verification required"}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {kycTier !== "none"
+                    ? `Tier ${kycTier === "tier2" ? "2" : "1"} verified — up to ${kycTier === "tier2" ? tier2Limit : tier1Limit} USDC per order`
+                    : `Complete verification to unlock orders up to ${tier1Limit} USDC (Tier 2: ${tier2Limit} USDC)`}
+                </p>
+              </div>
+              <Badge variant={kycTier !== "none" ? "success" : "warning"}>{kycTier !== "none" ? "Verified" : "Pending"}</Badge>
+            </div>
+            {kycTier === "none" && (
+              <p className="text-xs text-slate-500">
+                Upload a government-issued ID and proof of address to verify your identity. Our team reviews submissions within 24 hours.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

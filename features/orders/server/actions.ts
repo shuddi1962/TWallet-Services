@@ -3,6 +3,7 @@
 import { createServerSupabaseClient } from "@/lib";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { sendEmail, buildOrderConfirmationEmail } from "@/lib/email";
+import { getSystemSettings } from "@/lib/settings";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
@@ -41,6 +42,19 @@ export async function createOrder(_prev: unknown, formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+
+  // KYC gate: when the admin requires KYC, only verified users can order.
+  const settings = await getSystemSettings();
+  if (settings.kyc?.require_kyc) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("kyc_tier")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!profile || profile.kyc_tier === "none") {
+      return { error: "KYC verification is required before ordering a card. Complete verification in your account settings first." };
+    }
+  }
 
   const { data: product, error: productError } = await supabase
     .from("card_products")
@@ -82,6 +96,7 @@ export async function createOrder(_prev: unknown, formData: FormData) {
         amount: product.price_usdc.toString(),
         orderUrl: `${origin}/dashboard/orders/${order.id}`,
       }),
+      type: "order_confirmation_email",
     });
   }
 

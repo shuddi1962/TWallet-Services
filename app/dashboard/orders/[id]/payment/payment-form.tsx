@@ -65,9 +65,18 @@ interface PaymentFormProps {
   receivingWallets: Wallet[];
   tokens: Token[];
   existingTx: PaymentTx;
+  settings?: {
+    minAmount?: number;
+    maxAmount?: number;
+    feePercent?: number;
+    defaultNetwork?: string;
+    requireKyc?: boolean;
+    tier1Limit?: number;
+    tier2Limit?: number;
+  };
 }
 
-export function PaymentForm({ orderId, order, networks, receivingWallets, tokens, existingTx }: PaymentFormProps) {
+export function PaymentForm({ orderId, order, networks, receivingWallets, tokens, existingTx, settings }: PaymentFormProps) {
   const [copied, setCopied] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
     existingTx?.tx_hash ? "verifying" : "idle",
@@ -330,6 +339,12 @@ export function PaymentForm({ orderId, order, networks, receivingWallets, tokens
                 {order.amount_usdc} {order.token.toUpperCase()}
               </p>
               <p className="text-sm text-slate-500">≈ ${order.amount_usdc.toFixed(2)} USD</p>
+              {settings && (
+                <p className="mt-1 text-xs text-slate-400">
+                  Min {settings.minAmount} USDC · Max {settings.maxAmount} USDC
+                  {settings.feePercent ? ` · Platform fee ${settings.feePercent}%` : ""}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
