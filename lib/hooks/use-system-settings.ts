@@ -33,7 +33,7 @@ export function useSystemSettings(): SystemSettings {
     })();
 
     const channel = supabase
-      .channel("app-system-settings-live")
+      .channel(`app-system-settings-live-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "system_settings" },
