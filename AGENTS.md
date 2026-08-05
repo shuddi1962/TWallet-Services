@@ -78,6 +78,15 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 
 ## Work Completed
 
+### Session 20 — Aug 05, 2026 (Full KYC flow: user submits documents → admin approves/rejects → tier unlocks)
+- **`kyc_submissions` table** — migration `202608050002_kyc_submissions.sql` (applied to `smkckhsvzyjttzqhpzhv`): user_id, full_name, document_type (passport/drivers_license/national_id), document_number, document_front_url/back_url (stored in the existing private `documents` bucket), status pending/approved/rejected, admin_note, reviewed_by, reviewed_at. RLS (users read/insert own; admins read/update/delete all), realtime publication, indexes, `notification_type` + `audit_action` gain `kyc_submitted`/`kyc_reviewed`.
+- **DB triggers** — on INSERT: every admin gets an `admin_notifications` row (shows in admin bell + notifications page). On status change: user gets a bell notification; **approval auto-sets `profiles.kyc_tier='tier1'`** (orders unlock, nothing manual).
+- **User side** — profile KYC card now shows the true state: **Not submitted / Pending review / Approved / Rejected** (was always showing "Pending" since it guessed from `kyc_tier`). Inline submission form: name, document type, document number, front (required) + back (optional) uploads; duplicate-pending blocked; rejection shows the admin note + lets the user resubmit; live updates via a `kyc_submissions` realtime channel (`features/kyc/server/actions.ts`: `submitKycApplication`, `getMyKycSubmissions` + audit log).
+- **Admin side** — new **KYC Reviews** page (`/admin/kyc`, Fingerprint icon in sidebar): search by name/email/doc number, status filter, expandable rows with document links, optional note, Approve/Reject buttons; live INSERT/UPDATE realtime (new submissions toast + appear instantly). Approve/reject via `reviewKycSubmission` (guards already-reviewed, sets tier on approve, audit log).
+- **Admin notifications** — `kyc_submitted`/`kyc_reviewed` added to the type filter + badge config + related-link to `/admin/kyc`.
+- **Types regenerated** (kyc_submissions). Lint + typecheck clean, 88/88 tests green.
+- **Deployed** — commit `0835c23` → pushed → Vercel production READY (aliased to twalletservices.com). Migration pushed.
+
 ### Session 19 — Aug 05, 2026 (Settings live: every admin toggle now actually acts)
 - **Settings foundation** — `lib/settings-defaults.ts` (canonical snake_case defaults per category: general/payment/security/notifications/kyc + `mergeSettings`), `lib/settings.ts` (service-role `getSystemSettings` behind `unstable_cache` 30s/tag `system_settings`, **safe outside request scope** — falls back to uncached when the incremental cache is missing, so vitest/edge never throw), `lib/hooks/use-system-settings.ts` (client realtime hook: `useSystemSettings` + `useSetting`), migration `202608050001_settings_consolidate.sql` (applied to `smkckhsvzyjttzqhpzhv`) mapping legacy label-keyed rows → canonical keys.
 - **Admin settings page** — every field now carries its canonical `key` + description; auto-save/realtime merge use canonical keys; added missing "Wallet Validation Alert" toggle.
