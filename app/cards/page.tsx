@@ -8,11 +8,11 @@ import { Check, ArrowRight, Sparkles } from "lucide-react";
 import type { CardFinish } from "@/lib/cards";
 
 const cardPrices: Record<CardFinish, { price: string; note: string; badge?: string }> = {
-  sapphire: { price: "$9.99", note: "Virtual · issued instantly", badge: "Most Popular" },
-  obsidian: { price: "$14.99", note: "Metal · ships worldwide" },
-  cyber: { price: "$19.99", note: "Virtual · issued instantly", badge: "Limited" },
-  gold: { price: "$49.99", note: "Metal · premium finish" },
-  holographic: { price: "$29.99", note: "Metal · limited edition", badge: "Premium" },
+  sapphire: { price: "$5", note: "Virtual · issued instantly", badge: "Most Popular" },
+  obsidian: { price: "$10", note: "Metal · ships worldwide" },
+  cyber: { price: "$15", note: "Virtual · issued instantly", badge: "Limited" },
+  gold: { price: "$25", note: "Metal · premium finish" },
+  holographic: { price: "$50", note: "Metal · limited edition", badge: "Premium" },
 };
 
 const features = ["Worldwide acceptance", "Contactless payments", "ATM access", "On-chain verified"];

@@ -11,7 +11,7 @@ const plans = [
   {
     name: "Virtual Standard",
     slug: "virtual-standard",
-    price: "$9.99",
+    price: "$5",
     period: "one-time USDC",
     description: "Digital-first debit card for everyday online spending.",
     features: ["Instant issuance", "Virtual card details", "Online purchases", "ATM access", "Free virtual card"],
@@ -21,7 +21,7 @@ const plans = [
   {
     name: "Physical Standard",
     slug: "physical-standard",
-    price: "$19.99",
+    price: "$10",
     period: "one-time USDC",
     description: "Metal debit card shipped worldwide. Pay with crypto.",
     features: ["Metal card", "Global shipping", "Contactless payments", "ATM withdrawals", "Custom design"],
@@ -31,7 +31,7 @@ const plans = [
   {
     name: "Physical Premium",
     slug: "physical-premium",
-    price: "$49.99",
+    price: "$25",
     period: "one-time + annual",
     description: "Premium metal with priority shipping and rewards.",
     features: ["Brushed metal finish", "Priority shipping", "3% cashback", "Concierge service", "Custom engraving"],
@@ -119,7 +119,7 @@ export function Pricing() {
         </StaggerChildren>
 
         <p className="mt-10 text-center text-sm text-surface-500">
-          Also available: Virtual Premium ($29.99) · Physical Black ($99.99) — order after signup.
+          Also available: Virtual Premium ($15) · Physical Black ($50) — order after signup.
         </p>
       </Container>
     </section>

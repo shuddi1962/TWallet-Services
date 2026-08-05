@@ -213,7 +213,7 @@ export function AdminNotificationsTable({ notifications, count }: { notification
       {/* Filter bar */}
       <Card className="p-4 mb-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm flex-1 min-w-[200px]">
+          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm flex-1 min-w-[160px]">
             <Search className="w-4 h-4 text-body" />
             <input
               type="text"

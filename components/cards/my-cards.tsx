@@ -475,7 +475,7 @@ export function MyCards({
       </div>
 
       <div className="rounded-3xl border border-surface-200 bg-white p-4 sm:p-5">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
           {cards.map((c) => {
             const cNetwork = c.network || networkForSlug(c.card_products?.slug);
             const isSelected = c.id === selected.id;
@@ -491,7 +491,7 @@ export function MyCards({
                 aria-pressed={isSelected}
                 aria-label={`Select card ${c.label} ending ${c.pan_last4}`}
                 className={cn(
-                  "flex min-w-0 flex-1 items-center gap-2.5 rounded-2xl border p-2.5 text-left transition-all sm:flex-initial sm:min-w-[168px]",
+                  "flex min-w-0 items-center gap-2.5 rounded-2xl border p-2.5 text-left transition-all sm:flex-initial sm:min-w-[168px]",
                   isSelected
                     ? "border-brand-500 bg-brand-50/60 ring-2 ring-brand-500/25 shadow-sm shadow-brand-500/10"
                     : "border-surface-200 bg-surface-50 hover:border-surface-300 hover:bg-white",

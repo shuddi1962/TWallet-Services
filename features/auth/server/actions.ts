@@ -61,7 +61,7 @@ export async function signIn(_prev: unknown, formData: FormData) {
 
   const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: email.data,
     password: password.data,
   });
@@ -73,10 +73,13 @@ export async function signIn(_prev: unknown, formData: FormData) {
     return { error: error.message };
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = data?.user;
 
   if (user) {
-    const country = await detectCountry();
+    const [country, isAdmin] = await Promise.all([
+      detectCountry(),
+      isAdminUser(user.id),
+    ]);
     if (country) {
       await supabase.from("profiles").update({ country }).eq("id", user.id);
     }
@@ -84,7 +87,7 @@ export async function signIn(_prev: unknown, formData: FormData) {
     if (redirectTo && redirectTo.startsWith("/")) {
       redirect(redirectTo);
     }
-    if (await isAdminUser(user.id)) {
+    if (isAdmin) {
       redirect("/admin/dashboard");
     }
   }

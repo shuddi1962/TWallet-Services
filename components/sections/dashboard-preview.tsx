@@ -12,8 +12,8 @@ import { cn } from "@/lib/utils/cn";
 const recentOrders = [
   { id: "1", order_number: "TW-MSAFWLMJ-48YP", name: "Midnight Black", amount: 5.0, status: "delivered", time: "Today", tracking_number: "TWLX4829137751", carrier: "DHL" },
   { id: "2", order_number: "TW-MS5PZIRN-KB15", name: "Titanium", amount: 10.0, status: "delivered", time: "Yesterday", tracking_number: null, carrier: null },
-  { id: "3", order_number: "TW-K7D2XQZN-91AH", name: "Sapphire", amount: 9.99, status: "paid", time: "Jul 28", tracking_number: null, carrier: null },
-  { id: "4", order_number: "TW-RM4PVDLZ-62CK", name: "Gold", amount: 49.99, status: "processing", time: "Jul 26", tracking_number: null, carrier: null },
+  { id: "3", order_number: "TW-K7D2XQZN-91AH", name: "Sapphire", amount: 5, status: "paid", time: "Jul 28", tracking_number: null, carrier: null },
+  { id: "4", order_number: "TW-RM4PVDLZ-62CK", name: "Gold", amount: 25, status: "processing", time: "Jul 26", tracking_number: null, carrier: null },
 ];
 
 const STATUS_STYLE: Record<string, string> = {

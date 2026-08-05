@@ -392,7 +392,7 @@ export function AdminCardsTable({ products: initial }: { products: CardProduct[]
                     step="0.01"
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                    placeholder="29.99"
+                    placeholder="15.00"
                     className="w-full mt-1 px-3 py-2 border border-surface-200 rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
                   />
                 </label>

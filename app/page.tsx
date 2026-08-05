@@ -26,9 +26,11 @@ const jsonLd = {
     priceCurrency: "USD",
     offerCount: "3",
     offers: [
-      { "@type": "Offer", name: "Midnight Black", price: "0", priceCurrency: "USD", description: "Classic black metal card" },
-      { "@type": "Offer", name: "Titanium", price: "29", priceCurrency: "USD", description: "Premium titanium card" },
-      { "@type": "Offer", name: "Gold", price: "99", priceCurrency: "USD", description: "Exclusive gold card" },
+      { "@type": "Offer", name: "Sapphire", price: "5", priceCurrency: "USD", description: "Virtual card, issued instantly" },
+      { "@type": "Offer", name: "Obsidian", price: "10", priceCurrency: "USD", description: "Metal card, ships worldwide" },
+      { "@type": "Offer", name: "Cyber", price: "15", priceCurrency: "USD", description: "Virtual premium card" },
+      { "@type": "Offer", name: "Gold", price: "25", priceCurrency: "USD", description: "Premium metal card" },
+      { "@type": "Offer", name: "Holographic", price: "50", priceCurrency: "USD", description: "Limited edition metal card" },
     ],
   },
 };

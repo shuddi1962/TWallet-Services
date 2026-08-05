@@ -22,11 +22,11 @@ export default async function AdminNotificationsPage(props: {
           <p className="text-sm text-body">{count} notification{count === 1 ? "" : "s"}</p>
         </div>
       </div>
-      <div className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-1">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1">
           <SendNotification />
         </div>
-        <div className="xl:col-span-2">
+        <div className="lg:col-span-2">
           <AdminNotificationsTable notifications={notifications} count={count} />
         </div>
       </div>

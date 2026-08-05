@@ -104,9 +104,6 @@ export function Header() {
                 </Link>
               ))}
               <div className="mt-3 space-y-2 border-t border-white/10 pt-4">
-                <div className="px-1 sm:hidden">
-                  <ConnectButton hideWhenSignedIn className="w-full" />
-                </div>
                 <AuthNav mobile />
               </div>
             </div>
