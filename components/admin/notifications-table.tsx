@@ -212,9 +212,9 @@ export function AdminNotificationsTable({ notifications, count }: { notification
     <div>
       {/* Filter bar */}
       <Card className="p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm flex-1 min-w-[160px]">
-            <Search className="w-4 h-4 text-body" />
+        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm w-full lg:w-auto lg:flex-1 lg:min-w-[200px]">
+            <Search className="w-4 h-4 text-body shrink-0" />
             <input
               type="text"
               placeholder="Search title or message..."
@@ -235,42 +235,44 @@ export function AdminNotificationsTable({ notifications, count }: { notification
             )}
           </div>
 
-          <select
-            className="px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm text-body"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            aria-label="Filter by type"
-          >
-            {NOTIFICATION_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
+          <div className="grid grid-cols-2 gap-2 lg:flex lg:items-center lg:gap-3">
+            <select
+              className="w-full px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm text-body lg:w-auto"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              aria-label="Filter by type"
+            >
+              {NOTIFICATION_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
 
-          <select
-            className="px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm text-body"
-            value={readFilter}
-            onChange={(e) => setReadFilter(e.target.value)}
-            aria-label="Filter by read status"
-          >
-            {READ_FILTERS.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
+            <select
+              className="w-full px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm text-body lg:w-auto"
+              value={readFilter}
+              onChange={(e) => setReadFilter(e.target.value)}
+              aria-label="Filter by read status"
+            >
+              {READ_FILTERS.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full lg:w-auto">
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm text-body"
+              className="min-w-0 flex-1 px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm text-body lg:w-auto lg:flex-none"
               aria-label="From date"
             />
-            <span className="text-body text-sm">to</span>
+            <span className="text-body text-sm shrink-0">to</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm text-body"
+              className="min-w-0 flex-1 px-3 py-2 bg-white border border-surface-200 rounded-lg text-sm text-body lg:w-auto lg:flex-none"
               aria-label="To date"
             />
           </div>
@@ -278,7 +280,7 @@ export function AdminNotificationsTable({ notifications, count }: { notification
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="text-sm text-primary hover:text-primary/80 font-medium"
+              className="self-start lg:self-auto text-sm text-primary hover:text-primary/80 font-medium"
             >
               Reset
             </button>
@@ -295,7 +297,7 @@ export function AdminNotificationsTable({ notifications, count }: { notification
 
       {/* Empty state */}
       {filtered.length === 0 ? (
-        <Card className="p-12 text-center">
+        <Card className="p-8 sm:p-12 text-center">
           <div className="flex flex-col items-center gap-2">
             <CheckCheck className="w-12 h-12 text-success/60" aria-hidden="true" />
             <p className="text-lg font-medium text-heading">
@@ -311,8 +313,8 @@ export function AdminNotificationsTable({ notifications, count }: { notification
       ) : (
         /* Table */
         <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="text-left text-body bg-surface-50 border-b border-surface-200">
                   <th scope="col" className="py-3 px-4 font-medium">Type</th>

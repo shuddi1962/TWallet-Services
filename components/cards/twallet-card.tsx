@@ -216,7 +216,7 @@ export function TwalletCard({
             <div className="pointer-events-none absolute -bottom-20 left-8 h-40 w-40 rounded-full bg-black/20 blur-2xl" />
             <div className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(115deg,transparent_40%,white_50%,transparent_60%)]" />
 
-            <div className="relative flex h-full flex-col justify-between p-5 sm:p-6">
+            <div className="relative flex h-full flex-col justify-between p-4 sm:p-6">
               <div className="flex items-start justify-between">
                 <TrustMark />
                 <div className="text-right">
@@ -241,10 +241,10 @@ export function TwalletCard({
               </div>
 
               <div>
-                <p className="font-mono text-[17px] font-medium tracking-[0.18em] text-white sm:text-[19px]">
+                <p className="whitespace-nowrap font-mono text-[15px] font-medium tracking-[0.13em] text-white sm:text-[19px] sm:tracking-[0.18em]">
                   {panDisplay}
                 </p>
-                <div className="mt-3 flex items-end justify-between gap-3">
+                <div className="mt-2 flex items-end justify-between gap-3 sm:mt-3">
                   <div>
                     <p className="text-[9px] uppercase tracking-[0.16em] text-white/45">Cardholder</p>
                     <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-white/90">
@@ -272,8 +272,8 @@ export function TwalletCard({
               WebkitTransform: "rotateY(180deg)",
             }}
           >
-            <div className="mt-6 h-11 w-full bg-black/85" />
-            <div className="mt-5 px-5">
+            <div className="mt-4 h-10 w-full bg-black/85 sm:mt-6 sm:h-11" />
+            <div className="mt-4 px-5 sm:mt-5">
               <div className="flex items-center gap-2">
                 <div className="h-9 flex-1 rounded-sm bg-[repeating-linear-gradient(0deg,#e5e5e5_0px,#e5e5e5_2px,#f5f5f5_2px,#f5f5f5_4px)]" />
                 <div className="flex h-9 min-w-[64px] items-center justify-center rounded-sm bg-white px-3">
@@ -284,7 +284,7 @@ export function TwalletCard({
               </div>
               <p className="mt-2 text-right text-[10px] uppercase tracking-wider text-white/50">CVV</p>
             </div>
-            <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
+            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between sm:bottom-5 sm:left-5 sm:right-5">
               <div>
                 <TrustMark color="rgba(255,255,255,0.85)" />
                 <p className="mt-2 max-w-[220px] text-[10px] leading-relaxed text-white/45">
