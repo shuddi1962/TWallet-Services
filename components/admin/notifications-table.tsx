@@ -33,6 +33,8 @@ const NOTIFICATION_TYPES = [
   { value: "shipping_update", label: "Shipping Update" },
   { value: "support_reply", label: "Support Reply" },
   { value: "ticket_created", label: "New Support Ticket" },
+  { value: "kyc_submitted", label: "KYC Submitted" },
+  { value: "kyc_reviewed", label: "KYC Reviewed" },
   { value: "system", label: "System Alert" },
   { value: "promotion", label: "Promotion" },
 ];
@@ -52,6 +54,8 @@ const typeVariants: Record<string, string> = {
   shipping_update: "info",
   support_reply: "info",
   ticket_created: "warning",
+  kyc_submitted: "warning",
+  kyc_reviewed: "info",
   system: "warning",
   promotion: "secondary",
 };
@@ -65,6 +69,8 @@ const typeLabels: Record<string, string> = {
   shipping_update: "Shipping Update",
   support_reply: "Support Reply",
   ticket_created: "New Support Ticket",
+  kyc_submitted: "KYC Submitted",
+  kyc_reviewed: "KYC Reviewed",
   system: "System Alert",
   promotion: "Promotion",
 };
@@ -74,6 +80,7 @@ const relatedLinks: Record<string, string> = {
   payment: "/admin/payments",
   ticket: "/admin/support",
   user: "/admin/users",
+  kyc_submissions: "/admin/kyc",
 };
 
 export function AdminNotificationsTable({ notifications, count }: { notifications: AdminNotification[]; count: number }) {

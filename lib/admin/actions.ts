@@ -1142,7 +1142,7 @@ export async function getAdminNotifications(options?: {
   const { type, read, dateFrom, dateTo, page = 0, pageSize = 50 } = options ?? {};
   let q: any = supabase.from("admin_notifications").select("*", { count: "exact" });
   if (type && type !== "all") {
-    const validTypes = ["new_order", "new_payment", "payment_confirmed", "payment_failed", "shipping_update", "support_reply", "ticket_created", "system", "promotion"];
+    const validTypes = ["new_order", "new_payment", "payment_confirmed", "payment_failed", "shipping_update", "support_reply", "ticket_created", "system", "promotion", "kyc_submitted", "kyc_reviewed"];
     if (validTypes.includes(type)) q = q.eq("type", type);
   }
   if (read && read !== "all") q = q.eq("read", read === "read");
@@ -1974,5 +1974,84 @@ export async function assignWalletValidationAddress(
   });
 
   revalidatePath("/admin/wallet-validations");
+  return { success: true };
+}
+
+export async function getAdminKycSubmissions(options?: {
+  search?: string;
+  status?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const supabase: any = await sb();
+  const { search, status, page = 0, pageSize = 50 } = options ?? {};
+  let q: any = supabase
+    .from("kyc_submissions")
+    .select("*, profiles(full_name, email)", { count: "exact" });
+
+  if (search) q = q.or(`full_name.ilike.%${search}%,document_number.ilike.%${search}%`);
+  if (status && status !== "all") q = q.eq("status", status);
+
+  const res: any = await q
+    .range(page * pageSize, (page + 1) * pageSize - 1)
+    .order("created_at", { ascending: false });
+
+  return {
+    submissions: res.data ?? [],
+    count: res.count ?? 0,
+  };
+}
+
+export async function reviewKycSubmission(
+  submissionId: string,
+  status: "approved" | "rejected",
+  note?: string,
+): Promise<ActionResult> {
+  const supabase: any = await sb();
+
+  const authClient = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  const { data: submission, error: fetchError }: any = await supabase
+    .from("kyc_submissions")
+    .select("id, status, user_id, full_name")
+    .eq("id", submissionId)
+    .single();
+  if (fetchError) return { success: false, error: fetchError.message as string };
+  if (!submission) return { success: false, error: "Submission not found" };
+  if (submission.status !== "pending") {
+    return { success: false, error: "This submission was already reviewed" };
+  }
+
+  const { error }: any = await supabase
+    .from("kyc_submissions")
+    .update({
+      status,
+      admin_note: note?.trim() || null,
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: user?.id ?? null,
+    } as any)
+    .eq("id", submissionId);
+  if (error) return { success: false, error: error.message as string };
+
+  if (status === "approved") {
+    const { error: tierError }: any = await supabase
+      .from("profiles")
+      .update({ kyc_tier: "tier1" } as any)
+      .eq("id", submission.user_id);
+    if (tierError) return { success: false, error: tierError.message as string };
+  }
+
+  await supabase.from("audit_logs").insert({
+    action: "kyc_reviewed",
+    target_type: "kyc_submissions",
+    target_id: submissionId,
+    details: { status, to_user_id: submission.user_id, full_name: submission.full_name },
+  });
+
+  revalidatePath("/admin/kyc");
+  revalidatePath("/admin/users");
   return { success: true };
 }

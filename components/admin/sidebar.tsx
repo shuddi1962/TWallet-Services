@@ -22,6 +22,7 @@ import {
   Home,
   UserCog,
   Bell,
+  Fingerprint,
 } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { cn } from "@/lib/utils/cn";
@@ -29,6 +30,7 @@ import { cn } from "@/lib/utils/cn";
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, route: "/admin/dashboard" },
   { label: "Users", icon: Users, route: "/admin/users" },
+  { label: "KYC Reviews", icon: Fingerprint, route: "/admin/kyc" },
   { label: "Orders", icon: ShoppingBag, route: "/admin/orders" },
   { label: "Cards", icon: CreditCard, route: "/admin/cards" },
   { label: "Payments", icon: Coins, route: "/admin/payments" },

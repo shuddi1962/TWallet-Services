@@ -1814,6 +1814,76 @@ export type Database = {
           },
         ]
       }
+      kyc_submissions: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          document_back_url: string | null
+          document_front_url: string
+          document_number: string | null
+          document_type: string
+          full_name: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          document_back_url?: string | null
+          document_front_url: string
+          document_number?: string | null
+          document_type?: string
+          full_name: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          document_back_url?: string | null
+          document_front_url?: string
+          document_number?: string | null
+          document_type?: string
+          full_name?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kyc_submissions_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kyc_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kyc_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_dashboard_summary"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
@@ -3121,6 +3191,8 @@ export type Database = {
         | "sweep_initiated"
         | "sweep_status_updated"
         | "notification_sent"
+        | "kyc_submitted"
+        | "kyc_reviewed"
       card_network: "visa" | "mastercard"
       card_status: "active" | "frozen" | "cancelled" | "pending_activation"
       card_type: "physical" | "virtual"
@@ -3142,6 +3214,8 @@ export type Database = {
         | "order_delivered"
         | "card_activated"
         | "card_declined"
+        | "kyc_submitted"
+        | "kyc_reviewed"
       order_status:
         | "pending"
         | "paid"
@@ -3816,6 +3890,8 @@ export const Constants = {
         "sweep_initiated",
         "sweep_status_updated",
         "notification_sent",
+        "kyc_submitted",
+        "kyc_reviewed",
       ],
       card_network: ["visa", "mastercard"],
       card_status: ["active", "frozen", "cancelled", "pending_activation"],
@@ -3838,6 +3914,8 @@ export const Constants = {
         "order_delivered",
         "card_activated",
         "card_declined",
+        "kyc_submitted",
+        "kyc_reviewed",
       ],
       order_status: [
         "pending",

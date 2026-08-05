@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { getProfile, getSecurityInfo, updateProfile, getUserAddresses, upsertUserAddress, deleteUserAddress, uploadAvatar, removeAvatar } from "@/features/dashboard/server/actions";
+import { getMyKycSubmissions, submitKycApplication, type KycSubmissionRecord } from "@/features/kyc/server/actions";
 import { useSystemSettings } from "@/lib/hooks/use-system-settings";
 import { Loader2 } from "lucide-react";
 
@@ -41,7 +42,7 @@ export default function ProfilePage() {
   const [lastLogin, setLastLogin] = useState<Date | null>(null);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [walletCount, setWalletCount] = useState(0);
-  const [kycTier, setKycTier] = useState("none");
+  const [kycSubmissions, setKycSubmissions] = useState<KycSubmissionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +50,12 @@ export default function ProfilePage() {
   const kycRequired = Boolean(settings.kyc?.require_kyc);
   const tier1Limit = Number(settings.kyc?.tier1_limit_usdc ?? 1000);
   const tier2Limit = Number(settings.kyc?.tier2_limit_usdc ?? 100000);
+
+  const [kycState, kycFormAction, kycPending] = useActionState(submitKycApplication, undefined);
+
+  const latestKyc = kycSubmissions[0] ?? null;
+  const kycStatus = latestKyc?.status ?? "none";
+  const canResubmit = kycStatus === "rejected" || kycStatus === "none";
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -58,7 +65,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     void (async () => {
-      const [profileRes, securityRes, addressesRes] = await Promise.all([getProfile(), getSecurityInfo(), getUserAddresses()]);
+      const [profileRes, securityRes, addressesRes, kycRes] = await Promise.all([getProfile(), getSecurityInfo(), getUserAddresses(), getMyKycSubmissions()]);
       if (profileRes.error === null && profileRes.data) {
         setFullName(profileRes.data.fullName);
         setEmail(profileRes.data.email);
@@ -67,7 +74,9 @@ export default function ProfilePage() {
         setAvatarUrl(profileRes.data.avatarUrl ?? "");
         setMemberSince(profileRes.data.createdAt ? new Date(profileRes.data.createdAt) : null);
         setLastLogin(profileRes.data.lastLogin ? new Date(profileRes.data.lastLogin) : null);
-        setKycTier(profileRes.data.kycTier ?? "none");
+      }
+      if (kycRes.error === null && kycRes.data) {
+        setKycSubmissions(kycRes.data);
       }
       if (securityRes.error === null && securityRes.data) {
         setEmailConfirmed(securityRes.data.emailConfirmed);
@@ -150,6 +159,36 @@ export default function ProfilePage() {
               const exists = prev.some((a) => a.id === item.id);
               return exists ? prev.map((a) => (a.id === item.id ? item : a)) : [...prev, item];
             });
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "kyc_submissions", filter: `user_id=eq.${user.id}` },
+          (payload: unknown) => {
+            const p = payload as {
+              eventType: string;
+              new?: Record<string, unknown> | null;
+              old?: Record<string, unknown> | null;
+            };
+            const row = p.new;
+            if (!row?.id) return;
+            const record: KycSubmissionRecord = {
+              id: String(row.id),
+              full_name: String(row.full_name ?? ""),
+              document_type: String(row.document_type ?? "passport"),
+              document_number: (row.document_number as string | null) ?? null,
+              document_front_url: String(row.document_front_url ?? ""),
+              document_back_url: (row.document_back_url as string | null) ?? null,
+              status: (row.status as KycSubmissionRecord["status"]) ?? "pending",
+              admin_note: (row.admin_note as string | null) ?? null,
+              reviewed_at: (row.reviewed_at as string | null) ?? null,
+              created_at: String(row.created_at ?? ""),
+            };
+            setKycSubmissions((prev) =>
+              prev.some((s) => s.id === record.id)
+                ? prev.map((s) => (s.id === record.id ? record : s))
+                : [record, ...prev],
+            );
           },
         )
         .subscribe();
@@ -392,23 +431,89 @@ export default function ProfilePage() {
             <CardDescription>Verification is required to order cards on this platform</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {kycState?.success && (
+              <div className="rounded-xl border border-success/20 bg-success/10 p-4 text-sm text-success" role="alert">{kycState.success}</div>
+            )}
+            {kycState?.error && (
+              <div className="rounded-xl border border-error/20 bg-error/10 p-4 text-sm text-error" role="alert">{kycState.error}</div>
+            )}
+
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <div>
                 <p className="text-sm font-medium text-slate-900">
-                  {kycTier !== "none" ? "You are verified" : "Verification required"}
+                  {kycStatus === "approved"
+                    ? "You are verified"
+                    : kycStatus === "pending"
+                      ? "Documents under review"
+                      : kycStatus === "rejected"
+                        ? "Submission rejected"
+                        : "Not submitted"}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {kycTier !== "none"
-                    ? `Tier ${kycTier === "tier2" ? "2" : "1"} verified — up to ${kycTier === "tier2" ? tier2Limit : tier1Limit} USDC per order`
-                    : `Complete verification to unlock orders up to ${tier1Limit} USDC (Tier 2: ${tier2Limit} USDC)`}
+                  {kycStatus === "approved"
+                    ? `Tier 1 verified — up to ${tier1Limit} USDC per order (Tier 2: ${tier2Limit} USDC)`
+                    : kycStatus === "pending"
+                      ? "Our team is reviewing your documents — usually within 24 hours."
+                      : `Upload a government-issued ID to unlock orders up to ${tier1Limit} USDC`}
                 </p>
               </div>
-              <Badge variant={kycTier !== "none" ? "success" : "warning"}>{kycTier !== "none" ? "Verified" : "Pending"}</Badge>
+              <Badge
+                variant={kycStatus === "approved" ? "success" : kycStatus === "pending" ? "warning" : kycStatus === "rejected" ? "error" : "outline"}
+              >
+                {kycStatus === "approved" ? "Approved" : kycStatus === "pending" ? "Pending review" : kycStatus === "rejected" ? "Rejected" : "Not submitted"}
+              </Badge>
             </div>
-            {kycTier === "none" && (
+
+            {kycStatus === "rejected" && latestKyc?.admin_note && (
+              <div className="rounded-xl border border-error/20 bg-error/10 p-4 text-sm text-error" role="alert">
+                {latestKyc.admin_note}
+              </div>
+            )}
+
+            {kycStatus === "pending" && (
               <p className="text-xs text-slate-500">
-                Upload a government-issued ID and proof of address to verify your identity. Our team reviews submissions within 24 hours.
+                Submitted {latestKyc ? new Date(latestKyc.created_at).toLocaleDateString() : ""} — you&apos;ll get a notification the moment a decision is made. You can also check the admin review status here in real time.
               </p>
+            )}
+
+            {canResubmit && (
+              <form action={kycFormAction} className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-medium text-slate-900">
+                  {kycStatus === "rejected" ? "Resubmit documents" : "Submit identity documents"}
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="kyc-fullName">Full name (as on document)</Label>
+                    <Input id="kyc-fullName" name="fullName" defaultValue={fullName} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="kyc-documentType">Document type</Label>
+                    <select id="kyc-documentType" name="documentType" className={selectClassName} defaultValue="passport">
+                      <option value="passport">Passport</option>
+                      <option value="drivers_license">Driver&apos;s License</option>
+                      <option value="national_id">National ID</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="kyc-documentNumber">Document number (optional)</Label>
+                  <Input id="kyc-documentNumber" name="documentNumber" placeholder="e.g. A1234567" />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="kyc-front">Front of document *</Label>
+                    <Input id="kyc-front" name="front" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="kyc-back">Back of document</Label>
+                    <Input id="kyc-back" name="back" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" />
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">PNG, JPG, WEBP or PDF. Max 10MB per file. Documents are private — only our review team can see them.</p>
+                <Button type="submit" loading={kycPending}>
+                  {kycStatus === "rejected" ? "Resubmit for review" : "Submit for review"}
+                </Button>
+              </form>
             )}
           </CardContent>
         </Card>
