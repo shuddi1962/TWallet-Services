@@ -90,8 +90,17 @@ If tests exist for the touched area, run them too. Never commit with failing lin
   - **Notifications** actions visible on touch devices (`opacity-100 md:opacity-0 md:group-hover:opacity-100`) and loading skeleton no longer overflows (`w-full max-w-96`) (`app/dashboard/notifications/page.tsx`).
   - **Dashboard drawer** sidebar clamped to viewport (`w-72 max-w-[85vw]` in `components/layout/sidebar.tsx`) so it no longer sticks out of the drawer on ≤340px.
   - **Bottom tab bar** labels bumped to 11px for readability (`components/dashboard/bottom-tab-bar.tsx`).
+- **Round 2 (page-level overflow + 2–3 col mobile layouts)** — user reported dashboards still required horizontal sliding on phones:
+  - **Page-level overflow fixed** — admin `main` lacked `overflow-x-hidden` (dashboard main had it), so any wide element scrolled the whole page; added to `components/admin/layout.tsx`. Root cause of "slide right to see anything".
+  - **Admin header** (`components/admin/header.tsx`) — bell was crammed/cut on phones: breadcrumb now `min-w-0 flex-1 truncate`, "Production" badge hidden below `min-[420px]`, tighter gaps; bell + avatar always visible.
+  - **Dashboard header** (`components/layout/dashboard-header.tsx`) — wallet connect pill (≈170px) hidden on phones (`hidden sm:block`); wallet stays reachable via the Wallet tab + `/dashboard/wallet`.
+  - **Mobile footers in 2 columns** — homepage `footer.tsx` and dashboard `app-footer.tsx`: `grid-cols-2` base (brand card spans 2) instead of a single vertical stack, per user request.
+  - **2-col mobile stat grids** — user dashboard overview (`dashboard-content.tsx`), admin overview (`overview.tsx`), admin analytics (`analytics-panel.tsx`): `grid-cols-2` on phones, 4 on desktop.
+  - **2-col tablet panels** — dashboard My Card/Orders + wallet side panel, `my-cards.tsx` detail view, homepage dashboard-preview: `xl:grid-cols-5` → `lg:grid-cols-5` so tablets get side-by-side layout earlier.
+  - **FilterBar** search min-width 200px → 160px so filters wrap cleanly at 320px.
+  - **Full sweep confirmed** — transactions (mobile card list `md:hidden`), orders, support, profile, settings, security, wallet, notifications, KYC + wallet-validations expandable rows, all admin tables (scroll wrappers), auth pages, homepage sections: no remaining overflow sources found.
 - **Verified** — lint + typecheck clean (only pre-existing warnings), 88/88 tests green.
-- **Deployed** — commit `0616969` → pushed → Vercel production build READY (aliased to twalletservices.com).
+- **Deployed** — commit `e059ac3` → pushed → Vercel production build READY (aliased to twalletservices.com).
 
 ### Session 20 — Aug 05, 2026 (Full KYC flow: user submits documents → admin approves/rejects → tier unlocks)
 - **`kyc_submissions` table** — migration `202608050002_kyc_submissions.sql` (applied to `smkckhsvzyjttzqhpzhv`): user_id, full_name, document_type (passport/drivers_license/national_id), document_number, document_front_url/back_url (stored in the existing private `documents` bucket), status pending/approved/rejected, admin_note, reviewed_by, reviewed_at. RLS (users read/insert own; admins read/update/delete all), realtime publication, indexes, `notification_type` + `audit_action` gain `kyc_submitted`/`kyc_reviewed`.
