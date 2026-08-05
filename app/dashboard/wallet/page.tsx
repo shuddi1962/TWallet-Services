@@ -173,7 +173,7 @@ export default function WalletPage() {
       {assigned ? (
         <Card className="border-emerald-200 bg-emerald-50/60">
           <CardContent className="flex flex-col gap-4 p-5">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.7)]" />
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-emerald-800">Wallet connected</p>

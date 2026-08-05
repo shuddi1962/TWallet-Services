@@ -40,7 +40,7 @@ export function BottomTabBar() {
               aria-selected={isActive}
               aria-label={tab.label}
               className={cn(
-                "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors",
+                "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px] font-medium transition-colors",
                 isActive ? "text-black" : "text-slate-400 hover:text-slate-600",
               )}
             >
@@ -62,7 +62,7 @@ export function BottomTabBar() {
           aria-label="Log out"
           disabled={pending}
           onClick={() => startTransition(() => void signOut())}
-          className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors text-slate-400 hover:text-slate-600 disabled:opacity-60"
+          className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px] font-medium transition-colors text-slate-400 hover:text-slate-600 disabled:opacity-60"
         >
           <div className="flex h-8 w-12 items-center justify-center rounded-xl transition-colors">
             {pending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <LogOut className="h-5 w-5" aria-hidden="true" />}

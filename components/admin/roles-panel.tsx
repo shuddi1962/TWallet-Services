@@ -513,7 +513,7 @@ export function RolesPanel({
                             </button>
 
                             {overrideId === admin.id && (
-                              <div className="absolute right-0 top-full z-30 mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                              <div className="fixed inset-x-4 top-1/2 z-50 max-h-[75dvh] -translate-y-1/2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:inset-x-auto sm:top-full sm:mt-2 sm:w-80 sm:max-h-none sm:translate-y-0">
                                 <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                                   <p className="text-xs font-semibold text-slate-900">
                                     Permissions · {admin.profiles?.full_name ?? "Custom"}

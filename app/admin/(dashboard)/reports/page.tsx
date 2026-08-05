@@ -225,7 +225,7 @@ export default function AdminReportsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-md overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-surface-200 bg-surface-50">

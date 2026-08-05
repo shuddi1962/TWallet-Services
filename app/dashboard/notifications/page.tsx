@@ -203,7 +203,7 @@ export default function NotificationsPage() {
               <Skeleton className="h-10 w-10 rounded-full" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-3 w-96" />
+                <Skeleton className="h-3 w-full max-w-96" />
               </div>
             </div>
           ))}
@@ -315,7 +315,7 @@ export default function NotificationsPage() {
                             })}
                           </p>
                         </div>
-                        <div className="flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex shrink-0 gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                           {!n.read && (
                             <button
                               onClick={() => handleMarkRead(n.id)}

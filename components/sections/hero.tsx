@@ -120,14 +120,14 @@ function CardReveal() {
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#03060d] pt-20 pb-14 lg:pt-28 lg:pb-20">
+    <section className="relative overflow-hidden bg-[#03060d] pt-24 pb-16 lg:pt-28 lg:pb-20">
       <Stars />
       <FloatingOrbs />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.14),transparent_55%)]" />
       <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
 
       <Container className="relative z-10">
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-6">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -138,7 +138,7 @@ export function Hero() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-500/25 bg-brand-500/10 px-3 py-1"
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-500/25 bg-brand-500/10 px-3 py-1 mx-auto lg:mx-0"
             >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-400" />
               <span className="text-[11px] font-semibold tracking-wide text-brand-300">
@@ -150,7 +150,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.15 }}
-              className="text-[2.15rem] font-bold leading-[1.05] tracking-tight text-white sm:text-4xl lg:text-[2.9rem] xl:text-[3.35rem] xl:leading-[1.02]"
+              className="text-center text-[2.15rem] font-bold leading-[1.05] tracking-tight text-white sm:text-4xl lg:text-left lg:text-[2.9rem] xl:text-[3.35rem] xl:leading-[1.02]"
             >
               Your crypto.
               <br />
@@ -165,7 +165,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="max-w-md text-sm leading-relaxed text-white/55 sm:text-base"
+              className="mx-auto max-w-md text-center text-sm leading-relaxed text-white/55 sm:text-base lg:mx-0 lg:text-left"
             >
               Premium virtual &amp; metal cards, funded straight from your own wallet and issued in
               minutes. Accepted in 120+ countries — tracked from order to delivery.
@@ -175,16 +175,16 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
-              className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center"
+              className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center lg:justify-start"
             >
               <div className="relative">
                 <div className="absolute inset-0 animate-glow-pulse rounded-xl bg-brand-500/40 blur-xl" />
                 <Button
-                  className="relative h-11 overflow-hidden rounded-xl border-0 bg-gradient-to-r from-brand-500 to-brand-700 px-6 text-sm font-semibold text-white shadow-lg shadow-brand-600/30"
+                  className="relative h-11 overflow-hidden rounded-xl border-0 bg-gradient-to-r from-brand-500 to-brand-700 px-6 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 w-full sm:w-auto"
                   asChild
                 >
                   <Link href="/auth/register">
-                    <span className="relative z-10 flex items-center gap-2">
+                    <span className="relative z-10 flex items-center justify-center gap-2">
                       <Play className="h-3.5 w-3.5 fill-white" />
                       Get started
                     </span>
@@ -200,12 +200,12 @@ export function Hero() {
               </Button>
             </motion.div>
 
-            {/* Trust stats - single horizontal row */}
+            {/* Trust stats - one row on desktop, 2x2 on mobile */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-4 mt-3 border-t border-white/[0.06]"
+              className="grid grid-cols-2 gap-x-2 gap-y-3 pt-4 mt-3 border-t border-white/[0.06] lg:grid-cols-4 lg:gap-x-3"
             >
               {stats.map(({ icon: Icon, label }, i) => (
                 <motion.div
@@ -213,7 +213,7 @@ export function Hero() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.35 + i * 0.05 }}
-                  className="flex items-center gap-2"
+                  className="flex items-center justify-center gap-2 lg:justify-start"
                 >
                   <div className="w-7 h-7 shrink-0 rounded-lg bg-[#2563eb]/10 border border-[#2563eb]/15 flex items-center justify-center">
                     <Icon className="w-3.5 h-3.5 text-[#2563eb]" strokeWidth={2} aria-hidden="true" />
@@ -224,11 +224,12 @@ export function Hero() {
             </motion.div>
           </motion.div>
 
+          {/* Floating card — desktop only; hidden on mobile so the copy stays centered */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.15 }}
-            className="order-first mx-auto w-full max-w-[300px] sm:max-w-[340px] lg:order-none lg:col-span-3 lg:max-w-none"
+            className="hidden lg:block lg:col-span-3"
           >
             <CardReveal />
           </motion.div>
@@ -239,7 +240,7 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="lg:col-span-4"
           >
-            <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-6 shadow-2xl shadow-black/50 backdrop-blur-xl">
+            <div className="mx-auto w-full max-w-sm rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-6 shadow-2xl shadow-black/50 backdrop-blur-xl">
               <div className="mb-6 flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/30 to-accent-500/20 ring-1 ring-brand-400/30">
                   <Smartphone className="h-6 w-6 text-white" />

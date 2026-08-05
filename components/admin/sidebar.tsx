@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -48,23 +48,15 @@ const navItems = [
 interface AdminSidebarProps {
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
 }
 
-export function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebarProps) {
+export function AdminSidebar({ mobileOpen, onCloseMobile, collapsed, onCollapsedChange }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    const stored = localStorage.getItem("admin-sidebar-collapsed");
-    if (stored) setCollapsed(stored === "true");
-  }, []);
-
-  const toggle = () => {
-    const next = !collapsed;
-    setCollapsed(next);
-    localStorage.setItem("admin-sidebar-collapsed", String(next));
-  };
+  const toggle = () => onCollapsedChange(!collapsed);
 
   const filtered = navItems.filter((item) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase()),

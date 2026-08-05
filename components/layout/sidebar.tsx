@@ -33,7 +33,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <aside
-      className="flex h-full w-72 shrink-0 flex-col border-r border-slate-200 bg-white"
+      className="flex h-full w-72 max-w-[85vw] shrink-0 flex-col border-r border-slate-200 bg-white"
       aria-label="Dashboard navigation"
     >
       <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">

@@ -244,7 +244,7 @@ export default function AdminSettingsPage() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1 bg-surface-100 rounded-lg p-1 w-fit">
+        <div className="flex gap-1 bg-surface-100 rounded-lg p-1 w-fit max-w-full overflow-x-auto">
           {sections.map((tab) => (
             <button
               key={tab}
