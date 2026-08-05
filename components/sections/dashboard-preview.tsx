@@ -105,8 +105,8 @@ export function DashboardPreview() {
               <PremiumStat label="Total Spent" value="$1,240" icon={TrendingUp} change="+$230" />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-5">
-              <div className="space-y-6 xl:col-span-3">
+            <div className="grid gap-6 lg:grid-cols-5">
+              <div className="space-y-6 lg:col-span-3">
                 <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-neutral-900/10 blur-3xl" />
                   <div className="relative mb-5 flex items-center justify-between">
@@ -209,7 +209,7 @@ export function DashboardPreview() {
                 </div>
               </div>
 
-              <div className="space-y-6 xl:col-span-2">
+              <div className="space-y-6 lg:col-span-2">
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <h4 className="mb-4 text-lg font-semibold text-slate-900">Trust Wallet</h4>
                   <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">

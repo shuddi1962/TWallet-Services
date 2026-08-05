@@ -18,21 +18,21 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-slate-200 bg-white/90 px-4 backdrop-blur-2xl md:px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-3 backdrop-blur-2xl md:px-6">
       <button
         onClick={onMenuToggle}
-        className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 lg:hidden"
+        className="shrink-0 rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 lg:hidden"
         aria-label="Toggle sidebar"
       >
         <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
 
-      <nav aria-label="Breadcrumb">
-        <div className="text-sm font-medium text-slate-500">{breadcrumbFromPath(pathname)}</div>
+      <nav aria-label="Breadcrumb" className="min-w-0 flex-1">
+        <div className="truncate text-sm font-medium text-slate-500">{breadcrumbFromPath(pathname)}</div>
       </nav>
 
-      <div className="ml-auto flex items-center gap-3">
-        <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 ring-1 ring-emerald-500/20">
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+        <span className="hidden rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 ring-1 ring-emerald-500/20 min-[420px]:inline-flex">
           Production
         </span>
 
@@ -40,11 +40,11 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
 
         <Link
           href="/dashboard/profile"
-          className="flex items-center gap-2 border-l border-slate-200 pl-3 transition hover:opacity-80"
+          className="flex items-center gap-2 border-l border-slate-200 pl-2.5 transition hover:opacity-80 sm:pl-3"
           aria-label="Go to your account"
           title="Go to your account"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
             A
           </div>
           <div className="hidden sm:block">

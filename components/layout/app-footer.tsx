@@ -112,9 +112,9 @@ export function AppFooter({ variant = "light" }: { variant?: "light" | "dark" })
       )}
 
       <div className="relative mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {/* Brand card */}
-          <div className={cn(card, "flex flex-col")}>
+          <div className={cn(card, "col-span-2 flex flex-col lg:col-span-1")}>
             <Link href="/" className="inline-flex w-fit">
               <TrustLogo size="md" variant={dark ? "light" : "dark"} />
             </Link>

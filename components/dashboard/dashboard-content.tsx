@@ -108,7 +108,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
           <WelcomeBanner name={data.userName} />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <PremiumStat
             label="Active Cards"
             value={data.stats.activeCards}
@@ -139,8 +139,8 @@ export function DashboardContent({ data }: { data: DashboardData }) {
           />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="grid gap-6 xl:grid-cols-5">
-          <div className="space-y-6 xl:col-span-3">
+        <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-5">
+          <div className="space-y-6 lg:col-span-3">
             <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-neutral-900/10 blur-3xl" />
               <div className="relative mb-5 flex items-center justify-between">
@@ -263,7 +263,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
             </div>
           </div>
 
-          <div className="space-y-6 xl:col-span-2">
+          <div className="space-y-6 lg:col-span-2">
             <WalletOverview />
             <NotificationPanel notifications={data.notifications} />
           </div>

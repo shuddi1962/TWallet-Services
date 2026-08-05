@@ -51,8 +51,8 @@ export function Footer() {
     <footer className="border-t border-surface-200 bg-surface-50">
       <Container>
         <div className="py-12 lg:py-16">
-          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-            <div className="sm:col-span-2 lg:col-span-2">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-3 lg:grid-cols-6">
+            <div className="col-span-2 md:col-span-2 lg:col-span-2">
               <Link href="/" className="group inline-flex">
                 <TrustLogo size="md" variant="dark" />
               </Link>

@@ -525,8 +525,8 @@ export function MyCards({
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-5">
-        <div className="space-y-4 xl:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="space-y-4 lg:col-span-2">
           <TwalletCard
             finish={finish}
             holderName={holderShown}
@@ -600,7 +600,7 @@ export function MyCards({
           </div>
         </div>
 
-        <div className="space-y-4 xl:col-span-3">
+        <div className="space-y-4 lg:col-span-3">
           <div className="rounded-3xl border border-surface-200 bg-white p-5 sm:p-6">
             <h3 className="text-lg font-semibold text-surface-900">Card settings & security</h3>
             <p className="mt-1 text-sm text-surface-500">

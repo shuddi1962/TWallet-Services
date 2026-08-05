@@ -110,7 +110,9 @@ export function DashboardHeader({ userName }: { userName?: string }) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <ConnectButton />
+          <div className="hidden sm:block">
+            <ConnectButton />
+          </div>
           <Link
             href="/dashboard/notifications"
             className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"

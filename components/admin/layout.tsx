@@ -30,7 +30,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
       />
       <div className={cn("transition-all duration-300", sidebarCollapsed ? "lg:pl-[76px]" : "lg:pl-[260px]")}>
         <AdminHeader onMenuToggle={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
-        <main className="relative min-h-screen p-4 md:p-6" aria-label="Admin Dashboard">
+        <main className="relative min-h-screen overflow-x-hidden p-4 md:p-6" aria-label="Admin Dashboard">
           <div className="relative mx-auto max-w-7xl">{children}</div>
         </main>
       </div>

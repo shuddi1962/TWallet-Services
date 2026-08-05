@@ -163,7 +163,7 @@ export function AnalyticsPanel({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           icon={<TrendingUp className="h-5 w-5 text-brand-600" aria-hidden="true" />}
           iconClass="bg-brand-50"
