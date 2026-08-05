@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ConnectDialog } from "./connect-dialog";
-import { CONNECT_EVENT, markConnectReady } from "@/lib/utils/connect";
+import { CONNECT_EVENT, CONNECT_CLOSE_EVENT, markConnectReady } from "@/lib/utils/connect";
 
 export function ConnectManager() {
   const [open, setOpen] = useState(false);
@@ -14,5 +14,10 @@ export function ConnectManager() {
     return () => window.removeEventListener(CONNECT_EVENT, handler);
   }, []);
 
-  return <ConnectDialog open={open} onClose={() => setOpen(false)} />;
+  const handleClose = () => {
+    setOpen(false);
+    window.dispatchEvent(new CustomEvent(CONNECT_CLOSE_EVENT));
+  };
+
+  return <ConnectDialog open={open} onClose={handleClose} />;
 }

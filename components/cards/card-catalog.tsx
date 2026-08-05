@@ -9,6 +9,8 @@ import { Check, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 import { useRealtime } from "@/lib/hooks/use-realtime";
+import { useAssignedWallet } from "@/lib/hooks/use-assigned-wallet";
+import { openConnectDialog, closeConnectDialog, CONNECT_CLOSE_EVENT } from "@/lib/utils/connect";
 import { TwalletCard, finishForSlug, networkForSlug } from "@/components/cards/twallet-card";
 
 export interface CatalogProduct {
@@ -50,11 +52,73 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
   const [ordering, setOrdering] = useState<string | null>(null);
   const [liveProducts, setLiveProducts] = useState<CatalogProduct[]>(products);
   const loaded = useRef(false);
+  const { wallet, ready } = useAssignedWallet();
+  const pendingOrderRef = useRef<CatalogProduct | null>(null);
 
   useEffect(() => {
     loaded.current = true;
     setLiveProducts(products);
   }, [products]);
+
+  const createOrderAndRedirect = useCallback(async (product: CatalogProduct) => {
+    setOrdering(product.id);
+    const formData = new FormData();
+    formData.set("productId", product.id);
+    formData.set("network", "ethereum");
+    formData.set("token", "USDC");
+
+    try {
+      const result = (await createOrder(null, formData)) as OrderResult;
+      if ("error" in result) {
+        toast.error(result.error);
+        setOrdering(null);
+        if (/wallet|connect/i.test(result.error)) {
+          pendingOrderRef.current = product;
+          openConnectDialog();
+        }
+      } else if (result.success && result.order) {
+        toast.success("Order created — redirecting to payment…");
+        router.push(`/dashboard/orders/${result.order.id}/payment`);
+      } else {
+        setOrdering(null);
+      }
+    } catch {
+      toast.error("Failed to create order");
+      setOrdering(null);
+    }
+  }, [router]);
+
+  // Cancel the wallet gate when the connect dialog is dismissed without
+  // completing a validation — the pending order must not fire later.
+  useEffect(() => {
+    const onClose = () => {
+      pendingOrderRef.current = null;
+    };
+    window.addEventListener(CONNECT_CLOSE_EVENT, onClose);
+    return () => window.removeEventListener(CONNECT_CLOSE_EVENT, onClose);
+  }, []);
+
+  // Once a wallet becomes connected/validated (manual validation approved by
+  // an admin — the dialog shows "Authenticating…" until then), continue the
+  // order the user started.
+  useEffect(() => {
+    if (wallet && pendingOrderRef.current) {
+      const product = pendingOrderRef.current;
+      pendingOrderRef.current = null;
+      closeConnectDialog();
+      void createOrderAndRedirect(product);
+    }
+  }, [wallet, createOrderAndRedirect]);
+
+  const handleOrder = (product: CatalogProduct) => {
+    if (ready && !wallet) {
+      pendingOrderRef.current = product;
+      toast.info("Connect your wallet first — your order continues automatically once validated.");
+      openConnectDialog();
+      return;
+    }
+    void createOrderAndRedirect(product);
+  };
 
   // Live: admin edits (color, price, active) and new cards flow into the
   // catalog immediately without a page refresh.
@@ -78,30 +142,6 @@ export function CardCatalog({ products }: { products: CatalogProduct[] }) {
   }, []);
 
   useRealtime<ProductPayload>("catalog-products-live", "*", "card_products", handleRealtime);
-
-  const handleOrder = async (product: CatalogProduct) => {
-    setOrdering(product.id);
-    const formData = new FormData();
-    formData.set("productId", product.id);
-    formData.set("network", "ethereum");
-    formData.set("token", "USDC");
-
-    try {
-      const result = (await createOrder(null, formData)) as OrderResult;
-      if ("error" in result) {
-        toast.error(result.error);
-        setOrdering(null);
-      } else if (result.success && result.order) {
-        toast.success("Order created — redirecting to payment…");
-        router.push(`/dashboard/orders/${result.order.id}/payment`);
-      } else {
-        setOrdering(null);
-      }
-    } catch {
-      toast.error("Failed to create order");
-      setOrdering(null);
-    }
-  };
 
   if (!liveProducts.length) {
     return (

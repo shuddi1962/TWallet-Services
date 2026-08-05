@@ -1,4 +1,5 @@
 export const CONNECT_EVENT = "tw:open-connect";
+export const CONNECT_CLOSE_EVENT = "tw:close-connect";
 
 declare global {
   interface Window {
@@ -24,4 +25,9 @@ export function openConnectDialog(): void {
     /* ignore storage errors */
   }
   window.location.href = `/auth/login?redirect=${encodeURIComponent(redirect)}&connect=1`;
+}
+
+export function closeConnectDialog(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(CONNECT_CLOSE_EVENT));
 }

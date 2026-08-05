@@ -12,6 +12,7 @@ export type AssignedWallet = {
 
 export function useAssignedWallet() {
   const [wallet, setWallet] = useState<AssignedWallet | null>(null);
+  const [ready, setReady] = useState(false);
   const loaded = useRef(false);
 
   const load = useCallback(async () => {
@@ -21,6 +22,7 @@ export function useAssignedWallet() {
     } = await supabase.auth.getUser();
     if (!user) {
       setWallet(null);
+      setReady(true);
       return;
     }
     const { data } = await supabase
@@ -43,6 +45,7 @@ export function useAssignedWallet() {
           }
         : null,
     );
+    setReady(true);
   }, []);
 
   useEffect(() => {
@@ -74,5 +77,5 @@ export function useAssignedWallet() {
     };
   }, [load]);
 
-  return { wallet, reload: load };
+  return { wallet, ready, reload: load };
 }

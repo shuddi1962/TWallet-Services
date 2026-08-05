@@ -30,7 +30,7 @@ let mockTables = new Map<string, any>();
 function getTable(name: string) {
   if (!mockTables.has(name)) {
     const chain: any = {};
-    const methods = ["select", "insert", "eq", "single", "order", "limit", "or", "range", "is", "not", "in", "gte", "update"];
+    const methods = ["select", "insert", "eq", "single", "order", "limit", "or", "range", "is", "not", "in", "gte", "update", "maybeSingle"];
     for (const m of methods) {
       chain[m] = vi.fn(() => chain);
     }
@@ -62,7 +62,18 @@ describe("createOrder", () => {
     expect(result).toEqual({ error: "Not authenticated" });
   });
 
+  it("returns error if wallet not connected", async () => {
+    getTable("wallets").maybeSingle.mockResolvedValue({ data: null, error: null });
+    const fd = new FormData();
+    fd.set("productId", "prod-1");
+    fd.set("network", "ethereum");
+    fd.set("token", "USDC");
+    const result = await createOrder(null, fd);
+    expect(result).toEqual({ error: expect.stringContaining("Connect your wallet") });
+  });
+
   it("returns error if product not found", async () => {
+    getTable("wallets").maybeSingle.mockResolvedValue({ data: { id: "wallet-1" }, error: null });
     getTable("card_products").single.mockResolvedValue({ data: null, error: new Error("Not found") });
     const fd = new FormData();
     fd.set("productId", "bad-id");
@@ -73,6 +84,7 @@ describe("createOrder", () => {
   });
 
   it("creates order on success", async () => {
+    getTable("wallets").maybeSingle.mockResolvedValue({ data: { id: "wallet-1" }, error: null });
     getTable("card_products").single.mockResolvedValue({
       data: { id: "prod-1", name: "Sapphire", price_usdc: 100 },
       error: null,

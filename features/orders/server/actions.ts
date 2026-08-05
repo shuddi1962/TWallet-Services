@@ -43,6 +43,22 @@ export async function createOrder(_prev: unknown, formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  // Wallet gate: a validated (admin-approved) wallet must exist before an
+  // order can be placed. Wallet details are only recorded after the user
+  // goes through connect → manual validation → admin approval.
+  const { data: wallet } = await supabase
+    .from("wallets")
+    .select("id")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .limit(1)
+    .maybeSingle();
+  if (!wallet) {
+    return {
+      error: "Connect your wallet first before ordering a card. Open the Connect wallet dialog from your dashboard.",
+    };
+  }
+
   // KYC gate: when the admin requires KYC, only verified users can order.
   const settings = await getSystemSettings();
   if (settings.kyc?.require_kyc) {
