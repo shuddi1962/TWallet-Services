@@ -78,6 +78,19 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 
 ## Work Completed
 
+### Session 19 — Aug 05, 2026 (Settings live: every admin toggle now actually acts)
+- **Settings foundation** — `lib/settings-defaults.ts` (canonical snake_case defaults per category: general/payment/security/notifications/kyc + `mergeSettings`), `lib/settings.ts` (service-role `getSystemSettings` behind `unstable_cache` 30s/tag `system_settings`, **safe outside request scope** — falls back to uncached when the incremental cache is missing, so vitest/edge never throw), `lib/hooks/use-system-settings.ts` (client realtime hook: `useSystemSettings` + `useSetting`), migration `202608050001_settings_consolidate.sql` (applied to `smkckhsvzyjttzqhpzhv`) mapping legacy label-keyed rows → canonical keys.
+- **Admin settings page** — every field now carries its canonical `key` + description; auto-save/realtime merge use canonical keys; added missing "Wallet Validation Alert" toggle.
+- **Emails gated by settings** — `lib/email.ts`: `EmailType` union + `type` on `EmailParams`; `sendEmail` skips sends disabled in `notifications.<key>` (defaults on). Typed call sites: auth reset/password-changed (both flows), order confirmation, admin order status emails (paid/shipped/delivered/cancelled + shipping update), admin password reset, wallet-validation alert. `wallet_validated` added to union + defaults + settings page.
+- **Login lockout from settings** — `signIn` reads `security.max_login_attempts` + `lockout_duration_minutes` (defaults 5/15) for the rate-limit window.
+- **Session timeout from settings** — `session-timeout.tsx` now reads `security.session_idle_minutes` / `session_warn_minutes` live via the hook (defaults 30/25); warning toast shows the real remaining time.
+- **Payment limits enforced** — `getPaymentDetails` returns settings (min/max/fee/default network/KYC limits); `submitPaymentTx` rejects amounts outside `min_payment_amount`/`max_payment_amount` server-side; payment page shows "Min X · Max Y · Fee Z%".
+- **Maintenance Mode banner** — new `components/maintenance-banner.tsx` mounted in providers: sticky amber bar across the whole site the moment `general.maintenance_mode` is toggled (realtime).
+- **Dynamic support contact** — `/support` (server) and `/contact` (client) read `general.support_email`/`support_phone`; public footer copyright reads `general.site_name` — all live.
+- **KYC in user account** — `getProfile` returns `kycTier`; `createOrder` blocks orders when `kyc.require_kyc` on and tier is `none`; profile page shows a KYC card (tier badge, Tier 1/2 limits from settings) whenever `kyc.require_kyc` is on — appears immediately when toggled.
+- **Test suite green (88/88)** — `lib/settings.ts` self-guards `unstable_cache` for vitest; `tests/setup.ts` adds a global `@/lib/settings` mock (never touches network in unit tests) + explicit `vi` import. Lint + typecheck clean.
+- **Deployed** — commit `759246f` → pushed → Vercel production build READY (aliased to twalletservices.com). Migration `202608050001` pushed to remote.
+
 ### Session 18 — Aug 04, 2026 (Admin settings live + soft-delete users + wallet validation stalls on Authenticating)
 - **Admin settings page rebuilt** — `app/admin/(dashboard)/settings/page.tsx` now loads saved values from `system_settings` on mount (`getSettings` server action), auto-saves each tab's category after 600ms debounce (`updateSettings` now records `updated_by`/`updated_at` + writes a `system_setting_changed` audit row), shows a live "Saving… / Saved · time" indicator, has a manual Save button, and subscribes to `system_settings` realtime so edits from other admin sessions sync in (own in-flight saves skipped).
 - **Realtime migration applied** — `supabase/migrations/202608040001_system_settings_realtime.sql` publishes `system_settings` to `supabase_realtime` (already in `supabase_realtime` publication → cross-session sync). Applied to `smkckhsvzyjttzqhpzhv`.
