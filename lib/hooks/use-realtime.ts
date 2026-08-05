@@ -17,14 +17,21 @@ export function useRealtime<T = unknown>(
 
   useEffect(() => {
     const supabase = createClient();
-    const sub = supabase
-      .channel(channel)
-      .on("postgres_changes" as any, { event: event as any, schema: "public", table }, (payload: any) => {
-        cbRef.current(payload as T);
-      })
-      .subscribe();
+    let sub: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      sub = supabase
+        .channel(channel)
+        .on("postgres_changes" as any, { event: event as any, schema: "public", table }, (payload: any) => {
+          cbRef.current(payload as T);
+        })
+        .subscribe();
+    } catch (e) {
+      // Duplicate channel names on the singleton browser client (or any other
+      // realtime hiccup) must never crash the page — realtime degrades, UI lives.
+      console.warn(`[useRealtime] could not subscribe to "${channel}":`, e);
+    }
 
-    return () => { supabase.removeChannel(sub); };
+    return () => { if (sub) supabase.removeChannel(sub); };
   }, [channel, event, table]);
 }
 

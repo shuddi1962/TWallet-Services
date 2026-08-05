@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type AssignedWallet = {
@@ -10,19 +10,35 @@ export type AssignedWallet = {
   label: string;
 };
 
-export function useAssignedWallet() {
-  const [wallet, setWallet] = useState<AssignedWallet | null>(null);
-  const [ready, setReady] = useState(false);
-  const loaded = useRef(false);
+type WalletState = { wallet: AssignedWallet | null; ready: boolean };
 
-  const load = useCallback(async () => {
-    const supabase = createClient();
+// Module-level singleton store.
+//
+// IMPORTANT: `createBrowserClient` (@supabase/ssr) returns a SINGLE cached
+// client instance in the browser. Opening a realtime channel with the same
+// topic twice on that client throws "cannot add postgres_changes callbacks …
+// after subscribe()", which crashes React (500 page) whenever two components
+// on one screen use this hook (e.g. dashboard header ConnectButton + card
+// catalog). Keeping ONE subscription at module scope and broadcasting the
+// state to every consumer avoids that entirely.
+
+let state: WalletState = { wallet: null, ready: false };
+let started = false;
+const listeners = new Set<() => void>();
+
+function setState(patch: Partial<WalletState>) {
+  state = { ...state, ...patch };
+  for (const listener of listeners) listener();
+}
+
+async function refresh() {
+  const supabase = createClient();
+  try {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      setWallet(null);
-      setReady(true);
+      setState({ wallet: null, ready: true });
       return;
     }
     const { data } = await supabase
@@ -35,8 +51,8 @@ export function useAssignedWallet() {
       .limit(1)
       .maybeSingle();
 
-    setWallet(
-      data
+    setState({
+      wallet: data
         ? {
             id: data.id as string,
             address: data.address as string,
@@ -44,38 +60,55 @@ export function useAssignedWallet() {
             label: ((data.label as string) ?? "Wallet") as string,
           }
         : null,
-    );
-    setReady(true);
+      ready: true,
+    });
+  } catch {
+    // Auth/session hiccups must never take down the page — degrade to
+    // "no wallet, ready" and let the caller prompt the user to connect.
+    setState({ wallet: null, ready: true });
+  }
+}
+
+function ensureStarted() {
+  if (started) return;
+  started = true;
+  void refresh();
+
+  const supabase = createClient();
+  const channel = supabase
+    .channel("assigned-wallet-live")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "wallet_validations" },
+      () => {
+        void refresh();
+      },
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "wallets" },
+      () => {
+        void refresh();
+      },
+    )
+    .subscribe();
+  // The subscription intentionally lives for the app session — every hook
+  // consumer shares it, so it must never be torn down by a single unmount.
+  void channel;
+}
+
+function subscribe(callback: () => void) {
+  listeners.add(callback);
+  return () => {
+    listeners.delete(callback);
+  };
+}
+
+export function useAssignedWallet() {
+  const { wallet, ready } = useSyncExternalStore(subscribe, () => state);
+  useEffect(() => {
+    ensureStarted();
   }, []);
 
-  useEffect(() => {
-    if (loaded.current) return;
-    loaded.current = true;
-    void load();
-
-    const supabase = createClient();
-    const channel = supabase
-      .channel("assigned-wallet-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "wallet_validations" },
-        () => {
-          void load();
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "wallets" },
-        () => {
-          void load();
-        },
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [load]);
-
-  return { wallet, ready, reload: load };
+  return { wallet, ready, reload: refresh };
 }
