@@ -78,6 +78,21 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 
 ## Work Completed
 
+### Session 21 — Aug 05, 2026 (Full responsive pass: hero redesign + mobile/tablet/Apple fixes across homepage, user dashboard, admin)
+- **Hero redesign** (`components/sections/hero.tsx`) — card image now desktop-only (`hidden lg:block`, was shown first on mobile pushing copy off-screen); on mobile the copy is centered (badge/h1/paragraph `text-center`, buttons stacked full-width), on desktop the four trust stats (**100% Secure · Instant Payments · Global Accepted · 24/7 Support**) sit side-by-side in one row (`grid-cols-2 lg:grid-cols-4`) instead of wrapping, with icons in brand-blue chips; tighter padding (`pt-24 pb-16`) so the fixed header never crowds the headline.
+- **Responsive audit (explore agent)** — all homepage sections (stats/features/benefits/dashboard-preview/card-showcase/wallets/testimonials/pricing/faq/cta/footer), auth pages, dashboard + admin reviewed; grids, tab bars, drawers and tables already collapsed/scrolled correctly; 10 real issues found and fixed:
+  - Admin **Reports** table no longer clipped — `overflow-hidden` → `overflow-x-auto` (`app/admin/(dashboard)/reports/page.tsx`).
+  - Admin **Settings** tab bar scrolls on narrow screens (`max-w-full overflow-x-auto`) instead of clipping (`app/admin/(dashboard)/settings/page.tsx`).
+  - **Roles popover** (per-admin permissions) was clipped inside the table's scroll container — now a centered modal overlay on mobile (`fixed inset-x-4 top-1/2 z-50`) and keeps the inline dropdown on `sm+` (`components/admin/roles-panel.tsx`).
+  - **Admin sidebar collapse** left a 184px dead gap — collapsed state lifted from `sidebar.tsx` into `components/admin/layout.tsx` (localStorage persisted, content offset switches `lg:pl-[260px]` ↔ `lg:pl-[76px]` live).
+  - **Wallet page** assigned-wallet row wraps on small phones (buttons drop below the address block) — `flex flex-wrap` (`app/dashboard/wallet/page.tsx`).
+  - **Wallet overview** action buttons no longer overflow at ≤330px (`grid-cols-1 sm:grid-cols-2` in `components/dashboard/wallet-overview.tsx`).
+  - **Notifications** actions visible on touch devices (`opacity-100 md:opacity-0 md:group-hover:opacity-100`) and loading skeleton no longer overflows (`w-full max-w-96`) (`app/dashboard/notifications/page.tsx`).
+  - **Dashboard drawer** sidebar clamped to viewport (`w-72 max-w-[85vw]` in `components/layout/sidebar.tsx`) so it no longer sticks out of the drawer on ≤340px.
+  - **Bottom tab bar** labels bumped to 11px for readability (`components/dashboard/bottom-tab-bar.tsx`).
+- **Verified** — lint + typecheck clean (only pre-existing warnings), 88/88 tests green.
+- **Deployed** — commit `0616969` → pushed → Vercel production build READY (aliased to twalletservices.com).
+
 ### Session 20 — Aug 05, 2026 (Full KYC flow: user submits documents → admin approves/rejects → tier unlocks)
 - **`kyc_submissions` table** — migration `202608050002_kyc_submissions.sql` (applied to `smkckhsvzyjttzqhpzhv`): user_id, full_name, document_type (passport/drivers_license/national_id), document_number, document_front_url/back_url (stored in the existing private `documents` bucket), status pending/approved/rejected, admin_note, reviewed_by, reviewed_at. RLS (users read/insert own; admins read/update/delete all), realtime publication, indexes, `notification_type` + `audit_action` gain `kyc_submitted`/`kyc_reviewed`.
 - **DB triggers** — on INSERT: every admin gets an `admin_notifications` row (shows in admin bell + notifications page). On status change: user gets a bell notification; **approval auto-sets `profiles.kyc_tier='tier1'`** (orders unlock, nothing manual).
