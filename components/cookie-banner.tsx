@@ -29,13 +29,19 @@ export function CookieBanner() {
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <button
-            onClick={() => setAnalyticsConsent(false)}
+            onClick={() => {
+              setAnalyticsConsent(false);
+              setVisible(false);
+            }}
             className="rounded-lg border border-surface-600 px-4 py-2 text-sm font-medium text-surface-200 transition hover:border-surface-500"
           >
             Decline
           </button>
           <button
-            onClick={() => setAnalyticsConsent(true)}
+            onClick={() => {
+              setAnalyticsConsent(true);
+              setVisible(false);
+            }}
             className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
           >
             Accept

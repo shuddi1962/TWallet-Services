@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Trust - Premium Crypto Card Platform";
+export const alt = "TWallet - Premium Crypto Card Platform";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
