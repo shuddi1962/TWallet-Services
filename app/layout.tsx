@@ -2,21 +2,22 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 import { WalletProviders } from "@/components/wallet-providers";
 import { PostHogProvider } from "@/components/posthog-provider";
+import { CookieBanner } from "@/components/cookie-banner";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: {
-    default: "Trust — Non-Custodial Crypto Card",
-    template: "%s | Trust",
+    default: "TWallet — Non-Custodial Crypto Card",
+    template: "%s | TWallet",
   },
   description:
     "Order a crypto-funded card. Non-custodial — you keep control of your keys.",
   openGraph: {
-    title: "Trust",
+    title: "TWallet",
     description: "Your crypto, your card. Non-custodial.",
-    siteName: "Trust",
+    siteName: "TWallet",
     type: "website",
     locale: "en_US",
   },
@@ -45,7 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "Trust",
+              name: "TWallet",
               url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://twalletservices.com",
               description: "Non-custodial crypto-funded card platform",
             }),
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <PostHogProvider><WalletProviders cookies={cookies}>{children}</WalletProviders></PostHogProvider>
+        <CookieBanner />
       </body>
     </html>
   );

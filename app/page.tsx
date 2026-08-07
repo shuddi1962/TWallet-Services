@@ -16,7 +16,7 @@ import { CTA } from "@/components/sections/cta";
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Trust",
+  name: "TWallet",
   url: "https://twalletservices.com",
   logo: "https://twalletservices.com/favicon.ico",
   description: "Non-custodial, crypto-funded card platform. Order virtual and physical cards funded with crypto.",
