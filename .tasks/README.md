@@ -133,11 +133,11 @@ Vercel deploy, production DB, domain, monitoring, launch.
 | 088 | Resend email production domain verified | ✅ |
 | 089 | Upstash Redis production instance | ✅ |
 | 090 | PostHog analytics configured | ✅ |
-| 091 | Monitoring — uptime monitoring + alerting | ⏳ config ready, manual UI setup needed |
-| 092 | Monitoring — database backups (PITR + daily pg_dump) | ⏳ CI backup created; Free plan, upgrade to Pro ($25/mo) for daily backups |
+| 091 | Monitoring — uptime monitoring + alerting | ✅ GitHub Actions `monitor.yml` every 30min (5 production endpoints, auto-opens/closes alert issue); Better Uptime remains optional manual setup |
+| 092 | Monitoring — database backups (PITR + daily pg_dump) | ⏳ CI backup dump + artifact exists; Free plan, upgrade to Pro ($25/mo) for daily automated backups |
 | 093 | Monitoring — dashboard creation (ops, business, payments) | ⏳ docs ready, manual Sentry + PostHog UI setup needed |
 | 094 | Load testing + performance optimization | ✅ |
-| 095 | Security — penetration test + dependency audit | ⏳ plan documented, schedule externally |
+| 095 | Security — penetration test + dependency audit | ⏳ dependency audit fixed (50→46; remaining need breaking upgrades); headers-check live in CI; external pen test still to schedule |
 | 096 | Security — CSP, HSTS, security headers final review | ✅ |
 | 097 | Documentation — runbooks, on-call guide, postmortem template | ✅ |
 | 098 | Production readiness review + go/no-go checklist | ✅ |

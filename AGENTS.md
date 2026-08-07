@@ -266,8 +266,16 @@ If tests exist for the touched area, run them too. Never commit with failing lin
 - **Migrations pushed to remote** — `202608020001`, `202608020003`, `202608020004` (spend_limit_enabled) applied to `smkckhsvzyjttzqhpzhv` via `supabase db push`; `ALCHEMY_API_KEY` secret set; functions deployed via CLI (no Docker needed for deploy/secrets)
 - **Funding UI** — networks filtered to those with a configured wallet + token (Solana excluded — EVM-only verification); manual hash input always visible; auto-selects wallet's network
 
-### Remaining (v1.1 — manual/UI tasks)
-- **Uptime monitoring + alerting** — Config generated; manual setup in Better Uptime / UptimeRobot needed (no API keys available)
+### Session 24 — Aug 07, 2026 (Remaining work: uptime monitor live, security headers CI, dependency audit, cookie banner fix)
+- **Cookie banner dismissal fixed** — clicking Accept/Decline stored consent but never hid the banner; both buttons now call `setVisible(false)` after persisting (`components/cookie-banner.tsx`). Also committed the pending og-image brand fix (alt said "Trust").
+- **Uptime monitoring now runs (task 091)** — `tests/monitoring/uptime-checks.ts` rewritten from a config-print tool into a real zero-dependency Node smoke test: hits the 5 production endpoints (`/api/health`, `/api/ready`, `/api/version`, homepage, login), validates status codes + JSON shape + latency, exits non-zero on failure. New `.github/workflows/monitor.yml` runs it every 30 minutes from GitHub Actions and **auto-opens a `uptime-incident` GitHub issue on failure / auto-closes it on recovery** — no external service/API keys needed (Better Uptime remains optional). Verified: 5/5 monitors PASS against production.
+- **Security headers checked in CI (task 095 part)** — the `headers` job in `security.yml` was a stub (only checked out the repo). New `tests/security/headers-check.ts` (zero-dep Node) fetches production and validates all 7 headers from `next.config.ts` (HSTS ≥ max-age with includeSubDomains, X-Frame-Options DENY, nosniff, strict Referrer-Policy, Permissions-Policy, XSS-Protection, CSP with frame-ancestors/object-src 'none'/upgrade-insecure-requests) plus HTTPS enforcement; wired into the `headers` job on every push/PR. Verified: 7/7 PASS.
+- **Dependency audit reduced (task 095 part)** — `npm audit fix`: **50 → 46 vulnerabilities** (7 → 5 high). Fixed: js-yaml (CVE-2026-59870, high), nanoid (high), dompurify (XSS, moderate), hono (moderate). Remaining 5 high (axios via @coinbase/cdp-sdk, ws via walletconnect stack, postcss/sharp via next, uuid) all require **breaking** upgrades (next@16, wagmi/connectors@8, sentry@10) — deliberately deferred, tracked in `.tasks/README.md` 095.
+- **`.tasks/README.md` updated** — 091 marked done (GH Actions automation); 092/093/095 notes refreshed (092 still needs Pro plan; 093 manual dashboard setup; 095 pen test still external).
+- **Verified** — lint + typecheck clean (pre-existing warnings only), 89/89 tests green.
+
+### Remaining (v1.1 — manual/external tasks)
+- **Uptime monitoring + alerting** — GitHub Actions `monitor.yml` runs every 30 min with issue alerts; optional Better Uptime / UptimeRobot setup still needs API keys
 - **Database PITR + daily backup** — CI backup dump configured; Supabase project on **Free plan** (no automated backups). Upgrade to **Pro ($25/mo)** for daily backups or **Team ($599/mo)** for PITR
 - **Production dashboards** — Setup guide created; manual creation in Sentry + PostHog UI needed (no API keys available)
 - **Penetration test** — Plan documented; schedule externally

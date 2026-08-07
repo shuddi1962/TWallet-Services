@@ -27,5 +27,11 @@ jobs:
   headers:
     runs-on: ubuntu-latest
     steps:
-      - name: Check security headers
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify production security headers
+        run: node tests/security/headers-check.ts
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://twalletservices.com' }}
