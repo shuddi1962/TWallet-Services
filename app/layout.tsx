@@ -8,6 +8,7 @@ import { GeistMono } from "geist/font/mono";
 import { headers } from "next/headers";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://twalletservices.com"),
   title: {
     default: "TWallet — Non-Custodial Crypto Card",
     template: "%s | TWallet",
