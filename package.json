@@ -72,7 +72,7 @@
     "autoprefixer": "^10.4.0",
     "eslint": "^9.22.0",
     "eslint-config-next": "^15.2.0",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "msw": "^2.7.0",
     "playwright": "^1.52.0",
     "postcss": "^8.5.0",
