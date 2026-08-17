@@ -62,6 +62,7 @@ beforeEach(() => {
   (createAdminClient as any).mockReturnValue({
     auth: {
       admin: {
+        createUser: vi.fn(),
         generateLink: vi.fn(async () => ({
           data: { properties: { email_otp: "123456", confirmation_url: "http://localhost:3000/auth/reset-password?token_hash=abc&type=recovery" } },
           error: null,
@@ -100,27 +101,28 @@ describe("signUp", () => {
   });
 
   it("redirects on success", async () => {
-    const auth = (await (createServerSupabaseClient as any)()).auth;
-    auth.signUp.mockResolvedValue({ error: null });
+    const admin = createAdminClient() as any;
+    admin.auth.admin.createUser.mockResolvedValue({
+      data: { user: { id: "u1", email: "new@example.com" } },
+      error: null,
+    });
     const fd = new FormData();
     fd.set("email", "new@example.com");
     fd.set("password", "StrongPass1");
     fd.set("name", "New User");
     await signUp(null, fd);
-    expect(auth.signUp).toHaveBeenCalledWith({
+    expect(admin.auth.admin.createUser).toHaveBeenCalledWith({
       email: "new@example.com",
       password: "StrongPass1",
-      options: {
-        data: { full_name: "New User" },
-        emailRedirectTo: "http://localhost:3000/auth/callback",
-      },
+      email_confirm: false,
+      user_metadata: { full_name: "New User" },
     });
     expect(redirectMock).toHaveBeenCalledWith("/auth/verify?email=new%40example.com");
   });
 
   it("returns error from Supabase", async () => {
-    const auth = (await (createServerSupabaseClient as any)()).auth;
-    auth.signUp.mockResolvedValue({ error: { message: "Email already registered" } });
+    const admin = createAdminClient() as any;
+    admin.auth.admin.createUser.mockResolvedValue({ data: null, error: { message: "Email already registered" } });
     const fd = new FormData();
     fd.set("email", "test@example.com");
     fd.set("password", "StrongPass1");

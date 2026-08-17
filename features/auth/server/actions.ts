@@ -40,8 +40,9 @@ async function setInactivityCookie(idleMinutes: number) {
 async function sendVerificationEmail(email: string) {
   try {
     const admin = createAdminClient();
-    // No password: the user already exists (signUp created them), and passing
-    // one would make GoTrue reject the link with "User already registered".
+    // No password: the user already exists (created unconfirmed via the admin
+    // API), and passing one would make GoTrue reject the link with "User
+    // already registered".
     const { data: link, error } = await admin.auth.admin.generateLink({
       type: "signup",
       email,
@@ -80,21 +81,21 @@ export async function signUp(_prev: unknown, formData: FormData) {
   if (!password.success) return { error: password.error.errors[0]!.message };
   if (!name) return { error: "Name is required" };
 
-  const supabase = await createServerSupabaseClient();
+  const admin = createAdminClient();
 
-  const { data, error } = await supabase.auth.signUp({
+  // Create the user via the admin API with `email_confirm: false` — the admin
+  // API sends NO email, so exactly one verification email goes out (our own
+  // Resend channel below), never a duplicate from Supabase's SMTP.
+  const { data, error } = await admin.auth.admin.createUser({
     email: email.data,
     password: password.data,
-    options: {
-      data: { full_name: name, ...(country ? { country } : {}) },
-      emailRedirectTo: `${SITE_URL}/auth/callback`,
-    },
+    email_confirm: false,
+    user_metadata: { full_name: name, ...(country ? { country } : {}) },
   });
 
   if (error) return { error: error.message };
 
-  // Send the verification code through our own Resend channel (branded email,
-  // independent of Supabase's SMTP config, so it arrives even if SMTP is down).
+  // Send the verification code through our own Resend channel (branded email).
   if (data?.user?.email) {
     await sendVerificationEmail(data.user.email);
   }

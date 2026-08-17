@@ -4,6 +4,17 @@ vi.mock("@/lib", () => ({
   createServerSupabaseClient: vi.fn(),
 }));
 
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(),
+}));
+
+vi.mock("@/lib/email", () => ({
+  sendEmail: vi.fn(async () => ({ success: true })),
+  buildPasswordResetEmail: vi.fn(() => "<p>reset</p>"),
+  buildPasswordChangedEmail: vi.fn(() => "<p>changed</p>"),
+  buildEmailVerificationEmail: vi.fn(() => "<p>verify</p>"),
+}));
+
 vi.mock("@/lib/admin-provision", () => ({
   ensureAdminProvisioned: vi.fn().mockResolvedValue(undefined),
   isAdminUser: vi.fn().mockResolvedValue(false),
@@ -26,8 +37,23 @@ const { redirectMock } = vi.hoisted(() => ({ redirectMock: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 
 import { createServerSupabaseClient } from "@/lib";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { clearRateLimits } from "@/lib/rate-limit";
 import { signUp, signIn, signOut, sendPasswordResetEmail, updatePassword } from "./actions";
+
+function makeAdmin() {
+  return {
+    auth: {
+      admin: {
+        createUser: vi.fn(),
+        generateLink: vi.fn(async () => ({
+          data: { properties: { email_otp: "123456", confirmation_url: "http://localhost:3000/auth/reset-password?token_hash=abc&type=recovery" } },
+          error: null,
+        })),
+      },
+    },
+  };
+}
 
 function makeAuth() {
   return {
@@ -48,12 +74,17 @@ beforeEach(() => {
 describe("Auth Integration", () => {
   it("signs up, signs in, resets password, signs out", async () => {
     const auth = makeAuth();
-    auth.signUp.mockResolvedValue({ error: null });
     auth.signInWithPassword.mockResolvedValue({ error: null });
     auth.resetPasswordForEmail.mockResolvedValue({ error: null });
     auth.updateUser.mockResolvedValue({ error: null });
     auth.signOut.mockResolvedValue({ error: null });
     (createServerSupabaseClient as any).mockResolvedValue({ auth });
+    const admin = makeAdmin();
+    admin.auth.admin.createUser.mockResolvedValue({
+      data: { user: { id: "u1", email: "user@example.com" } },
+      error: null,
+    });
+    (createAdminClient as any).mockReturnValue(admin);
     const base = { email: "user@example.com", password: "StrongPass1" };
 
     const signUpFd = new FormData();
@@ -61,10 +92,11 @@ describe("Auth Integration", () => {
     signUpFd.set("password", base.password);
     signUpFd.set("name", "Test User");
     await signUp(null, signUpFd);
-    expect(auth.signUp).toHaveBeenCalledWith({
+    expect(admin.auth.admin.createUser).toHaveBeenCalledWith({
       email: base.email,
       password: base.password,
-      options: { data: { full_name: "Test User" }, emailRedirectTo: "http://localhost:3000/auth/callback" },
+      email_confirm: false,
+      user_metadata: { full_name: "Test User" },
     });
 
     const signInFd = new FormData();
@@ -75,10 +107,10 @@ describe("Auth Integration", () => {
 
     const resetFd = new FormData();
     resetFd.set("email", base.email);
-    await sendPasswordResetEmail(null, resetFd);
-    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith(base.email, {
-      redirectTo: "http://localhost:3000/auth/reset-password",
-    });
+    const resetResult = await sendPasswordResetEmail(null, resetFd);
+    expect(resetResult).toEqual({ success: "Check your email for a reset code" });
+    expect(admin.auth.admin.generateLink).toHaveBeenCalled();
+    expect(auth.resetPasswordForEmail).not.toHaveBeenCalled();
 
     const updateFd = new FormData();
     updateFd.set("password", "NewStrongPass1");
@@ -103,13 +135,36 @@ describe("Auth Integration", () => {
 
   it("handles duplicate signup", async () => {
     const auth = makeAuth();
-    auth.signUp.mockResolvedValue({ error: { message: "User already registered" } });
     (createServerSupabaseClient as any).mockResolvedValue({ auth });
+    const admin = makeAdmin();
+    admin.auth.admin.createUser.mockResolvedValue({
+      data: null,
+      error: { message: "A user with this email address has already been registered" },
+    });
+    (createAdminClient as any).mockReturnValue(admin);
     const fd = new FormData();
     fd.set("email", "existing@example.com");
     fd.set("password", "StrongPass1");
     fd.set("name", "Existing");
     const result = await signUp(null, fd);
-    expect(result).toEqual({ error: "User already registered" });
+    expect(result).toEqual({ error: "A user with this email address has already been registered" });
+  });
+
+  it("falls back to Supabase email when generateLink fails", async () => {
+    const auth = makeAuth();
+    auth.resetPasswordForEmail.mockResolvedValue({ error: null });
+    (createServerSupabaseClient as any).mockResolvedValue({ auth });
+    const admin = makeAdmin();
+    (admin.auth.admin.generateLink as any).mockResolvedValue({ data: null, error: { message: "boom" } });
+    (createAdminClient as any).mockReturnValue(admin);
+    const fd = new FormData();
+    fd.set("email", "user@example.com");
+    fd.set("password", "StrongPass1");
+    fd.set("name", "Test User");
+    const result = await sendPasswordResetEmail(null, fd);
+    expect(result).toEqual({ success: "Check your email for a reset code" });
+    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith("user@example.com", {
+      redirectTo: "http://localhost:3000/auth/reset-password",
+    });
   });
 });
