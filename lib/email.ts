@@ -5,6 +5,7 @@ import { getSetting } from "@/lib/settings";
  * Pass the key as `type` to gate the send with the admin setting.
  */
 export type EmailType =
+  | "verification_email"
   | "welcome_email"
   | "order_confirmation_email"
   | "payment_confirmation_email"
@@ -117,12 +118,15 @@ export function buildOrderShippedEmail(params: {
 
 export function buildPasswordResetEmail(params: {
   resetUrl: string;
+  code: string;
 }): string {
   return `
     <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
       <h1 style="color: #2563eb;">Reset Your Password</h1>
-      <p>Click the link below to reset your password. This link expires in 1 hour.</p>
-      <a href="${params.resetUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">Reset Password</a>
+      <p>Use this code to reset your password:</p>
+      <p style="font-size: 28px; letter-spacing: 0.3em; font-weight: 700; color: #2563eb;">${params.code}</p>
+      <p>Or open <strong>twalletservices.com/auth/reset-password</strong> and enter the code above.</p>
+      <p style="color: #94a3b8; font-size: 12px;">The code expires in 1 hour.</p>
     </div>
   `;
 }
@@ -142,13 +146,15 @@ export function buildWelcomeEmail(params: {
 }
 
 export function buildEmailVerificationEmail(params: {
-  verifyUrl: string;
+  code: string;
 }): string {
   return `
     <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
       <h1 style="color: #2563eb;">Verify Your Email</h1>
-      <p>Click the link below to verify your email address.</p>
-      <a href="${params.verifyUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">Verify Email</a>
+      <p>Use this code to verify your email address:</p>
+      <p style="font-size: 28px; letter-spacing: 0.3em; font-weight: 700; color: #2563eb;">${params.code}</p>
+      <p>Or open <strong>twalletservices.com/auth/verify</strong> and enter the code above.</p>
+      <p style="color: #94a3b8; font-size: 12px;">The code expires in 1 hour.</p>
     </div>
   `;
 }

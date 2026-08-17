@@ -50,6 +50,7 @@ const settingsConfig: Record<string, SettingField[]> = {
     { key: "require_mfa", label: "Require MFA", type: "toggle", default: false, description: "Prompts users to enable two-factor authentication" },
   ],
   Notifications: [
+    { key: "verification_email", label: "Verification Email", type: "toggle", default: true, description: "Email verification codes for new signups" },
     { key: "welcome_email", label: "Welcome Email", type: "toggle", default: true },
     { key: "order_confirmation_email", label: "Order Confirmation Email", type: "toggle", default: true },
     { key: "payment_confirmation_email", label: "Payment Confirmation Email", type: "toggle", default: true },

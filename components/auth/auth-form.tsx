@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils/cn";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, TimerOff } from "lucide-react";
 
 type Mode = "login" | "register";
 
@@ -24,6 +24,7 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
   const [registerState, registerAction, registerPending] = useActionState(signUp, undefined);
   const [redirect, setRedirect] = useState("/dashboard");
   const [showPassword, setShowPassword] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -31,6 +32,11 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
     if (r && r.startsWith("/")) setRedirect(r);
     if (params.get("connect") === "1") {
       window.sessionStorage.setItem("tw-pending-connect", "1");
+    }
+    if (params.get("expired") === "1") {
+      setNotice("Your session expired due to inactivity. Please sign in again.");
+    } else if (params.get("confirmed") === "1") {
+      setNotice("Your email is confirmed. You can sign in now.");
     }
   }, []);
 
@@ -67,6 +73,15 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
 
       <Card className="border-white/10 bg-surface-900/70">
         <CardContent className="p-6">
+          {notice && (
+            <div
+              role="status"
+              className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-400"
+            >
+              <TimerOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{notice}</span>
+            </div>
+          )}
           {mode === "login" ? (
             <form action={loginAction} onSubmit={() => trackLogin()} className="space-y-4">
               <input type="hidden" name="redirect" value={redirect} />

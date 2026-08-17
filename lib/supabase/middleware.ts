@@ -1,6 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+export const LAST_ACTIVE_COOKIE = "tw-last-active";
+const DEFAULT_IDLE_MINUTES = 30;
+
+function parseLastActive(value: string | undefined): { lastActive: number; idleMinutes: number } | null {
+  if (!value) return null;
+  const [epoch, mins] = value.split(":");
+  const lastActive = Number(epoch);
+  const idleMinutes = Number(mins);
+  if (!Number.isFinite(lastActive) || !Number.isFinite(idleMinutes) || idleMinutes < 1) return null;
+  return { lastActive, idleMinutes };
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -39,6 +51,59 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/admin/forgot-password") ||
     request.nextUrl.pathname.startsWith("/admin/reset-password");
   const isDashboardPage = request.nextUrl.pathname.startsWith("/dashboard");
+  const isProtected = isDashboardPage || (isAdminPage && !isAdminAuthPage);
+
+  // Server-side inactivity enforcement: the `tw-last-active` cookie (set at
+  // sign-in with the configured idle timeout) must have been refreshed by a
+  // protected request within the idle window. If it has lapsed — e.g. the tab
+  // was closed or the laptop was asleep — the session is revoked server-side,
+  // not just in the client.
+  if (user && isProtected) {
+    const parsed = parseLastActive(request.cookies.get(LAST_ACTIVE_COOKIE)?.value);
+    const now = Date.now();
+
+    if (parsed) {
+      const idleMs = parsed.idleMinutes * 60 * 1000;
+      if (now - parsed.lastActive > idleMs) {
+        await supabase.auth.signOut();
+        const url = request.nextUrl.clone();
+        url.pathname = "/auth/login";
+        url.searchParams.set("expired", "1");
+        url.searchParams.set("redirect", request.nextUrl.pathname);
+        const res = NextResponse.redirect(url);
+        res.cookies.set(LAST_ACTIVE_COOKIE, "", {
+          path: "/",
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 0,
+        });
+        // Carry the sign-out cookie deletions from the session client onto the
+        // redirect response (same header the framework applies for responses).
+        const setCookie = supabaseResponse.headers.get("x-middleware-set-cookie");
+        if (setCookie) res.headers.append("x-middleware-set-cookie", setCookie);
+        return res;
+      }
+      // Active within the window — slide it forward.
+      supabaseResponse.cookies.set(LAST_ACTIVE_COOKIE, `${now}:${parsed.idleMinutes}`, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: parsed.idleMinutes * 60,
+      });
+    } else {
+      // Session that predates the cookie (or first visit since deploy): start
+      // the window now instead of force-logging-out.
+      supabaseResponse.cookies.set(LAST_ACTIVE_COOKIE, `${now}:${DEFAULT_IDLE_MINUTES}`, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: DEFAULT_IDLE_MINUTES * 60,
+      });
+    }
+  }
 
   if (!user && isDashboardPage) {
     const url = request.nextUrl.clone();

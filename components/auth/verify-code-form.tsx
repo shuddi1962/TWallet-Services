@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { resendVerificationEmail } from "@/features/auth/server/actions";
 
 type Status = "idle" | "verifying" | "success" | "error";
 
@@ -82,14 +83,10 @@ export function VerifyCodeForm({
     setStatus("idle");
     setMessage("");
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email: email.trim().toLowerCase(),
-    });
+    const result = await resendVerificationEmail(email.trim().toLowerCase());
 
     setResending(false);
-    if (error) {
+    if (result?.error) {
       setStatus("error");
       setMessage("Couldn't resend the code. Please wait a moment and try again.");
       return;

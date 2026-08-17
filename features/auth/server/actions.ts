@@ -1,9 +1,16 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { emailSchema, passwordSchema } from "@/lib/validations";
-import { sendEmail, buildPasswordResetEmail, buildPasswordChangedEmail } from "@/lib/email";
+import {
+  sendEmail,
+  buildPasswordResetEmail,
+  buildPasswordChangedEmail,
+  buildEmailVerificationEmail,
+} from "@/lib/email";
 import { ensureAdminProvisioned, isAdminUser } from "@/lib/admin-provision";
 import { detectCountry } from "@/lib/geo";
 import { getSystemSettings } from "@/lib/settings";
@@ -11,6 +18,53 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://twalletservices.com";
+
+/** Cookie that tracks the last server-verified activity on protected pages. */
+const LAST_ACTIVE_COOKIE = "tw-last-active";
+
+async function setInactivityCookie(idleMinutes: number) {
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(LAST_ACTIVE_COOKIE, `${Date.now()}:${Math.max(1, Math.round(idleMinutes))}`, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: Math.max(60, Math.round(idleMinutes) * 60),
+    });
+  } catch {
+    // Cookie store unavailable (e.g. edge context) — the middleware still enforces.
+  }
+}
+
+async function sendVerificationEmail(email: string) {
+  try {
+    const admin = createAdminClient();
+    // No password: the user already exists (signUp created them), and passing
+    // one would make GoTrue reject the link with "User already registered".
+    const { data: link, error } = await admin.auth.admin.generateLink({
+      type: "signup",
+      email,
+      options: { redirectTo: `${SITE_URL}/auth/callback` },
+    } as Parameters<typeof admin.auth.admin.generateLink>[0]);
+    if (error || !link?.properties) {
+      console.error("[email] generateLink(signup) failed for", email, error?.message ?? "no properties");
+      return false;
+    }
+    const code = link.properties.email_otp;
+    const res = await sendEmail({
+      to: email,
+      subject: "Verify your TWallet email",
+      html: buildEmailVerificationEmail({ code }),
+      type: "verification_email",
+    });
+    if (!res.success) console.error("[email] verification send failed:", res.error);
+    return res.success;
+  } catch (err) {
+    console.error("[email] sendVerificationEmail failed:", err instanceof Error ? err.message : err);
+    return false;
+  }
+}
 
 export async function signUp(_prev: unknown, formData: FormData) {
   const { allowed } = await checkRateLimit("signup", "register", RATE_LIMITS.register);
@@ -28,7 +82,7 @@ export async function signUp(_prev: unknown, formData: FormData) {
 
   const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: email.data,
     password: password.data,
     options: {
@@ -38,6 +92,12 @@ export async function signUp(_prev: unknown, formData: FormData) {
   });
 
   if (error) return { error: error.message };
+
+  // Send the verification code through our own Resend channel (branded email,
+  // independent of Supabase's SMTP config, so it arrives even if SMTP is down).
+  if (data?.user?.email) {
+    await sendVerificationEmail(data.user.email);
+  }
 
   redirect("/auth/verify?email=" + encodeURIComponent(email.data));
 }
@@ -84,6 +144,7 @@ export async function signIn(_prev: unknown, formData: FormData) {
       await supabase.from("profiles").update({ country }).eq("id", user.id);
     }
     await ensureAdminProvisioned(user);
+    await setInactivityCookie(Number(settings.security?.session_idle_minutes ?? 30));
     if (redirectTo && redirectTo.startsWith("/")) {
       redirect(redirectTo);
     }
@@ -98,7 +159,24 @@ export async function signIn(_prev: unknown, formData: FormData) {
 export async function signOut() {
   const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut();
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete(LAST_ACTIVE_COOKIE);
+  } catch {
+    // no cookie store — the middleware clears/ignores it anyway
+  }
   redirect("/auth/login");
+}
+
+export async function resendVerificationEmail(email: string) {
+  const parsed = emailSchema.safeParse(String(email ?? "").trim());
+  if (!parsed.success) return { error: "Invalid email address" };
+
+  const { allowed } = await checkRateLimit("resend-verification", "resendVerification", RATE_LIMITS.forgotPassword);
+  if (!allowed) return { error: "Too many requests. Please try again later." };
+
+  await sendVerificationEmail(parsed.data);
+  return { success: "A new verification code was sent to your email." };
 }
 
 export async function sendPasswordResetEmail(_prev: unknown, formData: FormData) {
@@ -108,22 +186,41 @@ export async function sendPasswordResetEmail(_prev: unknown, formData: FormData)
   const email = emailSchema.safeParse(formData.get("email"));
   if (!email.success) return { error: email.error.errors[0]!.message };
 
-  const supabase = await createServerSupabaseClient();
+  // Mint a real recovery code + link and deliver them through our own Resend
+  // channel — no dependency on Supabase's SMTP config.
+  try {
+    const admin = createAdminClient();
+    const { data: link, error } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email: email.data,
+      options: { redirectTo: `${SITE_URL}/auth/reset-password` },
+    });
+    if (error || !link?.properties) {
+      console.error("[email] generateLink(recovery) failed for", email.data, error?.message ?? "no properties");
+    } else {
+      const code = link.properties.email_otp;
+      const resetUrl = `${SITE_URL}/auth/reset-password?token_hash=${encodeURIComponent(link.properties.hashed_token)}&type=recovery`;
+      const res = await sendEmail({
+        to: email.data,
+        subject: "Reset Your TWallet Password",
+        html: buildPasswordResetEmail({ resetUrl, code }),
+        type: "password_reset_email",
+      });
+      if (!res.success) console.error("[email] reset send failed:", res.error);
+      return { success: "Check your email for a reset code" };
+    }
+  } catch (err) {
+    console.error("[email] sendPasswordResetEmail failed:", err instanceof Error ? err.message : err);
+  }
 
+  // Fallback: let Supabase send its own recovery email (may not arrive if SMTP is down).
+  const supabase = await createServerSupabaseClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
     redirectTo: `${SITE_URL}/auth/reset-password`,
   });
-
   if (error) return { error: error.message };
 
-  sendEmail({
-    to: email.data,
-    subject: "Reset Your TWallet Password",
-    html: buildPasswordResetEmail({ resetUrl: `${SITE_URL}/auth/reset-password` }),
-    type: "password_reset_email",
-  });
-
-  return { success: "Check your email for a reset link" };
+  return { success: "Check your email for a reset code" };
 }
 
 export async function updatePassword(_prev: unknown, formData: FormData) {
@@ -135,15 +232,20 @@ export async function updatePassword(_prev: unknown, formData: FormData) {
 
   if (error) return { error: error.message };
 
-  // Fire-and-forget password changed notification
+  // Password-changed notification (best-effort, awaited so it isn't dropped)
   const { data: { user } } = await supabase.auth.getUser();
   if (user?.email) {
-    sendEmail({
-      to: user.email,
-      subject: "Password Changed - TWallet",
-      html: buildPasswordChangedEmail(),
-      type: "password_changed_email",
-    });
+    try {
+      const res = await sendEmail({
+        to: user.email,
+        subject: "Password Changed - TWallet",
+        html: buildPasswordChangedEmail(),
+        type: "password_changed_email",
+      });
+      if (!res.success) console.error("[email] password-changed send failed:", res.error);
+    } catch (err) {
+      console.error("[email] password-changed send failed:", err instanceof Error ? err.message : err);
+    }
   }
 
   redirect("/auth/login?reset=success");
@@ -194,12 +296,17 @@ export async function changePassword(_prev: unknown, formData: FormData) {
   });
 
   if (user.email) {
-    sendEmail({
-      to: user.email,
-      subject: "Password Changed - TWallet",
-      html: buildPasswordChangedEmail(),
-      type: "password_changed_email",
-    });
+    try {
+      const res = await sendEmail({
+        to: user.email,
+        subject: "Password Changed - TWallet",
+        html: buildPasswordChangedEmail(),
+        type: "password_changed_email",
+      });
+      if (!res.success) console.error("[email] password-changed send failed:", res.error);
+    } catch (err) {
+      console.error("[email] password-changed send failed:", err instanceof Error ? err.message : err);
+    }
   }
 
   revalidatePath("/dashboard/security");

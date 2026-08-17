@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { updatePassword } from "@/features/auth/server/actions";
+import { RecoveryGate } from "@/components/auth/recovery-gate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +21,8 @@ export default function AdminResetPasswordPage() {
         </p>
       </div>
 
-      <Card className="border-white/10 bg-surface-900/70">
+      <RecoveryGate admin>
+        <Card className="border-white/10 bg-surface-900/70">
         <CardContent className="p-6">
           <form action={formAction} className="space-y-4">
             {state?.error && (
@@ -52,6 +54,7 @@ export default function AdminResetPasswordPage() {
           </form>
         </CardContent>
       </Card>
+      </RecoveryGate>
 
       <p className="mt-6 text-center text-sm text-surface-500">
         <Link href="/admin/login" className="text-brand-400 hover:underline">

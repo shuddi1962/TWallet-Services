@@ -28,6 +28,7 @@ export const SETTING_DEFAULTS: Record<SettingsCategory, Record<string, unknown>>
     require_mfa: false,
   },
   notifications: {
+    verification_email: true,
     welcome_email: true,
     order_confirmation_email: true,
     payment_confirmation_email: true,

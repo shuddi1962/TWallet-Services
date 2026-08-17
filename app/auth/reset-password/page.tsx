@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { updatePassword } from "@/features/auth/server/actions";
+import { RecoveryGate } from "@/components/auth/recovery-gate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,8 @@ export default function ResetPasswordPage() {
         <p className="mt-1 text-surface-400">Enter your new password below</p>
       </div>
 
-      <Card className="border-white/10 bg-surface-900/70">
+      <RecoveryGate>
+        <Card className="border-white/10 bg-surface-900/70">
         <CardContent className="p-6">
           <form action={formAction} className="space-y-4">
             {state?.error && (
@@ -48,6 +50,7 @@ export default function ResetPasswordPage() {
           </form>
         </CardContent>
       </Card>
+      </RecoveryGate>
     </div>
   );
 }

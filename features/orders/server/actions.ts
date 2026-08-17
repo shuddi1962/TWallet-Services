@@ -122,11 +122,11 @@ async function createOrderInner(formData: FormData) {
 
   if (orderError) return { error: orderError.message };
 
-  // Fire-and-forget order confirmation email
+  // Order confirmation email (best-effort, awaited so it isn't dropped)
   if (user?.email) {
     try {
       const origin = (await headers()).get("origin") ?? "https://twalletservices.com";
-      sendEmail({
+      const res = await sendEmail({
         to: user.email,
         subject: `Order Confirmed - ${orderNumber}`,
         html: buildOrderConfirmationEmail({
@@ -137,8 +137,9 @@ async function createOrderInner(formData: FormData) {
         }),
         type: "order_confirmation_email",
       });
-    } catch {
-      // email is best-effort — never fail an already-created order over it
+      if (!res.success) console.error("[email] order confirmation failed:", res.error);
+    } catch (err) {
+      console.error("[email] order confirmation failed:", err instanceof Error ? err.message : err);
     }
   }
 

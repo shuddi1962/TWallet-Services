@@ -4,9 +4,24 @@ vi.mock("@/lib", () => ({
   createServerSupabaseClient: vi.fn(),
 }));
 
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(),
+}));
+
+vi.mock("@/lib/email", () => ({
+  sendEmail: vi.fn(async () => ({ success: true })),
+  buildPasswordResetEmail: vi.fn(() => "<p>reset</p>"),
+  buildPasswordChangedEmail: vi.fn(() => "<p>changed</p>"),
+  buildEmailVerificationEmail: vi.fn(() => "<p>verify</p>"),
+}));
+
 vi.mock("@/lib/admin-provision", () => ({
   ensureAdminProvisioned: vi.fn().mockResolvedValue(undefined),
   isAdminUser: vi.fn().mockResolvedValue(false),
+}));
+
+const { cookieStore } = vi.hoisted(() => ({
+  cookieStore: { set: vi.fn(), delete: vi.fn() },
 }));
 
 vi.mock("next/headers", () => ({
@@ -19,6 +34,7 @@ vi.mock("next/headers", () => ({
       return map[key] ?? null;
     },
   })),
+  cookies: vi.fn(async () => cookieStore),
 }));
 
 const { redirectMock } = vi.hoisted(() => ({ redirectMock: vi.fn() }));
@@ -26,6 +42,7 @@ const { redirectMock } = vi.hoisted(() => ({ redirectMock: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 
 import { createServerSupabaseClient } from "@/lib";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { clearRateLimits } from "@/lib/rate-limit";
 import { signUp, signIn, signOut, sendPasswordResetEmail, updatePassword } from "./actions";
 
@@ -42,11 +59,17 @@ beforeEach(() => {
       getUser: vi.fn().mockResolvedValue({ data: { user: { email: "test@example.com" } }, error: null }),
     },
   });
+  (createAdminClient as any).mockReturnValue({
+    auth: {
+      admin: {
+        generateLink: vi.fn(async () => ({
+          data: { properties: { email_otp: "123456", confirmation_url: "http://localhost:3000/auth/reset-password?token_hash=abc&type=recovery" } },
+          error: null,
+        })),
+      },
+    },
+  });
 });
-
-function getAuth() {
-  return (createServerSupabaseClient as any).mock.results[0]!.value as any;
-}
 
 describe("signUp", () => {
   it("returns error for invalid email", async () => {
@@ -155,13 +178,11 @@ describe("sendPasswordResetEmail", () => {
     expect(result).toEqual({ error: "Invalid email address" });
   });
 
-  it("sends reset email", async () => {
-    const auth = (await (createServerSupabaseClient as any)()).auth;
-    auth.resetPasswordForEmail.mockResolvedValue({ error: null });
+  it("sends reset email via generateLink", async () => {
     const fd = new FormData();
     fd.set("email", "test@example.com");
     const result = await sendPasswordResetEmail(null, fd);
-    expect(result).toEqual({ success: "Check your email for a reset link" });
+    expect(result).toEqual({ success: "Check your email for a reset code" });
   });
 });
 
