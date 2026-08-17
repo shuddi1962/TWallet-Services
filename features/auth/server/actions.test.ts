@@ -160,6 +160,29 @@ describe("signIn", () => {
     await signIn(null, fd);
     expect(redirectMock).toHaveBeenCalledWith("/dashboard");
   });
+
+  it("accepts a password that fails registration complexity rules", async () => {
+    // Legacy accounts may predate the uppercase/number requirements — login
+    // must hand the password straight to Supabase, not re-validate it.
+    const auth = (await (createServerSupabaseClient as any)()).auth;
+    auth.signInWithPassword.mockResolvedValue({ error: null });
+    const fd = new FormData();
+    fd.set("email", "admin@example.com");
+    fd.set("password", "admin12345");
+    await signIn(null, fd);
+    expect(auth.signInWithPassword).toHaveBeenCalledWith({
+      email: "admin@example.com",
+      password: "admin12345",
+    });
+  });
+
+  it("returns error for missing password", async () => {
+    const fd = new FormData();
+    fd.set("email", "test@example.com");
+    fd.set("password", "");
+    const result = await signIn(null, fd);
+    expect(result).toEqual({ error: "Password is required" });
+  });
 });
 
 describe("signOut", () => {

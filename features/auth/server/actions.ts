@@ -114,17 +114,20 @@ export async function signIn(_prev: unknown, formData: FormData) {
   if (!allowed) return { error: "Too many failed attempts. Please try again later." };
 
   const email = emailSchema.safeParse(formData.get("email"));
-  const password = passwordSchema.safeParse(formData.get("password"));
+  // Login must NOT enforce registration complexity rules — an existing account
+  // may predate them (e.g. an admin password without an uppercase letter).
+  // Authentication is Supabase's job; we only require a non-empty password.
+  const password = String(formData.get("password") ?? "");
   const redirectTo = String(formData.get("redirect") ?? "").trim();
 
   if (!email.success) return { error: email.error.errors[0]!.message };
-  if (!password.success) return { error: password.error.errors[0]!.message };
+  if (!password) return { error: "Password is required" };
 
   const supabase = await createServerSupabaseClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.data,
-    password: password.data,
+    password,
   });
 
   if (error) {
