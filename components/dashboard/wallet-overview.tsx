@@ -2,34 +2,20 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useAccount, useBalance, useChainId } from "wagmi";
-import { Copy, Check, Wallet, Plug, ExternalLink } from "lucide-react";
-import { trackWalletDisconnected } from "@/lib/analytics";
+import { Copy, Check, Wallet, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
+import { useAssignedWallet } from "@/lib/hooks/use-assigned-wallet";
 import { openConnectDialog } from "@/lib/utils/connect";
 
-const CHAIN_NAMES: Record<number, string> = {
-  1: "Ethereum",
-  11155111: "Sepolia",
-  137: "Polygon",
-  8453: "Base",
-  42161: "Arbitrum",
-  10: "Optimism",
-};
-
 export function WalletOverview() {
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
-  const { data: balance } = useBalance({ address });
-  const { disconnect } = useWalletConnect();
+  const { wallet: assignedWallet } = useAssignedWallet();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    if (!address) return;
+    if (!assignedWallet) return;
     try {
-      await navigator.clipboard.writeText(address);
+      await navigator.clipboard.writeText(assignedWallet.address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -48,7 +34,7 @@ export function WalletOverview() {
           <h3 className="text-base font-semibold text-slate-900">Wallet</h3>
           <p className="text-xs text-slate-500">Connect to pay for cards</p>
         </div>
-        {isConnected && (
+        {assignedWallet && (
           <Badge variant="success" className="gap-1.5">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
             Connected
@@ -57,7 +43,7 @@ export function WalletOverview() {
       </div>
 
       <div className="p-5">
-        {!isConnected || !address ? (
+        {!assignedWallet ? (
           <div className="flex flex-col items-center py-8 text-center">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-100 ring-1 ring-neutral-200">
               <Wallet className="h-6 w-6 text-black" />
@@ -82,12 +68,10 @@ export function WalletOverview() {
           <div className="space-y-4">
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-black via-neutral-800 to-neutral-900 p-5 text-white">
               <p className="text-[11px] font-medium uppercase tracking-wider text-white/70">
-                Native balance
+                Assigned wallet
               </p>
-              <p className="mt-2 text-2xl font-bold">
-                {balance
-                  ? `${(Number(balance.value) / 10 ** balance.decimals).toLocaleString(undefined, { maximumFractionDigits: 5 })} ${balance.symbol}`
-                  : "—"}
+              <p className="mt-2 truncate font-mono text-sm text-white/90">
+                {assignedWallet.address}
               </p>
               <div className="mt-4 flex items-center justify-between text-sm">
                 <button
@@ -95,38 +79,23 @@ export function WalletOverview() {
                   onClick={() => void handleCopy()}
                   className="inline-flex items-center gap-1.5 font-mono text-white/85"
                 >
-                  {address.slice(0, 6)}…{address.slice(-4)}
+                  {assignedWallet.address.slice(0, 6)}…{assignedWallet.address.slice(-4)}
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
                 <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs">
-                  {CHAIN_NAMES[chainId] ?? `Chain ${chainId}`}
+                  {assignedWallet.network || "Verified"}
                 </span>
               </div>
+              <p className="mt-2 text-xs text-white/60">
+                {assignedWallet.label} · verified by TWallet
+              </p>
             </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <Button variant="outline" size="sm" className="rounded-xl" asChild>
-                <a
-                  href={`https://etherscan.io/address/${address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Explorer
-                </a>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="rounded-xl border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                onClick={() => {
-                  trackWalletDisconnected();
-                  void disconnect();
-                }}
-              >
-                <Plug className="h-3.5 w-3.5" />
-                Disconnect
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" className="rounded-xl" asChild>
+              <a href="/dashboard/wallet">
+                <ExternalLink className="h-3.5 w-3.5" />
+                Manage wallet
+              </a>
+            </Button>
           </div>
         )}
       </div>

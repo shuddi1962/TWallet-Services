@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ManualValidation } from "@/components/wallet/manual-validation";
-import { useWalletConnect } from "@/lib/hooks/use-wallet-connect";
 import { createClient } from "@/lib/supabase/client";
 import { disconnectMyWallet, changeMyWalletAddress } from "@/features/wallet-validate/server/actions";
 
@@ -20,7 +19,6 @@ type AssignedWallet = {
 };
 
 export default function WalletPage() {
-  const { isConnected, address } = useWalletConnect();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"choose" | "web3" | "manual">("choose");
@@ -252,21 +250,9 @@ export default function WalletPage() {
             )}
           </CardContent>
         </Card>
-      ) : (isConnected && address) ? (
-        <Card className="border-emerald-200 bg-emerald-50/60">
-          <CardContent className="flex items-center gap-3 p-5">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.7)]" />
-            <div>
-              <p className="text-sm font-semibold text-emerald-800">Wallet connected</p>
-              <p className="font-mono text-xs text-emerald-700">
-                {address?.slice(0, 6)}…{address?.slice(-4)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       ) : null}
 
-      {!open && !assigned && !(isConnected && address) ? (
+      {!open && !assigned ? (
         <Card className="border-slate-200 bg-white">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/20 to-accent-500/20 ring-1 ring-brand-200">

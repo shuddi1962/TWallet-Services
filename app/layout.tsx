@@ -5,7 +5,6 @@ import { PostHogProvider } from "@/components/posthog-provider";
 import { CookieBanner } from "@/components/cookie-banner";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://twalletservices.com"),
@@ -29,9 +28,6 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const headersList = await headers();
-  const cookies = headersList.get("cookie");
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -55,7 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <PostHogProvider><WalletProviders cookies={cookies}>{children}</WalletProviders></PostHogProvider>
+        <PostHogProvider><WalletProviders>{children}</WalletProviders></PostHogProvider>
         <CookieBanner />
       </body>
     </html>

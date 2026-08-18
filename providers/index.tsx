@@ -2,8 +2,7 @@
 
 import { ReactNode, useState } from "react";
 import { Toaster } from "sonner";
-import { WagmiProvider, type Config, type State } from "wagmi";
-import { deserialize } from "@wagmi/core";
+import { WagmiProvider, type Config } from "wagmi";
 import { createAppKit } from "@reown/appkit/react";
 import { mainnet, polygon, base, arbitrum, optimism, sepolia } from "@reown/appkit/networks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -11,31 +10,6 @@ import { WalletLinker } from "@/components/wallet/wallet-linker";
 import { SessionTimeout } from "@/components/session-timeout";
 import { MaintenanceBanner } from "@/components/maintenance-banner";
 import { config, projectId, wagmiAdapter } from "@/lib/wagmi-config";
-
-function decodeCookieValue(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
-function readInitialState(config: Config, cookieHeader: string | null): State | undefined {
-  if (!cookieHeader) return undefined;
-  const key = `${config.storage?.key}.store`;
-  for (const part of cookieHeader.split(";")) {
-    const trimmed = part.trim();
-    if (!trimmed.startsWith(`${key}=`)) continue;
-    const raw = trimmed.slice(key.length + 1);
-    try {
-      const parsed = deserialize<{ state?: State }>(decodeCookieValue(raw));
-      return parsed?.state ?? undefined;
-    } catch {
-      return undefined;
-    }
-  }
-  return undefined;
-}
 
 if (typeof window !== "undefined") {
   createAppKit({
@@ -59,17 +33,16 @@ if (typeof window !== "undefined") {
   });
 }
 
-export function Providers({ children, cookies }: { children: ReactNode; cookies: string | null }) {
+export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
       }),
   );
-  const initialState = readInitialState(config as Config, cookies);
 
   return (
-    <WagmiProvider config={config as Config} initialState={initialState}>
+    <WagmiProvider config={config as Config}>
       <QueryClientProvider client={queryClient}>
         <MaintenanceBanner />
         {children}

@@ -1,91 +1,48 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useAccount, useDisconnect, useChainId } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { createClient } from "@/lib/supabase/client";
 
-const NETWORK_BY_CHAIN: Record<number, string> = {
-  1: "ethereum",
-  11155111: "sepolia",
-  137: "polygon",
-  8453: "base",
-  42161: "arbitrum",
-  10: "optimism",
-};
+// NOTE: this component deliberately does NOT persist web3 connections to the
+// `wallets` table. Web3 connect is "Temporarily unavailable" by product
+// decision (see connect-dialog) — the only path that creates a connected
+// wallet is the manual validation flow + admin approval. An automatic
+// on-mount save would silently "assign" a wallet to any user whose browser
+// had a previously-authorized injected wallet. The remaining job here is
+// cleanup: when the app session ends, drop the wagmi connection too.
 
 export function WalletLinker() {
-  const { address, isConnected, connector } = useAccount();
-  const chainId = useChainId();
+  const { isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
-  const lastSaved = useRef<string | null>(null);
 
   useEffect(() => {
     supabaseRef.current = createClient();
   }, []);
+
+  // Web3 connect is unavailable by product decision — a connection restored
+  // from the wagmi store (e.g. a previously-authorized browser wallet on the
+  // same machine) is never a legitimate "connected" state here, so drop it
+  // the moment it appears. Nothing ever re-connects afterward.
+  useEffect(() => {
+    if (isConnected) {
+      void disconnect();
+    }
+  }, [isConnected, disconnect]);
 
   useEffect(() => {
     const supabase = supabaseRef.current;
     if (!supabase) return;
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event: string) => {
+    } = supabase.auth.onAuthStateChange((event: string) => {
       if (event === "SIGNED_OUT" && isConnected) {
         disconnect();
       }
     });
     return () => subscription.unsubscribe();
   }, [isConnected, disconnect]);
-
-  useEffect(() => {
-    if (!address || !isConnected) return;
-    const key = `${address.toLowerCase()}:${chainId}`;
-    if (lastSaved.current === key) return;
-
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
-
-    const saveWallet = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const network = NETWORK_BY_CHAIN[chainId] ?? "ethereum";
-      const label = connector?.name ?? "Wallet";
-
-      const { data: existing } = await supabase
-        .from("wallets")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("address", address)
-        .eq("network_id", chainId)
-        .is("deleted_at", null)
-        .maybeSingle();
-
-      if (existing) {
-        await supabase
-          .from("wallets")
-          .update({ last_used_at: new Date().toISOString(), label, network })
-          .eq("id", existing.id);
-      } else {
-        await supabase.from("wallets").insert({
-          user_id: user.id,
-          address,
-          network,
-          network_id: chainId,
-          label,
-          signature: "wc-connect",
-          message: `Connected via ${label} at ${new Date().toISOString()}`,
-          is_default: true,
-          connected_at: new Date().toISOString(),
-        });
-      }
-      lastSaved.current = key;
-    };
-
-    void saveWallet();
-  }, [address, isConnected, connector, chainId]);
 
   return null;
 }

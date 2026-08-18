@@ -1,6 +1,6 @@
 "use client";
 
-import { Wallet, ChevronDown, LogOut, Copy, Check, ShieldCheck, ExternalLink } from "lucide-react";
+import { Wallet, ChevronDown, LogOut, Copy, Check, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export function ConnectButton({
   hideWhenSignedIn?: boolean;
   className?: string;
 }) {
-  const { disconnect, isConnected, address } = useWalletConnect();
+  const { disconnect } = useWalletConnect();
   const { wallet: assignedWallet, reload } = useAssignedWallet();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -155,58 +155,9 @@ export function ConnectButton({
     );
   }
 
-  if (isConnected && address) {
-    return (
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setMenuOpen((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-brand-700"
-        >
-          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          {short(address)}
-          <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-        </button>
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  openConnectDialog();
-                }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                Validate manually
-              </button>
-              <button
-                type="button"
-                onClick={() => void copy(address)}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50"
-              >
-                {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-                {copied ? "Copied" : "Copy address"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  void disconnect();
-                }}
-                className="flex w-full items-center gap-2 border-t border-slate-200 px-4 py-2.5 text-left text-sm text-red-500 hover:bg-slate-50"
-              >
-                <LogOut className="h-4 w-4" />
-                Disconnect
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
+  // Web3 connections are intentionally unavailable (see connect-dialog), so a
+  // wagmi "connected" state is never a real wallet here. The only connection
+  // shown is the admin-assigned wallet from manual validation.
 
   return (
     <Button
