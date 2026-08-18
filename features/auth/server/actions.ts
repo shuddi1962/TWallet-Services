@@ -93,7 +93,51 @@ export async function signUp(_prev: unknown, formData: FormData) {
     user_metadata: { full_name: name, ...(country ? { country } : {}) },
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    if (!/already registered|already been registered|already exists/i.test(error.message)) {
+      return { error: error.message };
+    }
+
+    // The email already exists in auth.users. Recover the two legitimate cases:
+    //   1) the user registered before but never confirmed (missed/never got the
+    //      code) — re-send the code instead of erroring;
+    //   2) the account was soft-deleted — reactivate it (keeping the history)
+    //      and treat it as a fresh registration.
+    // Anything else (active, confirmed account) must sign in instead.
+    const { data: link, error: linkError } = await admin.auth.admin.generateLink({
+      type: "signup",
+      email: email.data,
+      options: { redirectTo: `${SITE_URL}/auth/callback` },
+    } as Parameters<typeof admin.auth.admin.generateLink>[0]);
+
+    if (!linkError && link?.properties) {
+      // Existing unconfirmed user — resend the code, no "already registered" error.
+      await sendVerificationEmail(email.data);
+      redirect("/auth/verify?email=" + encodeURIComponent(email.data));
+    }
+
+    const existing = await admin
+      .from("profiles")
+      .select("id, status, deleted_at")
+      .eq("email", email.data)
+      .maybeSingle();
+
+    if (existing.data?.status === "deleted") {
+      const { error: reactivateError } = await admin.auth.admin.updateUserById(existing.data.id, {
+        password: password.data,
+        email_confirm: false,
+      });
+      if (reactivateError) return { error: reactivateError.message };
+      await admin
+        .from("profiles")
+        .update({ status: "active", deleted_at: null, full_name: name, ...(country ? { country } : {}) })
+        .eq("id", existing.data.id);
+      await sendVerificationEmail(email.data);
+      redirect("/auth/verify?email=" + encodeURIComponent(email.data));
+    }
+
+    return { error: "An account with this email already exists. Please sign in instead." };
+  }
 
   // Send the verification code through our own Resend channel (branded email).
   if (data?.user?.email) {
@@ -144,6 +188,13 @@ export async function signIn(_prev: unknown, formData: FormData) {
       detectCountry(),
       isAdminUser(user.id),
     ]);
+    // A soft-deleted account cannot sign in — the owner re-registers with the
+    // same email instead (signUp reactivates it).
+    const profile = await supabase.from("profiles").select("status").eq("id", user.id).maybeSingle();
+    if (profile.data?.status === "deleted") {
+      await supabase.auth.signOut();
+      return { error: "This account has been deleted. Register again with this email to reactivate it." };
+    }
     if (country) {
       await supabase.from("profiles").update({ country }).eq("id", user.id);
     }

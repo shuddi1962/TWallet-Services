@@ -50,8 +50,17 @@ function makeAdmin() {
           data: { properties: { email_otp: "123456", confirmation_url: "http://localhost:3000/auth/reset-password?token_hash=abc&type=recovery" } },
           error: null,
         })),
+        updateUserById: vi.fn(async () => ({ error: null })),
       },
     },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        })),
+      })),
+      update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+    })),
   };
 }
 
@@ -66,6 +75,17 @@ function makeAuth() {
   };
 }
 
+function makeProfilesFrom(status = "active") {
+  return vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        maybeSingle: vi.fn().mockResolvedValue({ data: { status }, error: null }),
+      })),
+    })),
+    update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+  }));
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   clearRateLimits();
@@ -78,7 +98,7 @@ describe("Auth Integration", () => {
     auth.resetPasswordForEmail.mockResolvedValue({ error: null });
     auth.updateUser.mockResolvedValue({ error: null });
     auth.signOut.mockResolvedValue({ error: null });
-    (createServerSupabaseClient as any).mockResolvedValue({ auth });
+    (createServerSupabaseClient as any).mockResolvedValue({ auth, from: makeProfilesFrom() });
     const admin = makeAdmin();
     admin.auth.admin.createUser.mockResolvedValue({
       data: { user: { id: "u1", email: "user@example.com" } },
@@ -133,9 +153,9 @@ describe("Auth Integration", () => {
     expect(result).toEqual({ error: "Invalid email or password" });
   });
 
-  it("handles duplicate signup", async () => {
+  it("handles duplicate signup by resending the code", async () => {
     const auth = makeAuth();
-    (createServerSupabaseClient as any).mockResolvedValue({ auth });
+    (createServerSupabaseClient as any).mockResolvedValue({ auth, from: makeProfilesFrom() });
     const admin = makeAdmin();
     admin.auth.admin.createUser.mockResolvedValue({
       data: null,
@@ -146,8 +166,26 @@ describe("Auth Integration", () => {
     fd.set("email", "existing@example.com");
     fd.set("password", "StrongPass1");
     fd.set("name", "Existing");
-    const result = await signUp(null, fd);
-    expect(result).toEqual({ error: "A user with this email address has already been registered" });
+    await signUp(null, fd);
+    // generateLink succeeds → unconfirmed → code re-sent, no error surfaced.
+    expect(redirectMock).toHaveBeenCalledWith("/auth/verify?email=existing%40example.com");
+  });
+
+  it("rejects sign-in for a soft-deleted account", async () => {
+    const auth = makeAuth();
+    auth.signInWithPassword.mockResolvedValue({
+      data: { user: { id: "deleted-id", email: "deleted@example.com" } },
+      error: null,
+    });
+    (createServerSupabaseClient as any).mockResolvedValue({ auth, from: makeProfilesFrom("deleted") });
+    const fd = new FormData();
+    fd.set("email", "deleted@example.com");
+    fd.set("password", "StrongPass1");
+    const result = await signIn(null, fd);
+    expect(result).toEqual({
+      error: "This account has been deleted. Register again with this email to reactivate it.",
+    });
+    expect(auth.signOut).toHaveBeenCalled();
   });
 
   it("falls back to Supabase email when generateLink fails", async () => {

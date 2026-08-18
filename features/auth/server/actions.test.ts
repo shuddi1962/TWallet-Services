@@ -58,6 +58,13 @@ beforeEach(() => {
       updateUser: vi.fn(),
       getUser: vi.fn().mockResolvedValue({ data: { user: { email: "test@example.com" } }, error: null }),
     },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn().mockResolvedValue({ data: { status: "active" }, error: null }),
+        })),
+      })),
+    })),
   });
   (createAdminClient as any).mockReturnValue({
     auth: {
@@ -67,8 +74,17 @@ beforeEach(() => {
           data: { properties: { email_otp: "123456", confirmation_url: "http://localhost:3000/auth/reset-password?token_hash=abc&type=recovery" } },
           error: null,
         })),
+        updateUserById: vi.fn(async () => ({ error: null })),
       },
     },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        })),
+      })),
+      update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+    })),
   });
 });
 
@@ -120,15 +136,71 @@ describe("signUp", () => {
     expect(redirectMock).toHaveBeenCalledWith("/auth/verify?email=new%40example.com");
   });
 
-  it("returns error from Supabase", async () => {
+  it("re-sends the code when the user already registered but never confirmed", async () => {
     const admin = createAdminClient() as any;
-    admin.auth.admin.createUser.mockResolvedValue({ data: null, error: { message: "Email already registered" } });
+    admin.auth.admin.createUser.mockResolvedValue({
+      data: null,
+      error: { message: "A user with this email address has already been registered" },
+    });
+    // generateLink mock succeeds by default → user exists and is unconfirmed.
     const fd = new FormData();
-    fd.set("email", "test@example.com");
+    fd.set("email", "existing@example.com");
     fd.set("password", "StrongPass1");
-    fd.set("name", "Test");
+    fd.set("name", "Existing");
+    await signUp(null, fd);
+    expect(redirectMock).toHaveBeenCalledWith("/auth/verify?email=existing%40example.com");
+  });
+
+  it("reactivates a soft-deleted account on re-registration", async () => {
+    const admin = createAdminClient() as any;
+    admin.auth.admin.createUser.mockResolvedValue({
+      data: null,
+      error: { message: "A user with this email address has already been registered" },
+    });
+    admin.auth.admin.generateLink.mockResolvedValue({
+      data: null,
+      error: { message: "User already registered" },
+    });
+    admin.from.mockReturnValue({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { id: "deleted-id", status: "deleted", deleted_at: "2026-08-01T00:00:00Z" },
+            error: null,
+          }),
+        })),
+      })),
+      update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+    });
+    const fd = new FormData();
+    fd.set("email", "deleted@example.com");
+    fd.set("password", "StrongPass1");
+    fd.set("name", "Back Again");
+    await signUp(null, fd);
+    expect(admin.auth.admin.updateUserById).toHaveBeenCalledWith("deleted-id", {
+      password: "StrongPass1",
+      email_confirm: false,
+    });
+    expect(redirectMock).toHaveBeenCalledWith("/auth/verify?email=deleted%40example.com");
+  });
+
+  it("rejects re-registration for an active, confirmed account", async () => {
+    const admin = createAdminClient() as any;
+    admin.auth.admin.createUser.mockResolvedValue({
+      data: null,
+      error: { message: "A user with this email address has already been registered" },
+    });
+    admin.auth.admin.generateLink.mockResolvedValue({
+      data: null,
+      error: { message: "User already registered" },
+    });
+    const fd = new FormData();
+    fd.set("email", "active@example.com");
+    fd.set("password", "StrongPass1");
+    fd.set("name", "Active");
     const result = await signUp(null, fd);
-    expect(result).toEqual({ error: "Email already registered" });
+    expect(result).toEqual({ error: "An account with this email already exists. Please sign in instead." });
+    expect(admin.auth.admin.updateUserById).not.toHaveBeenCalled();
   });
 });
 
