@@ -105,7 +105,9 @@ function subscribe(callback: () => void) {
 }
 
 export function useAssignedWallet() {
-  const { wallet, ready } = useSyncExternalStore(subscribe, () => state);
+  // getServerSnapshot: during SSR/prerender the store always starts in its
+  // initial state (no wallet, not ready) — the real query only runs client-side.
+  const { wallet, ready } = useSyncExternalStore(subscribe, () => state, () => state);
   useEffect(() => {
     ensureStarted();
   }, []);
